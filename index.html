@@ -11,7 +11,7 @@
         (function() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('clear') || urlParams.has('logout') || urlParams.has('redirect')) {
+                if (urlParams.has('clear') || urlParams.has('logout')) {
                     sessionStorage.removeItem('gncp_admin_user');
                     sessionStorage.removeItem('gncp_station_user');
                     return;
@@ -32,9 +32,10 @@
                         if (role === 'IT_CENTER') return 'stations/it-center/index.html';
                         return '';
                     };
-                    const url = getRoleRedirectUrl(user.role);
-                    if (url) {
-                        window.location.replace(url);
+                    const redirectParam = urlParams.get('redirect');
+                    const target = redirectParam ? decodeURIComponent(redirectParam) : getRoleRedirectUrl(user.role);
+                    if (target) {
+                        window.location.replace(target);
                     }
                 }
             } catch (e) {
@@ -753,7 +754,7 @@
 
                 const checkActiveSession = () => {
                     const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('clear') || urlParams.has('logout') || urlParams.has('redirect')) {
+                    if (urlParams.has('clear') || urlParams.has('logout')) {
                         sessionStorage.removeItem('gncp_admin_user');
                         sessionStorage.removeItem('gncp_station_user');
                         currentUser.value = null;
@@ -777,9 +778,10 @@
 
                     if (user && user.role) {
                         currentUser.value = user;
-                        const url = getRoleRedirectUrl(user.role);
-                        if (url) {
-                            window.location.replace(url);
+                        const redirectParam = urlParams.get('redirect');
+                        const target = redirectParam ? decodeURIComponent(redirectParam) : getRoleRedirectUrl(user.role);
+                        if (target) {
+                            window.location.replace(target);
                         }
                     }
                 };

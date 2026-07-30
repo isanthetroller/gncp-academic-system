@@ -2058,13 +2058,20 @@ createApp({
 
         // ── Auth ──
         onMounted(() => {
-            const s = sessionStorage.getItem('gncp_admin_user');
-            if (s) { 
-                currentAdmin.value = JSON.parse(s); 
-                loadAll(); 
-            } else {
-                window.location.href = '../index.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            const s = sessionStorage.getItem('gncp_admin_user') || sessionStorage.getItem('gncp_station_user');
+            if (s) {
+                try {
+                    const u = JSON.parse(s);
+                    if (u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN')) {
+                        currentAdmin.value = u;
+                        loadAll();
+                        return;
+                    }
+                } catch(e) {}
             }
+            sessionStorage.removeItem('gncp_admin_user');
+            sessionStorage.removeItem('gncp_station_user');
+            window.location.href = '../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         });
         const handleLogout = async () => {
             const result = await Swal.fire({

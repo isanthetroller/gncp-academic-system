@@ -7,6 +7,15 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/utils/response.php';
 
+if (($_GET['action'] ?? '') === 'logout') {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    session_unset();
+    session_destroy();
+    sendResponse(true, null, 'Logged out successfully.', 200);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, null, 'Method not allowed. Use POST.', 405);
 }
