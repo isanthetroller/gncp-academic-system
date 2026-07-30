@@ -216,22 +216,32 @@
                                 </p>
 
                                 <!-- Credentials Grid -->
-                                <div class="row g-3 p-3 rounded-3 mb-4" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);">
-                                    <div class="col-sm-4">
-                                        <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Student ID Number</div>
-                                        <code class="fs-6 fw-bold font-monospace" style="color: #FBBF24; background: transparent; padding: 0;">{{ enrollmentData.permanentId || enrollmentData.tempStudentId }}</code>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-12 col-md-4">
+                                        <div class="p-3 rounded-3 h-100 d-flex flex-column justify-content-center" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);">
+                                            <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Student ID Number</div>
+                                            <div class="d-inline-flex align-items-center">
+                                                <code class="fs-6 fw-bold font-monospace" style="color: #FBBF24; background: transparent; padding: 0;">{{ enrollmentData.permanentId || enrollmentData.tempStudentId }}</code>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-5">
-                                        <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Institutional Email / Username</div>
-                                        <code class="fs-6 fw-bold font-monospace text-lowercase" style="color: #38BDF8; background: transparent; padding: 0;">{{ enrollmentData.institutionalEmail || enrollmentData.form.email }}</code>
+                                    <div class="col-12 col-md-5">
+                                        <div class="p-3 rounded-3 h-100 d-flex flex-column justify-content-center" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);">
+                                            <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Institutional Email / Username</div>
+                                            <div class="d-inline-flex align-items-center" style="max-width: 100%;">
+                                                <code class="fs-6 fw-bold font-monospace text-lowercase" style="color: #38BDF8; background: transparent; padding: 0; word-break: break-all; overflow-wrap: anywhere; line-height: 1.3;">{{ enrollmentData.institutionalEmail || enrollmentData.form.email }}</code>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-3">
-                                        <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Default Password</div>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <code class="fs-6 fw-bold font-monospace text-lowercase px-2 py-1 rounded" style="color: #FACC15; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25);">{{ enrollmentData.defaultPassword || enrollmentData.form.lastName.toLowerCase() }}</code>
-                                            <button class="btn btn-sm btn-link text-white-50 p-0 ms-1" @click="copyToClipboard(enrollmentData.defaultPassword || enrollmentData.form.lastName.toLowerCase())" title="Copy Password">
-                                                <i class="fa-solid fa-copy" style="color: #ffffff;"></i>
-                                            </button>
+                                    <div class="col-12 col-md-3">
+                                        <div class="p-3 rounded-3 h-100 d-flex flex-column justify-content-center" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);">
+                                            <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Default Password</div>
+                                            <div class="d-flex align-items-center justify-content-between gap-1">
+                                                <code class="fs-6 fw-bold font-monospace text-lowercase px-2 py-1 rounded" style="color: #FACC15; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25);">{{ enrollmentData.defaultPassword || enrollmentData.form.lastName.toLowerCase() }}</code>
+                                                <button class="btn btn-sm btn-link text-white-50 p-1 ms-1" @click="copyToClipboard(enrollmentData.defaultPassword || enrollmentData.form.lastName.toLowerCase())" title="Copy Password">
+                                                    <i class="fa-solid fa-copy" style="color: #ffffff; font-size: 0.9rem;"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
