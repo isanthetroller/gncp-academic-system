@@ -158,22 +158,22 @@
                         <button class="btn-pill btn-pill-sm py-1"
                                 :class="activeFilter === 'All' ? 'btn-pill-green' : 'btn-pill-outline'"
                                 @click="setFilter('All')">
-                            All <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ students.length }}</span>
+                            All <span class="ms-1 badge rounded-pill">{{ students.length }}</span>
                         </button>
                         <button class="btn-pill btn-pill-sm py-1"
                                 :class="activeFilter === 'Pending' ? 'btn-pill-green' : 'btn-pill-outline'"
                                 @click="setFilter('Pending')">
-                            Pending <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ pendingCount }}</span>
+                            Pending <span class="ms-1 badge rounded-pill">{{ pendingCount }}</span>
                         </button>
                         <button class="btn-pill btn-pill-sm py-1"
                                 :class="activeFilter === 'Completed' ? 'btn-pill-green' : 'btn-pill-outline'"
                                 @click="setFilter('Completed')">
-                            Cleared / Fit <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ completedCount }}</span>
+                            Cleared / Fit <span class="ms-1 badge rounded-pill">{{ completedCount }}</span>
                         </button>
                         <button class="btn-pill btn-pill-sm py-1"
                                 :class="activeFilter === 'Conditional' ? 'btn-pill-green' : 'btn-pill-outline'"
                                 @click="setFilter('Conditional')">
-                            Conditional / Flagged <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ unfitCount }}</span>
+                            Conditional / Flagged <span class="ms-1 badge rounded-pill">{{ unfitCount }}</span>
                         </button>
                     </div>
 

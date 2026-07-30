@@ -342,8 +342,27 @@ a { text-decoration: none; }
 
 .btn-pill-ghost { background: transparent; color: var(--text-muted); border: 1.5px solid var(--gray-border); }
 .btn-pill-ghost:hover { border-color: var(--text-muted); color: var(--text-dark); }
-
 .btn-pill-sm { padding: 5px 12px; font-size: 0.77rem; border-radius: 30px; }
+
+/* Filter Pill Badges */
+.btn-pill .badge {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    padding: 2px 7px !important;
+    transition: all 0.15s ease;
+}
+.btn-pill-green .badge {
+    background-color: rgba(255, 255, 255, 0.28) !important;
+    color: #FFFFFF !important;
+}
+.btn-pill-outline .badge {
+    background-color: rgba(0, 106, 78, 0.12) !important;
+    color: var(--primary-green) !important;
+}
+.btn-pill-outline:hover .badge {
+    background-color: var(--primary-green) !important;
+    color: #FFFFFF !important;
+}
 
 /* KPI Stat Cards */
 .stats-grid {
