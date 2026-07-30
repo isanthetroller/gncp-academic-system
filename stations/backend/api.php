@@ -237,6 +237,17 @@ try {
         if (isset($updateData['payment'])) {
             $sets[] = "`payment_data` = :payment_data";
             $params['payment_data'] = json_encode($updateData['payment']);
+
+            // Sync to permanent students table as well if student record exists
+            try {
+                $upStud = $pdo->prepare("UPDATE `students` SET `payment_data` = :payment_data WHERE `temp_reference_no` = :ref OR `id` = :ref");
+                $upStud->execute([
+                    'payment_data' => json_encode($updateData['payment']),
+                    'ref' => $refNo
+                ]);
+            } catch (Exception $e) {
+                // Ignore if student has not been promoted yet
+            }
         }
         if (isset($updateData['helpdesk'])) {
             $sets[] = "`helpdesk_data` = :helpdesk_data";

@@ -307,67 +307,92 @@ createApp({
             if (!selectedStudent.value) return;
             const student = selectedStudent.value;
             const payAmt = parseFloat(payAmountInput.value) || 0;
+            const currentBal = parseFloat(student.payment.balance) || 0;
 
-            if (payAmt <= 0) {
-                await Swal.fire({
-                    title: 'Invalid Amount',
-                    text: 'Please enter a valid payment amount greater than 0.',
-                    icon: 'warning',
-                    confirmButtonColor: '#0d6efd'
-                });
+            const minAllowed = currentBal < 3000 ? currentBal : 3000;
+
+            if (payAmt < minAllowed) {
+                if (currentBal < 3000) {
+                    await Swal.fire({
+                        title: 'Minimum Payment Required',
+                        text: `The remaining balance is ₱${currentBal.toLocaleString()}. Please enter the full remaining balance of ₱${currentBal.toLocaleString()} to settle payment.`,
+                        icon: 'warning',
+                        confirmButtonColor: '#006A4E'
+                    });
+                } else {
+                    await Swal.fire({
+                        title: 'Minimum Payment Limit',
+                        text: 'The minimum payment amount allowed is ₱3,000.00.',
+                        icon: 'warning',
+                        confirmButtonColor: '#006A4E'
+                    });
+                }
                 return;
             }
-            if (payAmt > student.payment.balance) {
+
+            if (payAmt > currentBal) {
                 await Swal.fire({
                     title: 'Excess Amount',
-                    text: 'Payment amount cannot exceed the outstanding balance of ₱' + student.payment.balance.toLocaleString() + '.',
+                    text: 'Payment amount cannot exceed the outstanding balance of ₱' + currentBal.toLocaleString() + '.',
                     icon: 'warning',
-                    confirmButtonColor: '#0d6efd'
+                    confirmButtonColor: '#006A4E'
                 });
                 return;
             }
+
             if (student.payment.paymentType === 'Cash' && cashTendered.value < payAmt) {
                 await Swal.fire({
                     title: 'Insufficient Cash',
                     text: 'Cash tendered (₱' + cashTendered.value.toLocaleString() + ') is less than the payment amount (₱' + payAmt.toLocaleString() + ').',
                     icon: 'warning',
-                    confirmButtonColor: '#0d6efd'
+                    confirmButtonColor: '#006A4E'
                 });
                 return;
             }
-            const isFull = (student.payment.balance - payAmt) === 0;
-            student.status = isFull ? 'PAID' : 'PARTIAL';
+
+            const isFull = (currentBal - payAmt) === 0;
+            const newStatus = isFull ? 'PAID' : 'PARTIAL';
 
             if (!student.payment.transactionRef) {
                 student.payment.transactionRef = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
             }
 
             const transactionRef = student.payment.transactionRef;
-            const paymentType = student.payment.paymentType;
-            const notes = student.payment.cashierNotes;
+            const paymentType = student.payment.paymentType || 'Cash';
+            const notes = student.payment.cashierNotes || '';
+            const cashierName = currentUser.value ? currentUser.value.name : 'Cashier Officer';
 
+            // 1. Update the reactive local state directly for real-time modal update
+            student.payment.amountPaid = (student.payment.amountPaid || 0) + payAmt;
+            student.payment.balance = currentBal - payAmt;
+            student.payment.status = newStatus;
+            student.status = newStatus;
+
+            if (!student.payment.history || !Array.isArray(student.payment.history)) {
+                student.payment.history = [];
+            }
+
+            student.payment.history.push({
+                date: new Date().toISOString(),
+                amount: payAmt,
+                reference: transactionRef,
+                paymentType: paymentType,
+                cashier: cashierName,
+                notes: notes
+            });
+
+            // 2. Persist to DataBus / localStorage and trigger background sync
             StationDataBus.updateStudent(student.referenceNumber, (s) => {
-                s.payment.status         = student.status;
-                s.payment.amountPaid     = (s.payment.amountPaid || 0) + payAmt;
-                s.payment.balance        = (s.payment.balance || 0) - payAmt;
+                s.status                 = newStatus;
+                s.payment.status         = newStatus;
+                s.payment.amountPaid     = student.payment.amountPaid;
+                s.payment.balance        = student.payment.balance;
                 s.payment.paymentType    = paymentType;
                 s.payment.transactionRef = transactionRef;
                 s.payment.notes          = notes;
-                s.payment.verifiedBy     = currentUser.value.name;
+                s.payment.verifiedBy     = cashierName;
                 s.payment.dateVerified   = new Date().toLocaleDateString();
-
-                if (!s.payment.history || !Array.isArray(s.payment.history)) {
-                    s.payment.history = [];
-                }
-
-                s.payment.history.push({
-                    date: new Date().toISOString(),
-                    amount: payAmt,
-                    reference: transactionRef,
-                    paymentType: paymentType,
-                    cashier: currentUser.value.name,
-                    notes: notes
-                });
+                s.payment.history        = student.payment.history;
 
                 const currentStepIdx = (s.roadmap && Array.isArray(s.roadmap)) ? s.roadmap.findIndex(r => r.stepId === 'cashier_payment') : -1;
                 if (currentStepIdx !== -1) {
@@ -381,8 +406,25 @@ createApp({
                 }
             });
 
+            // 3. Directly POST to backend PHP/MySQL to guarantee instant database persistence
+            try {
+                await fetch('../backend/api.php?action=update_student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        referenceNumber: student.referenceNumber,
+                        updateData: {
+                            payment: student.payment,
+                            roadmap: student.roadmap,
+                            status: newStatus
+                        }
+                    })
+                });
+            } catch (e) {
+                console.error('[Cashier] Direct backend save failed:', e);
+            }
+
             loadQueue();
-            closeModal();
 
             receiptData.value = {
                 refNo: student.referenceNumber,
@@ -392,12 +434,21 @@ createApp({
                 transactionRef: transactionRef,
                 totalFee: student.payment.totalFee,
                 amountPaid: payAmt,
-                balance: student.payment.balance - payAmt,
+                balance: student.payment.balance,
                 date: new Date().toLocaleString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 }),
-                cashier: currentUser.value?.name || 'Cashier Officer'
+                cashier: cashierName
             };
+
+            closeModal();
+
+            await Swal.fire({
+                title: 'Payment Recorded!',
+                text: `Successfully collected ₱${payAmt.toLocaleString()}. Remaining balance: ₱${student.payment.balance.toLocaleString()}.`,
+                icon: 'success',
+                confirmButtonColor: '#006A4E'
+            });
         };
 
         const printCOR = (student) => {
