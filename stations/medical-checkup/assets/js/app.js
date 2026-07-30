@@ -50,7 +50,15 @@ createApp({
                     list.push(s);
                 }
             }
-            return list;
+            return [...list].sort((a, b) => {
+                let vA = a[sortBy.value] || '';
+                let vB = b[sortBy.value] || '';
+                if (typeof vA === 'string') vA = vA.toLowerCase();
+                if (typeof vB === 'string') vB = vB.toLowerCase();
+                if (vA < vB) return sortDesc.value ? 1 : -1;
+                if (vA > vB) return sortDesc.value ? -1 : 1;
+                return 0;
+            });
         });
 
         const filteredStudents = computed(() => {
