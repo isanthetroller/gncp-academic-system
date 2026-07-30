@@ -33,7 +33,11 @@ createApp({
         };
 
         const getMedicalStepStatus = (student) => {
-            if (!student || !student.roadmap) return 'PENDING';
+            if (!student) return 'PENDING';
+            if (student.medical && (student.medical.status === 'fit' || student.medical.status === 'cleared' || student.medical.status === 'conditional' || student.medical.verifiedBy)) {
+                return 'COMPLETED';
+            }
+            if (!student.roadmap) return 'PENDING';
             const step = student.roadmap.find(r => r.stepId === 'clinic_checkup');
             return step ? step.status : 'PENDING';
         };

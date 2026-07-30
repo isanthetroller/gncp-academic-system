@@ -26,9 +26,105 @@ try {
             }
         }
 
-        // Fetch only approved/enrolled student records (exclude pre-registered or rejected)
+        // Fetch staging pre_enrollments (exclude pre-registered or rejected)
         $stmt = $pdo->query("SELECT * FROM `pre_enrollments` WHERE `status` NOT IN ('PRE_REGISTERED', 'Rejected') ORDER BY `id` DESC");
-        $rows = $stmt->fetchAll();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch permanent student directory records and index by reference ID/Email for seamless merging
+        $studMap = [];
+        $existingRefs = [];
+        try {
+            $studStmt = $pdo->query("SELECT * FROM `students` ORDER BY `id` DESC");
+            $studRows = $studStmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($studRows as $sr) {
+                if (!empty($sr['temp_reference_no'])) {
+                    $studMap[$sr['temp_reference_no']] = $sr;
+                }
+                $studMap[$sr['id']] = $sr;
+                if (!empty($sr['email'])) {
+                    $studMap[strtolower($sr['email'])] = $sr;
+                }
+            }
+        } catch (Exception $e) {}
+
+        // Merge updated student fields from permanent directory into staging queue rows
+        foreach ($rows as &$row) {
+            $ref = $row['temp_student_id'];
+            $email = strtolower($row['email'] ?? '');
+            $sr = $studMap[$ref] ?? ($studMap[$email] ?? null);
+
+            if ($sr) {
+                $existingRefs[$ref] = true;
+                $existingRefs[$sr['id']] = true;
+
+                if (!empty($sr['medical_data']) && $sr['medical_data'] !== '{}') {
+                    $row['medical_data'] = $sr['medical_data'];
+                }
+                if (!empty($sr['payment_data']) && $sr['payment_data'] !== '{}') {
+                    $row['payment_data'] = $sr['payment_data'];
+                }
+                if (!empty($sr['requirements_data']) && $sr['requirements_data'] !== '{}') {
+                    $row['requirements_data'] = $sr['requirements_data'];
+                }
+                if (!empty($sr['roadmap']) && $sr['roadmap'] !== '[]') {
+                    $row['roadmap'] = $sr['roadmap'];
+                }
+            }
+        }
+        unset($row);
+
+        // Append any permanent enrolled students that do not exist in staging pre_enrollments
+        if (isset($studRows)) {
+            foreach ($studRows as $sr) {
+                $ref = !empty($sr['temp_reference_no']) ? $sr['temp_reference_no'] : $sr['id'];
+                $email = strtolower($sr['email'] ?? '');
+                if (!isset($existingRefs[$ref]) && !isset($existingRefs[$sr['id']]) && !isset($existingRefs[$email])) {
+                    $existingRefs[$ref] = true;
+                    $existingRefs[$sr['id']] = true;
+
+                    $personal = json_decode($sr['personal_info'] ?? '{}', true) ?: [];
+                    $academic = json_decode($sr['academic_info'] ?? '{}', true) ?: [];
+                    $nameParts = explode(' ', trim($sr['name'] ?? ''));
+                    $firstName = $personal['firstName'] ?? ($nameParts[0] ?? '');
+                    $lastName = $personal['lastName'] ?? (end($nameParts) ?? '');
+                    $middleName = $personal['middleName'] ?? '';
+
+                    $rows[] = [
+                        'id'                  => $sr['id'],
+                        'temp_student_id'     => $ref,
+                        'temp_pin'            => '123456',
+                        'first_name'          => $firstName,
+                        'middle_name'         => $middleName,
+                        'last_name'           => $lastName,
+                        'course_code'         => $sr['program'],
+                        'student_type'        => 'REGULAR',
+                        'phone'               => $personal['phone'] ?? '',
+                        'email'               => $sr['email'],
+                        'gender'              => $personal['gender'] ?? 'Other',
+                        'address'             => $personal['address'] ?? '',
+                        'payment_mode'        => 'Cash',
+                        'created_at'          => $sr['created_at'],
+                        'senior_high_school'  => $academic['seniorHighSchool'] ?? '',
+                        'shs_track'           => $academic['shsTrack'] ?? '',
+                        'health_status'       => 'GOOD',
+                        'medical_conditions'  => '',
+                        'allergies'           => 'None',
+                        'current_medication'  => 0,
+                        'medication_details'  => '',
+                        'roadmap'             => $sr['roadmap'],
+                        'requirements_data'   => $sr['requirements_data'],
+                        'medical_data'        => $sr['medical_data'],
+                        'scholarship_data'    => $sr['scholarship_data'],
+                        'payment_data'        => $sr['payment_data'],
+                        'helpdesk_data'       => $sr['helpdesk_data'],
+                        'enrollment_data'     => $sr['enrollment_data'],
+                        'scholarship'         => 'NONE',
+                        'year_level_applied'  => $sr['year_level'],
+                        'status'              => $sr['status']
+                    ];
+                }
+            }
+        }
 
         // Fetch subject sections belonging to the active academic period to avoid mixing old schedules.
         // Use LEFT JOIN so subject_sections that aren't linked to a cohort block still appear.
