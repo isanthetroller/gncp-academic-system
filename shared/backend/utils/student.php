@@ -18,10 +18,11 @@ function getCurriculumSubjects($pdo, $programCode, $yearLevel = '1st Year', $sem
     $sql = "SELECT s.code, s.title, s.lecture_units, s.lab_units, s.lab_fee, s.prerequisites 
             FROM `curriculum` c
             JOIN `subjects` s ON (c.subject = s.title OR c.subject = s.code)
-            WHERE c.program = :progName AND c.year_level = :year AND c.semester = :sem";
+            WHERE (c.program = :progName OR c.program = :progCode) AND c.year_level = :year AND c.semester = :sem";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         'progName' => $programName,
+        'progCode' => $programCode,
         'year'     => $yearLevel,
         'sem'      => $semester
     ]);
