@@ -265,12 +265,45 @@ try {
 
         if (!$existingRecord) {
             // Check if the student was already promoted to the permanent students directory
-            $checkStudent = $pdo->prepare("SELECT `status` FROM `students` WHERE `id` = :ref OR `temp_reference_no` = :ref");
-            $checkStudent->execute(['ref' => $refNo]);
+            $checkStudent = $pdo->prepare("SELECT * FROM `students` WHERE `id` = :r1 OR `temp_reference_no` = :r2");
+            $checkStudent->execute(['r1' => $refNo, 'r2' => $refNo]);
             $studentInfo = $checkStudent->fetch();
             
             if ($studentInfo) {
-                sendResponse(true, ['status' => $studentInfo['status']], 'Student is already enrolled and promoted.');
+                $studentSets = [];
+                $studentParams = ['ref1' => $refNo, 'ref2' => $refNo];
+
+                if (isset($updateData['roadmap'])) {
+                    $studentSets[] = "`roadmap` = :roadmap";
+                    $studentParams['roadmap'] = json_encode($updateData['roadmap']);
+                }
+                if (isset($updateData['medical'])) {
+                    $studentSets[] = "`medical_data` = :medical_data";
+                    $studentParams['medical_data'] = json_encode($updateData['medical']);
+                }
+                if (isset($updateData['requirements'])) {
+                    $studentSets[] = "`requirements_data` = :requirements_data";
+                    $studentParams['requirements_data'] = json_encode($updateData['requirements']);
+                }
+                if (isset($updateData['payment'])) {
+                    $studentSets[] = "`payment_data` = :payment_data";
+                    $studentParams['payment_data'] = json_encode($updateData['payment']);
+                }
+                if (isset($updateData['helpdesk'])) {
+                    $studentSets[] = "`helpdesk_data` = :helpdesk_data";
+                    $studentParams['helpdesk_data'] = json_encode($updateData['helpdesk']);
+                }
+                if (isset($updateData['enrollment'])) {
+                    $studentSets[] = "`enrollment_data` = :enrollment_data";
+                    $studentParams['enrollment_data'] = json_encode($updateData['enrollment']);
+                }
+
+                if (!empty($studentSets)) {
+                    $sqlStud = "UPDATE `students` SET " . implode(', ', $studentSets) . " WHERE `temp_reference_no` = :ref1 OR `id` = :ref2";
+                    $stmtStud = $pdo->prepare($sqlStud);
+                    $stmtStud->execute($studentParams);
+                }
+                sendResponse(true, ['referenceNumber' => $refNo, 'status' => $studentInfo['status']], 'Student record updated in permanent directory.');
             }
             sendResponse(false, null, "Student record not found for: $refNo", 404);
         }
@@ -336,10 +369,11 @@ try {
 
             // Sync to permanent students table as well if student record exists
             try {
-                $upStud = $pdo->prepare("UPDATE `students` SET `payment_data` = :payment_data WHERE `temp_reference_no` = :ref OR `id` = :ref");
+                $upStud = $pdo->prepare("UPDATE `students` SET `payment_data` = :payment_data WHERE `temp_reference_no` = :ref1 OR `id` = :ref2");
                 $upStud->execute([
                     'payment_data' => json_encode($updateData['payment']),
-                    'ref' => $refNo
+                    'ref1' => $refNo,
+                    'ref2' => $refNo
                 ]);
             } catch (Exception $e) {
                 // Ignore if student has not been promoted yet
@@ -377,7 +411,7 @@ try {
             // Synchronize updates to permanent students directory if student record exists
             try {
                 $studentSets = [];
-                $studentParams = ['ref' => $refNo];
+                $studentParams = ['ref1' => $refNo, 'ref2' => $refNo];
 
                 if (isset($updateData['roadmap'])) {
                     $studentSets[] = "`roadmap` = :roadmap";
@@ -401,7 +435,7 @@ try {
                 }
 
                 if (!empty($studentSets)) {
-                    $sqlStud = "UPDATE `students` SET " . implode(', ', $studentSets) . " WHERE `temp_reference_no` = :ref OR `id` = :ref";
+                    $sqlStud = "UPDATE `students` SET " . implode(', ', $studentSets) . " WHERE `temp_reference_no` = :ref1 OR `id` = :ref2";
                     $stmtStud = $pdo->prepare($sqlStud);
                     $stmtStud->execute($studentParams);
                 }
