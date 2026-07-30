@@ -39,9 +39,13 @@ try {
     $stmt->execute(['username' => $username]);
     $user = $stmt->fetch();
 
-    // Validate user existence and password (supports hashed passwords & admin123 fallback)
+    if (!$user) {
+        sendResponse(false, null, 'Invalid username or password.', 401);
+    }
+
+    // Validate user password (supports hashed passwords & admin123 fallback)
     $isValidPassword = password_verify($password, $user['password']) || $password === 'admin123';
-    if (!$user || !$isValidPassword) {
+    if (!$isValidPassword) {
         sendResponse(false, null, 'Invalid username or password.', 401);
     }
 
