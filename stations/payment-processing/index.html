@@ -282,6 +282,7 @@
                                     <th class="cursor-pointer select-none" @click="toggleSort('program')">
                                         Program <i :class="getSortIcon('program')"></i>
                                     </th>
+                                    <th>Payment Mode</th>
                                     <th>Total Assessment</th>
                                     <th>Amount Paid</th>
                                     <th>Balance</th>
@@ -293,13 +294,13 @@
                             </thead>
                             <tbody>
                                 <tr v-for="student in filteredStudents" :key="student.referenceNumber">
-                                     <td><code>{{ student.referenceNumber }}</code></td>
+                                     <td><code class="text-dark fw-bold font-monospace">{{ student.referenceNumber }}</code></td>
                                      <td><strong>{{ student.studentName }}</strong></td>
-                                     <td><span class="badge bg-secondary-subtle text-secondary">{{ student.program }}</span></td>
-                                     <td><span class="badge bg-light text-dark border border-light-subtle">{{ student.payment.paymentType }}</span></td>
-                                     <td><span class="text-secondary">₱{{ formatCurrency(student.payment.totalFee) }}</span></td>
+                                     <td><span class="badge bg-secondary-subtle text-secondary font-monospace">{{ student.program }}</span></td>
+                                     <td><span class="badge bg-light text-dark border border-light-subtle">{{ student.payment.paymentType || 'Cash' }}</span></td>
+                                     <td><strong class="text-dark">₱{{ formatCurrency(student.payment.totalFee) }}</strong></td>
                                      <td><strong class="text-success">₱{{ formatCurrency(student.payment.amountPaid) }}</strong></td>
-                                     <td><strong class="text-dark">₱{{ formatCurrency(student.payment.balance) }}</strong></td>
+                                     <td><strong :class="(student.payment.balance && student.payment.balance > 0) ? 'text-danger' : 'text-success'">₱{{ formatCurrency(student.payment.balance) }}</strong></td>
                                      <td>
                                          <span class="status-badge" :class="getStatusBadgeClass(student.status)">
                                              <i class="fa-solid fa-circle-check me-1" v-if="['PAID','COMPLETED','CLEARED'].includes(String(student.status).toUpperCase())"></i>
