@@ -519,10 +519,13 @@ try {
                 sendResponse(false, null, 'Program code is required.', 400);
             }
 
-            // Map program code (e.g. BSIT) to full name stored in sections table
-            $stmt = $pdo->prepare("SELECT `name` FROM `programs` WHERE `code` = :code");
-            $stmt->execute(['code' => $prog]);
-            $progName = $stmt->fetchColumn() ?: $prog;
+            // Map program code <-> full name stored in sections table
+            $stmt = $pdo->prepare("SELECT `name`, `code` FROM `programs` WHERE `code` = :code OR `name` = :name");
+            $stmt->execute(['code' => $prog, 'name' => $prog]);
+            $progRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $progName = $progRow['name'] ?? $prog;
+            $progCode = $progRow['code'] ?? $prog;
 
             // Fetch cohort sections WITH real-time enrolled count (both approved queue applicants and finalized student profiles)
             $stmt = $pdo->prepare("
@@ -533,29 +536,33 @@ try {
                            COALESCE(
                                (SELECT COUNT(*) FROM `pre_enrollments` pe
                                 WHERE pe.section_code = s.code
-                                  AND pe.course_code   = :prog_code
+                                  AND (pe.course_code = :progCode1 OR pe.course_code = :progName1)
                                   AND pe.status NOT IN ('Rejected','PRE_REGISTERED')),
                                0
                            ) + COALESCE(
                                (SELECT COUNT(*) FROM `students` st
                                 WHERE (st.enrollment_data LIKE CONCAT('%\"assignedSection\":\"', s.code, '\"%')
                                        OR JSON_UNQUOTE(JSON_EXTRACT(st.enrollment_data, '$.assignedSection')) = s.code)
-                                  AND st.program = :progName),
+                                  AND (st.program = :progName2 OR st.program = :progCode2)),
                                0
                            )
                        ) AS enrolled_count
                 FROM `sections` s
                 JOIN `academic_periods` ap ON s.academic_period_id = ap.id
-                WHERE s.program    = :prog
-                  AND s.year_level = :year
+                WHERE (s.program = :progName3 OR s.program = :progCode3)
+                  AND (s.year_level = :year OR :year_fallback = '')
                   AND ap.status    = 'Active'
                 ORDER BY s.code ASC
             ");
             $stmt->execute([
-                'prog'      => $progName,
-                'progName'  => $progName,
-                'year'      => $year,
-                'prog_code' => $prog
+                'progName1'     => $progName,
+                'progCode1'     => $progCode,
+                'progName2'     => $progName,
+                'progCode2'     => $progCode,
+                'progName3'     => $progName,
+                'progCode3'     => $progCode,
+                'year'          => $year,
+                'year_fallback' => $year
             ]);
             $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -564,12 +571,19 @@ try {
                 $subStmt = $pdo->prepare("
                     SELECT DISTINCT TRIM(SUBSTRING_INDEX(code, '-', -1)) AS cohort
                     FROM `subject_sections`
-                    WHERE `program`    = :prog
-                      AND `year_level` = :year
-                      AND `semester`   = :sem
+                    WHERE (`program` = :progName OR `program` = :progCode)
+                      AND (`year_level` = :year OR :year_fallback = '')
+                      AND (`semester` = :sem OR :sem_fallback = '')
                     ORDER BY cohort ASC
                 ");
-                $subStmt->execute(['prog' => $progName, 'year' => $year, 'sem' => $sem]);
+                $subStmt->execute([
+                    'progName'      => $progName,
+                    'progCode'      => $progCode,
+                    'year'          => $year,
+                    'year_fallback' => $year,
+                    'sem'           => $sem,
+                    'sem_fallback'  => $sem
+                ]);
                 $cohorts = $subStmt->fetchAll(PDO::FETCH_COLUMN);
 
                 $sections = [];

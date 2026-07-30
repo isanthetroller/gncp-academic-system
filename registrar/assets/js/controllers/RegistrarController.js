@@ -260,18 +260,21 @@
                     if (!sections.value || !progCode) return [];
                     const search = progCode.trim().toLowerCase();
                     
-                    const progObj = programs.value ? programs.value.find(p => p.code.trim().toLowerCase() === search) : null;
+                    const progObj = programs.value ? programs.value.find(p => p.code.trim().toLowerCase() === search || p.name.trim().toLowerCase() === search) : null;
                     const searchName = progObj ? progObj.name.trim().toLowerCase() : search;
+                    const searchCode = progObj ? progObj.code.trim().toLowerCase() : search;
                     
                     const targetYear = (targetYearLevel || '1st Year').trim().toLowerCase();
                     return sections.value.filter(s => {
                         const progName = (s.program || '').trim().toLowerCase();
                         const isProgMatch = (progName === searchName || 
+                                             progName === searchCode ||
                                              progName.includes(search) || 
                                              search.includes(progName));
                         
                         const sectionYear = (s.yearLevel || '1st Year').trim().toLowerCase();
-                        return isProgMatch && sectionYear === targetYear;
+                        const isYearMatch = !targetYear || sectionYear === targetYear || sectionYear.includes(targetYear) || targetYear.includes(sectionYear);
+                        return isProgMatch && isYearMatch;
                     }).map(s => ({
                         id: s.id || 0,
                         code: s.code,
