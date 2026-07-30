@@ -372,7 +372,7 @@ createApp({
             unfitCount,
             setView,
             openReview,
-            badgeClass,
+            badgeClass: getStatusBadgeClass,
             getStepIcon,
             saveCheckup,
             formatStatus,
