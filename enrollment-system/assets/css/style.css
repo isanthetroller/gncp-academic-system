@@ -99,8 +99,9 @@ h1, h2, h3, h4, h5, h6 {
  * Wizard Card & Progress Line
  * ------------------------------------------------------------------------- */
 .wizard-card {
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid var(--gray-border) !important;
     overflow: hidden;
 }
 
@@ -193,7 +194,7 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--primary-green);
     border-color: var(--primary-green);
     color: #FFFFFF;
-    box-shadow: 0 4px 14px rgba(0, 106, 78, 0.30);
+    box-shadow: none;
 }
 
 /* -- Active State -- */
@@ -201,7 +202,7 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--primary-green);
     border-color: var(--primary-green);
     color: #FFFFFF;
-    box-shadow: 0 6px 20px rgba(0, 106, 78, 0.35);
+    box-shadow: none;
 }
 
 
@@ -448,8 +449,8 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--primary-green-hover);
     border-color: var(--primary-green-hover);
     color: var(--white);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 106, 78, 0.2);
+    transform: translateY(-1px);
+    box-shadow: none;
 }
 
 .btn-pill-outline {
@@ -497,14 +498,14 @@ h1, h2, h3, h4, h5, h6 {
 .nstp-card:hover {
     border-color: var(--primary-green);
     background-color: rgba(0, 106, 78, 0.03);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 106, 78, 0.12);
+    transform: translateY(-1px);
+    box-shadow: none;
 }
 
 .nstp-card.selected {
     border-color: var(--primary-green);
     background-color: var(--primary-green-light);
-    box-shadow: 0 6px 20px rgba(0, 106, 78, 0.15);
+    box-shadow: none;
 }
 
 .nstp-icon-wrap {
@@ -712,14 +713,14 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--primary-green);
     border-color: var(--primary-green);
     color: var(--white);
-    box-shadow: 0 4px 14px rgba(0, 106, 78, 0.30);
+    box-shadow: none;
 }
 
 .marker-final {
     background-color: var(--primary-gold);
     border-color: var(--primary-gold-hover);
     color: var(--white);
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+    box-shadow: none;
 }
 
 /* Content area */
@@ -800,14 +801,14 @@ h1, h2, h3, h4, h5, h6 {
  * Temporary Student Account Card & Credential Block Styles
  * ------------------------------------------------------------------------- */
 .temp-account-card {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
-    border: 2px solid var(--primary-green-light);
-    border-left: 5px solid var(--primary-green) !important;
+    background-color: var(--white);
+    border: 1px solid var(--gray-border);
+    border-left: 4px solid var(--primary-green) !important;
 }
 
 .credential-block {
     background-color: var(--white);
-    border: 2px solid var(--gray-border) !important;
+    border: 1px solid var(--gray-border) !important;
     transition: border-color var(--transition-speed) ease;
 }
 
@@ -843,8 +844,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .tracker-profile-header {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F4F6F8 100%);
-    border-left: 5px solid var(--primary-gold) !important;
+    background-color: var(--white);
+    border: 1px solid var(--gray-border);
+    border-left: 4px solid var(--primary-gold) !important;
 }
 
 @media (min-width: 768px) {
