@@ -142,6 +142,24 @@
                 return new Date(isoStr).toLocaleString();
             };
 
+            const copyToClipboard = (text) => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text);
+                    if (window.Swal) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Password copied!',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    } else {
+                        alert('Copied: ' + text);
+                    }
+                }
+            };
+
             return {
                 currentView,
                 isLoading,
@@ -158,7 +176,8 @@
                 progressPercent,
                 nextPendingStep,
                 getStudentTypeLabel,
-                formatDate
+                formatDate,
+                copyToClipboard
             };
         }
     }).mount('#tracker-app');

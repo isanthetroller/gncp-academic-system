@@ -200,6 +200,54 @@
                                 {{ enrollmentData.status === 'Rejected' ? 'Application Terminated' : progressPercent + '% Complete' }}
                             </span>
                         </div>
+                    <!-- Enrollment Completed & Student Portal Credentials Card -->
+                    <div class="card shadow-lg border-0 mb-4 p-4 p-md-5 rounded-4 text-white position-relative overflow-hidden" 
+                         style="background: linear-gradient(135deg, #006A4E 0%, #004D38 100%);"
+                         v-if="progressPercent === 100 || enrollmentData.status === 'ENROLLED' || enrollmentData.status === 'ACTIVATED'">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-4 position-relative" style="z-index: 2;">
+                            <div>
+                                <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-white bg-opacity-20 text-white border border-white border-opacity-25 mb-3" style="backdrop-filter: blur(8px);">
+                                    <i class="fa-solid fa-circle-check text-warning"></i>
+                                    <span class="fw-bold uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Enrollment Officially Complete</span>
+                                </div>
+                                <h3 class="fw-bold text-white mb-2" style="font-family: var(--font-heading); letter-spacing: -0.02em;">Welcome to Go-on National College!</h3>
+                                <p class="text-white-50 mb-4" style="max-width: 540px;">
+                                    Congratulations! All campus workstations have cleared your admission. Your official student portal credentials are ready below.
+                                </p>
+
+                                <!-- Credentials Grid -->
+                                <div class="row g-3 p-3 rounded-3 bg-black bg-opacity-25 border border-white border-opacity-10 mb-4" style="backdrop-filter: blur(12px);">
+                                    <div class="col-sm-4">
+                                        <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Student ID Number</div>
+                                        <code class="fs-6 fw-bold text-warning font-monospace">{{ enrollmentData.permanentId || enrollmentData.tempStudentId }}</code>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Institutional Email / Username</div>
+                                        <code class="fs-6 fw-bold text-info font-monospace text-lowercase">{{ enrollmentData.institutionalEmail || enrollmentData.form.email }}</code>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="text-white-50 small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Default Password</div>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <code class="fs-6 fw-bold text-white bg-white bg-opacity-20 px-2 py-0.5 rounded font-monospace text-lowercase">{{ enrollmentData.defaultPassword || enrollmentData.form.lastName.toLowerCase() }}</code>
+                                            <button class="btn btn-sm btn-link text-white-50 p-0 ms-1" @click="copyToClipboard(enrollmentData.defaultPassword || enrollmentData.form.lastName.toLowerCase())" title="Copy Password">
+                                                <i class="fa-solid fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Direct Portal Access Action Button -->
+                                <a :href="enrollmentData.portalLoginUrl || '../student-portal/index.html'" class="btn btn-lg px-4 py-3 rounded-3 shadow-sm font-heading fw-bold d-inline-flex align-items-center gap-2" style="background: #ffffff; color: #006A4E; transition: transform 0.2s;">
+                                    <i class="fa-solid fa-right-to-bracket"></i>
+                                    Access Student Portal Now
+                                    <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+
+                            <div class="text-center d-none d-md-block opacity-75">
+                                <i class="fa-solid fa-graduation-cap" style="font-size: 7rem; color: rgba(255,255,255,0.15);"></i>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Next Step Spotlight Card (hidden if application is rejected) -->

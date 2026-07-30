@@ -324,12 +324,10 @@
                             if (modal) modal.hide();
                         });
 
-                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$';
-                    let pass = '';
-                    for (let i = 0; i < 8; i++) {
-                        pass += chars.charAt(Math.floor(Math.random() * chars.length));
-                    }
-                    generatedPassword.value = pass;
+                    const nameParts = (student.name || '').trim().split(' ');
+                    const rawLast = student.lastName || nameParts[nameParts.length - 1] || 'delacruz';
+                    const cleanLast = rawLast.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    generatedPassword.value = cleanLast || 'delacruz';
                 }
 
                 const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('itReviewModal'));

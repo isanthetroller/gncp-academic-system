@@ -129,7 +129,11 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
         $email = "{$cleanFirst}.{$cleanLast}{$randomSuffix}@gncp.edu.ph";
     }
 
-    $plainPassword = $itData['password'] ?? ('gncp' . rand(1000, 9999));
+    $defaultLastNamePassword = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', $record['last_name'] ?? '')));
+    if (empty($defaultLastNamePassword)) {
+        $defaultLastNamePassword = 'password123';
+    }
+    $plainPassword = !empty($itData['password']) ? $itData['password'] : $defaultLastNamePassword;
     $hashedPassword = password_hash($plainPassword, PASSWORD_DEFAULT);
     $photoFile = $itData['photoFile'] ?? null;
 

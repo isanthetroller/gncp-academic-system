@@ -87,6 +87,11 @@ try {
     // Decode roadmap and parse record into response format
     $roadmap = json_decode($record['roadmap'], true) ?: [];
 
+    $cleanLast = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', $record['last_name'] ?? '')));
+    if (empty($cleanLast)) {
+        $cleanLast = 'password123';
+    }
+
     sendResponse(true, [
         'tempStudentId' => $record['temp_student_id'],
         'tempPin'       => $record['temp_pin'],
@@ -94,6 +99,8 @@ try {
         'createdAt'     => $record['created_at'],
         'permanentId'   => $record['permanent_id'] ?? null,
         'institutionalEmail' => $record['institutional_email'] ?? null,
+        'defaultPassword'    => $cleanLast,
+        'portalLoginUrl'     => '../student-portal/index.html',
         'form'          => [
             'firstName'             => $record['first_name'],
             'middleName'            => $record['middle_name'],
