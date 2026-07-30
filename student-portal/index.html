@@ -450,10 +450,26 @@
                 </div>
 
                 <form @submit.prevent="handleLogin">
-                    <input type="text" class="login-input" v-model="loginForm.studentId" required placeholder="Permanent Student ID (e.g. GNCP-2026-xxxx)">
-                    <input type="password" class="login-input" v-model="loginForm.password" required placeholder="Account Password">
+                    <div style="position: relative; margin-bottom: 12px;">
+                        <input type="text" class="login-input" v-model="loginForm.studentId" required placeholder="Permanent Student ID (e.g. GNCP-2026-xxxx)" style="margin-bottom: 0;">
+                    </div>
+                    <div style="position: relative; margin-bottom: 14px;">
+                        <input :type="showPassword ? 'text' : 'password'" class="login-input" v-model="loginForm.password" required placeholder="Account Password" style="margin-bottom: 0; padding-right: 42px;">
+                        <button type="button" @click="showPassword = !showPassword" tabindex="-1" :title="showPassword ? 'Hide password' : 'Show password'" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 0.8rem; color: #4b5563; padding: 0 2px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; margin: 0;">
+                            <input type="checkbox" v-model="rememberMe" style="width: 15px; height: 15px; accent-color: #006A4E; cursor: pointer;">
+                            <span>Remember login credentials</span>
+                        </label>
+                        <span v-if="hasSavedCredentials" @click="clearSavedCredentials" style="color: #dc2626; cursor: pointer; font-weight: 600;" title="Clear remembered login info"><i class="fas fa-trash-can me-1"></i>Clear</span>
+                    </div>
+
                     <button type="submit" class="login-btn" :disabled="isLoggingIn">
-                        <span v-if="isLoggingIn">Signing in...</span>
+                        <span v-if="isLoggingIn"><i class="fas fa-spinner fa-spin me-1"></i> Signing in...</span>
                         <span v-else>Sign In</span>
                     </button>
                 </form>
@@ -721,10 +737,36 @@
                 const currentStudent = ref(null);
                 const isLoggingIn = ref(false);
                 const loginError = ref('');
+                const showPassword = ref(false);
+                const rememberMe = ref(true);
+                const hasSavedCredentials = ref(false);
+
                 const loginForm = reactive({
                     studentId: '',
                     password: ''
                 });
+
+                const loadSavedCredentials = () => {
+                    try {
+                        const saved = localStorage.getItem('gncp_saved_student_credentials');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            if (parsed.studentId) loginForm.studentId = parsed.studentId;
+                            if (parsed.password) loginForm.password = parsed.password;
+                            hasSavedCredentials.value = true;
+                            rememberMe.value = true;
+                        }
+                    } catch (e) {
+                        console.error('Error reading saved student credentials:', e);
+                    }
+                };
+
+                const clearSavedCredentials = () => {
+                    loginForm.studentId = '';
+                    loginForm.password = '';
+                    localStorage.removeItem('gncp_saved_student_credentials');
+                    hasSavedCredentials.value = false;
+                };
 
                 // Dashboard Data
                 const profile = ref({});
@@ -763,6 +805,18 @@
                         if (result.success && result.data) {
                             currentStudent.value = result.data;
                             sessionStorage.setItem('gncp_portal_student', JSON.stringify(result.data));
+
+                            if (rememberMe.value) {
+                                localStorage.setItem('gncp_saved_student_credentials', JSON.stringify({
+                                    studentId: loginForm.studentId,
+                                    password: loginForm.password
+                                }));
+                                hasSavedCredentials.value = true;
+                            } else {
+                                localStorage.removeItem('gncp_saved_student_credentials');
+                                hasSavedCredentials.value = false;
+                            }
+
                             fetchDashboardData();
                         } else {
                             loginError.value = result.error || 'Failed to authenticate.';
@@ -814,6 +868,7 @@
 
                 onMounted(() => {
                     checkSession();
+                    loadSavedCredentials();
                 });
 
                 return {
@@ -821,6 +876,10 @@
                     isLoggingIn,
                     loginError,
                     loginForm,
+                    showPassword,
+                    rememberMe,
+                    hasSavedCredentials,
+                    clearSavedCredentials,
                     profile,
                     roadmap,
                     requirements,

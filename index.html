@@ -549,6 +549,27 @@
         }
 
         /* --- Student Portal escape hatch --- */
+        .password-toggle-btn {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #64748B;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease;
+            z-index: 5;
+        }
+        .password-toggle-btn:hover {
+            color: var(--primary-green, #006A4E);
+        }
+
         .student-escape-hatch {
             text-align: center;
             margin-top: 32px;
@@ -647,7 +668,7 @@
                         <label class="form-label" for="password">Password</label>
                         <div class="input-wrapper">
                             <input 
-                                type="password" 
+                                :type="showPassword ? 'text' : 'password'" 
                                 id="password" 
                                 class="form-input" 
                                 v-model="loginForm.password" 
@@ -655,8 +676,18 @@
                                 placeholder="••••••••"
                                 autocomplete="current-password"
                                 :disabled="isLoggingIn"
+                                style="padding-right: 44px;"
                             >
                             <i class="fas fa-lock input-icon"></i>
+                            <button 
+                                type="button" 
+                                class="password-toggle-btn" 
+                                @click="showPassword = !showPassword" 
+                                tabindex="-1"
+                                :title="showPassword ? 'Hide password' : 'Show password'"
+                            >
+                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -690,6 +721,7 @@
                 const currentUser = ref(null);
                 const loginError = ref('');
                 const isLoggingIn = ref(false);
+                const showPassword = ref(false);
                 
                 const loginForm = reactive({
                     username: '',
@@ -858,6 +890,7 @@
                     loginForm,
                     loginError,
                     isLoggingIn,
+                    showPassword,
                     currentUser,
                     workstations,
                     filteredWorkstations,

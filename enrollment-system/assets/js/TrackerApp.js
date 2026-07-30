@@ -11,6 +11,9 @@
             const currentView = ref('LOGIN'); // 'LOGIN' | 'LOADING' | 'DASHBOARD'
             const isLoading = ref(false);
             const loginError = ref('');
+            const showPassword = ref(false);
+            const rememberMe = ref(true);
+            const hasSavedCredentials = ref(false);
 
             const loginForm = reactive({
                 tempStudentId: '',
@@ -19,8 +22,31 @@
 
             const enrollmentData = ref(null);
 
-            // Check URL parameters for auto-login demo support e.g. tracker.html?id=GNCP-2026-123456&pin=654321
+            const loadSavedCredentials = () => {
+                try {
+                    const saved = localStorage.getItem('gncp_saved_tracker_credentials');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.tempStudentId) loginForm.tempStudentId = parsed.tempStudentId;
+                        if (parsed.tempPin) loginForm.tempPin = parsed.tempPin;
+                        hasSavedCredentials.value = true;
+                        rememberMe.value = true;
+                    }
+                } catch (e) {
+                    console.error('Error loading saved tracker credentials:', e);
+                }
+            };
+
+            const clearSavedCredentials = () => {
+                loginForm.tempStudentId = '';
+                loginForm.tempPin = '';
+                localStorage.removeItem('gncp_saved_tracker_credentials');
+                hasSavedCredentials.value = false;
+            };
+
+            // Check URL parameters or local saved credentials
             onMounted(() => {
+                loadSavedCredentials();
                 const params = new URLSearchParams(window.location.search);
                 const autoId = params.get('id');
                 const autoPin = params.get('pin');
@@ -46,6 +72,17 @@
                         if (res.success) {
                             enrollmentData.value = res.data;
                             currentView.value = 'DASHBOARD';
+
+                            if (rememberMe.value) {
+                                localStorage.setItem('gncp_saved_tracker_credentials', JSON.stringify({
+                                    tempStudentId: loginForm.tempStudentId,
+                                    tempPin: loginForm.tempPin
+                                }));
+                                hasSavedCredentials.value = true;
+                            } else {
+                                localStorage.removeItem('gncp_saved_tracker_credentials');
+                                hasSavedCredentials.value = false;
+                            }
                         } else {
                             loginError.value = res.error || 'Failed to authenticate.';
                         }
@@ -110,6 +147,10 @@
                 isLoading,
                 loginError,
                 loginForm,
+                showPassword,
+                rememberMe,
+                hasSavedCredentials,
+                clearSavedCredentials,
                 enrollmentData,
                 handleLogin,
                 logout,

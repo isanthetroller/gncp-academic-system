@@ -1484,7 +1484,15 @@
             <div class="form-row"><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" v-model="form.name" placeholder="Dr. Juan Dela Cruz"></div></div>
             <div class="form-row col2">
                 <div class="form-group"><label class="form-label">Username</label><input class="form-input" v-model="form.username" placeholder="username" autocomplete="off"></div>
-                <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" v-model="form.password" placeholder="••••••••"></div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div style="position: relative;">
+                        <input class="form-input" :type="showOperatorPassword ? 'text' : 'password'" v-model="form.password" placeholder="••••••••" style="padding-right: 36px;">
+                        <button type="button" @click="showOperatorPassword = !showOperatorPassword" tabindex="-1" :title="showOperatorPassword ? 'Hide password' : 'Show password'" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 2px;">
+                            <i :class="showOperatorPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label class="form-label">Assigned Station Role</label>
@@ -1661,6 +1669,7 @@ createApp({
         const currentAdmin = ref(null);
         const isLoggingIn  = ref(false);
         const loginError   = ref('');
+        const showOperatorPassword = ref(false);
         const loginForm    = reactive({ username:'', password:'' });
 
         // View state
@@ -2396,7 +2405,7 @@ createApp({
         };
 
         return {
-            currentAdmin, isLoggingIn, loginError, loginForm,
+            currentAdmin, isLoggingIn, loginError, loginForm, showOperatorPassword,
             view, search, modal, form,
             successMsg, errorMsg,
             departments, programs, subjects, curriculum, periods, sections, classOfferings, fees, users, students,
