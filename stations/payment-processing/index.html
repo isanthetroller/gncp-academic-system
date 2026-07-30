@@ -369,13 +369,38 @@
                                 </div>
                             </div>
 
-                            <!-- Collect Payment Details -->
-                            <div class="panel p-3 bg-light border border-light-subtle rounded">
+                            <!-- Collect Payment Details Panel -->
+                            <div class="panel p-3 bg-light border border-light-subtle rounded" v-if="selectedStudent.payment.balance > 0">
                                 <h6 class="mb-3 text-dark fw-bold" style="font-size: 0.85rem;"><i class="fa-solid fa-hand-holding-dollar me-2 text-success"></i>Collect Payment Details</h6>
                                 <div class="row g-3">
+                                    <!-- Payment Plan Radio Selector -->
+                                    <div class="col-12">
+                                        <label class="form-label text-muted small uppercase fw-bold mb-1">Select Payment Plan</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <div class="form-check form-check-inline border rounded px-3 py-1.5 bg-white cursor-pointer" :class="{'border-success bg-success bg-opacity-10': paymentScheme === 'FULL'}">
+                                                <input class="form-check-input" type="radio" name="paymentSchemeChoice" id="schemeFull" value="FULL" v-model="paymentScheme" @change="handleSchemeChange">
+                                                <label class="form-check-input-label fw-bold text-dark ms-1 cursor-pointer" for="schemeFull" style="font-size: 0.8rem;">
+                                                    Full Payment (₱{{ formatCurrency(selectedStudent.payment.balance) }})
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline border rounded px-3 py-1.5 bg-white cursor-pointer" v-if="selectedStudent.payment.balance >= 3000" :class="{'border-success bg-success bg-opacity-10': paymentScheme === 'DOWNPAYMENT'}">
+                                                <input class="form-check-input" type="radio" name="paymentSchemeChoice" id="schemeDown" value="DOWNPAYMENT" v-model="paymentScheme" @change="handleSchemeChange">
+                                                <label class="form-check-input-label fw-bold text-dark ms-1 cursor-pointer" for="schemeDown" style="font-size: 0.8rem;">
+                                                    Minimum Downpayment (₱3,000)
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline border rounded px-3 py-1.5 bg-white cursor-pointer" :class="{'border-success bg-success bg-opacity-10': paymentScheme === 'CUSTOM'}">
+                                                <input class="form-check-input" type="radio" name="paymentSchemeChoice" id="schemeCustom" value="CUSTOM" v-model="paymentScheme" @change="handleSchemeChange">
+                                                <label class="form-check-input-label fw-bold text-dark ms-1 cursor-pointer" for="schemeCustom" style="font-size: 0.8rem;">
+                                                    Custom Amount
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small uppercase fw-bold">Payment Mode</label>
-                                        <select class="form-select" v-model="selectedStudent.payment.paymentType" :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'">
+                                        <select class="form-select" v-model="selectedStudent.payment.paymentType">
                                             <option value="Cash">Cash</option>
                                             <option value="GCash">GCash</option>
                                         </select>
@@ -383,15 +408,16 @@
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small uppercase fw-bold">Amount to Pay</label>
                                         <div class="input-group">
-                                            <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem; border-top-left-radius: 9px; border-bottom-left-radius: 9px;">₱</span>
-                                            <input class="form-control border-start-0" type="number" min="1" :max="selectedStudent.payment.balance" v-model.number="payAmountInput" :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
+                                            <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem;">₱</span>
+                                            <input class="form-control border-start-0" type="number" :min="selectedStudent.payment.balance < 3000 ? selectedStudent.payment.balance : 3000" :max="selectedStudent.payment.balance" v-model.number="payAmountInput" :readonly="paymentScheme !== 'CUSTOM'" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
                                         </div>
+                                        <div class="form-text text-muted" style="font-size: 0.7rem;">Minimum allowed: ₱{{ formatCurrency(selectedStudent.payment.balance < 3000 ? selectedStudent.payment.balance : 3000) }}</div>
                                     </div>
                                     <div class="col-md-6" v-if="selectedStudent.payment.paymentType === 'Cash'">
                                         <label class="form-label text-muted small uppercase fw-bold">Cash Tendered</label>
                                         <div class="input-group">
-                                            <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem; border-top-left-radius: 9px; border-bottom-left-radius: 9px;">₱</span>
-                                            <input class="form-control border-start-0" type="number" min="0" v-model.number="cashTendered" :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
+                                            <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem;">₱</span>
+                                            <input class="form-control border-start-0" type="number" min="0" v-model.number="cashTendered" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
                                         </div>
                                     </div>
                                     <div class="col-md-6" v-if="selectedStudent.payment.paymentType === 'Cash'">
@@ -415,6 +441,16 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Account Fully Settled Hero Banner -->
+                            <div class="panel p-4 text-center border-0 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #006A4E 0%, #004D38 100%); color: #ffffff;" v-else>
+                                <div class="mb-2" style="font-size: 2.5rem; color: #34D399;"><i class="fa-solid fa-circle-check"></i></div>
+                                <h5 class="fw-bold mb-1" style="font-family: var(--font-heading); letter-spacing: -0.02em;">ACCOUNT FULLY SETTLED</h5>
+                                <p class="small text-white-50 mb-3">All tuition and matriculation fees for this term have been paid in full (Balance: ₱0.00).</p>
+                                <button type="button" class="btn-pill btn-pill-green border-0 shadow-sm px-4" style="background: #ffffff; color: #006A4E; font-weight: 800;" @click="markEnrolledAndPrint(selectedStudent)">
+                                    <i class="fa-solid fa-print me-1"></i> Print Official Receipt
+                                </button>
                             </div>
                         </div>
 
@@ -444,13 +480,13 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3" v-if="selectedStudent.payment.paymentType === 'GCash'">
-                                <label class="form-label text-muted small uppercase fw-bold">Transaction / OR Reference</label>
-                                <input class="form-control" type="text" v-model="selectedStudent.payment.transactionRef" placeholder="Enter GCash Ref ID..." :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'">
+                            <div class="mb-3" v-if="selectedStudent.payment.paymentType === 'GCash' && selectedStudent.payment.balance > 0">
+                                <label class="form-label text-muted small uppercase fw-bold">GCash Reference / OR Ref No.</label>
+                                <input class="form-control" type="text" v-model="selectedStudent.payment.transactionRef" placeholder="Enter GCash Ref ID...">
                             </div>
-                            <div class="mb-1">
+                            <div class="mb-1" v-if="selectedStudent.payment.balance > 0">
                                 <label class="form-label text-muted small uppercase fw-bold">Cashier Observations / Notes</label>
-                                <textarea class="form-control" rows="4" v-model="selectedStudent.payment.cashierNotes" placeholder="Enter ledger modifications or payment observations here..." :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'"></textarea>
+                                <textarea class="form-control" rows="4" v-model="selectedStudent.payment.cashierNotes" placeholder="Enter ledger modifications or payment observations here..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -472,8 +508,8 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="h in selectedStudent.payment.history" :key="h.date">
-                                        <td><code>{{ new Date(h.date).toLocaleString() }}</code></td>
-                                        <td><code>{{ h.reference }}</code></td>
+                                        <td><code class="text-secondary font-monospace">{{ new Date(h.date).toLocaleString() }}</code></td>
+                                        <td><code class="fw-bold text-dark font-monospace">{{ h.reference }}</code></td>
                                         <td><span class="badge bg-light text-dark border">{{ h.paymentType }}</span></td>
                                         <td><strong class="text-success">₱{{ formatCurrency(h.amount) }}</strong></td>
                                         <td>{{ h.cashier }}</td>

@@ -238,6 +238,17 @@ createApp({
 
         const payAmountInput = ref(0);
         const cashTendered = ref(0);
+        const paymentScheme = ref('FULL');
+
+        const handleSchemeChange = () => {
+            if (!selectedStudent.value || !selectedStudent.value.payment) return;
+            const balance = selectedStudent.value.payment.balance || 0;
+            if (paymentScheme.value === 'FULL') {
+                payAmountInput.value = balance;
+            } else if (paymentScheme.value === 'DOWNPAYMENT') {
+                payAmountInput.value = balance >= 3000 ? 3000 : balance;
+            }
+        };
 
         const changeDue = computed(() => {
             if (cashTendered.value <= 0 || payAmountInput.value <= 0) return 0;
@@ -252,7 +263,9 @@ createApp({
 
         const openProcess = (student) => {
             selectedStudent.value = student;
-            payAmountInput.value = student.payment.balance || 0; // Default to full outstanding balance
+            const currentBal = student.payment.balance || 0;
+            paymentScheme.value = 'FULL';
+            payAmountInput.value = currentBal; // Default to full outstanding balance
             cashTendered.value = 0;
             setTimeout(() => {
                 const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal'));
@@ -353,11 +366,10 @@ createApp({
             const isFull = (currentBal - payAmt) === 0;
             const newStatus = isFull ? 'PAID' : 'PARTIAL';
 
-            if (!student.payment.transactionRef) {
-                student.payment.transactionRef = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
-            }
+            // Generate a FRESH unique transaction reference for each individual payment
+            const transactionRef = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+            student.payment.transactionRef = transactionRef;
 
-            const transactionRef = student.payment.transactionRef;
             const paymentType = student.payment.paymentType || 'Cash';
             const notes = student.payment.cashierNotes || '';
             const cashierName = currentUser.value ? currentUser.value.name : 'Cashier Officer';
@@ -664,6 +676,8 @@ createApp({
             closeReceipt,
             payAmountInput,
             cashTendered,
+            paymentScheme,
+            handleSchemeChange,
             changeDue,
             newBalance,
             recordPayment,
