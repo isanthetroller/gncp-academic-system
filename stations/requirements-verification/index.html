@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requirements & Data Verification | Go-on National College</title>
+    <link href="../../shared/libs/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/libs/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="../../shared/libs/fonts/fonts.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../../shared/libs/login.css">
+    <style>
+        [v-cloak] { display: none !important; }
+        
+        .unified-login-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; padding: 10px 14px; font-size: 0.88rem; box-sizing: border-box; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .unified-login-input:focus { border-color: rgba(212,175,55,0.6); box-shadow: 0 0 0 3px rgba(212,175,55,0.1); }
+        .unified-login-btn { width: 100%; background: linear-gradient(135deg, #D4AF37, #b8961e); border: none; border-radius: 10px; color: #0b1511; font-weight: 800; padding: 12px; font-size: 0.9rem; cursor: pointer; letter-spacing: 0.5px; margin-top: 6px; transition: background 0.2s, opacity 0.2s; }
+        .unified-login-btn:hover { background: linear-gradient(135deg, #e0bc3e, #c9a622); }
+        .unified-login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .unified-login-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 10px 14px; color: #fca5a5; font-size: 0.82rem; margin-bottom: 16px; text-align: left; }
+        /* ── Confirmation Dialog */
+        .confirm-overlay { position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        .confirm-card { background: #0f2318; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); padding: 36px 36px 28px; width: 100%; max-width: 380px; text-align: center; animation: slideUp 0.2s ease; }
+        @keyframes slideUp { from { transform: translateY(16px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+        .confirm-icon { font-size: 2.2rem; margin-bottom: 14px; }
+        .confirm-title { font-family: 'Outfit', sans-serif; font-weight: 800; color: #fff; font-size: 1.2rem; margin: 0 0 8px; }
+        .confirm-msg { color: rgba(255,255,255,0.55); font-size: 0.85rem; margin: 0 0 26px; line-height: 1.5; }
+        .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+        .confirm-btn-cancel { flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: rgba(255,255,255,0.7); font-weight: 600; padding: 11px; font-size: 0.88rem; cursor: pointer; transition: background 0.2s; }
+        .confirm-btn-cancel:hover { background: rgba(255,255,255,0.12); }
+        .confirm-btn-danger { flex: 1; background: linear-gradient(135deg,#ef4444,#dc2626); border: none; border-radius: 10px; color: #fff; font-weight: 700; padding: 11px; font-size: 0.88rem; cursor: pointer; transition: opacity 0.2s; }
+        .confirm-btn-danger:hover { opacity: 0.88; }
+    </style>
+</head>
+<body>
+    <div id="app" class="dashboard-shell" v-cloak>
+        <template v-if="currentUser">
+            <aside class="sidebar">
+            <div class="brand-block">
+                <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 10px;">
+                <div>
+                    <h1>Go-on National College</h1>
+                    <p>REQUIREMENTS & VERIFICATION</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-category-group">
+                    <div class="sidebar-category-title">OVERVIEW</div>
+                    <a href="#" @click.prevent="setView('dashboard')" :class="{ active: currentView === 'dashboard' }">
+                        <i class="fas fa-gauge"></i> Dashboard
+                    </a>
+                    <a href="#" @click.prevent="setView('queue')" :class="{ active: currentView === 'queue' }">
+                        <i class="fas fa-users-line"></i> Student Queue
+                    </a>
+                </div>
+                <div class="sidebar-category-group">
+                    <div class="sidebar-category-title">SYSTEM</div>
+                    <a href="#" @click.prevent="handleLogout">
+                        <i class="fas fa-right-from-bracket"></i> Logout
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-dot"></div>
+                <div class="sidebar-footer-text">
+                    <strong>{{ currentUser.name }}</strong>
+                    Role: {{ currentUser.role }}
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-panel">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="eyebrow">REQUIREMENTS & VERIFICATION</span>
+                    <span class="top-bar-divider">|</span>
+                    <h2>{{ currentTitle }}</h2>
+                </div>
+                <div class="top-bar-actions">
+                    <template v-if="currentView === 'dashboard'">
+                        <button class="btn-pill btn-pill-outline">Export Records</button>
+                    </template>
+                    <template v-else-if="currentView === 'queue'">
+                        <input class="search-pill" type="text" v-model="searchQuery" placeholder="Search queue...">
+                        <button class="btn-pill btn-pill-green" @click="verifyAll">Verify All</button>
+                    </template>
+                </div>
+            </div>
+             <div v-if="currentView === 'dashboard'" class="view-section">
+                <div class="context-bar">
+                    <div class="context-bar-left">
+                        <h3>Document Verification Hub</h3>
+                        <p>Review and verify student submitted documents for AY 2025–2026</p>
+                    </div>
+                    <div class="context-bar-right">
+                        <button class="btn-pill btn-pill-outline" @click="setView('queue')"><i class="fa-solid fa-users-line"></i> Open student queue</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total in Queue</div>
+                        <div class="stat-value">{{ totalInQueue }}</div>
+                        <div class="stat-meta">Total students waiting</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Verified Today</div>
+                        <div class="stat-value">{{ verifiedToday }}</div>
+                        <div class="stat-meta" style="color: var(--primary-green);">Verified records completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Date &amp; Time (PST)</div>
+                        <div class="stat-value" style="font-size: 1.05rem; line-height: 1.25; margin-top: 8px; font-weight: 700; color: var(--primary-green);">{{ currentDateTime }}</div>
+                        <div class="stat-meta" style="color: var(--primary-gold)">Philippine Standard Time</div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Recent Submissions</h3>
+                                <p>Latest document activity across the verification queue.</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ref No.</th>
+                                        <th>Student Name</th>
+                                        <th>Program</th>
+                                        <th>Documents</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="student in students.slice(0, 5)" :key="student.referenceNumber">
+                                        <td><code>{{ student.referenceNumber }}</code></td>
+                                        <td><strong>{{ student.name }}</strong></td>
+                                        <td><span class="badge bg-secondary-subtle text-secondary">{{ student.program }}</span></td>
+                                        <td><span class="badge bg-light text-dark border">{{ documentSubmissionCount(student) }}/3 submitted</span></td>
+                                        <td>
+                                            <span class="status-badge" :class="getStatusBadgeClass(student.status)">
+                                                <i class="fa-solid fa-circle-check me-1" v-if="['COMPLETED','CLEARED','VERIFIED'].includes(String(student.status).toUpperCase())"></i>
+                                                <i class="fa-solid fa-clock me-1" v-else-if="String(student.status).toUpperCase() === 'PENDING'"></i>
+                                                <i class="fa-solid fa-spinner fa-spin me-1" v-else-if="String(student.status).toUpperCase() === 'IN_PROGRESS'"></i>
+                                                <i class="fa-solid fa-flag me-1" v-else-if="['FLAGGED','DISCREPANCY'].includes(String(student.status).toUpperCase())"></i>
+                                                {{ formatStatus(student.status) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-pill btn-pill-green btn-pill-sm" @click="openReview(student)">Review</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Quick Actions</h3>
+                                <p>Actions for faster verification and reporting.</p>
+                            </div>
+                        </div>
+                        <div class="quick-actions-list">
+                            <div class="quick-action-item" @click="openNextPending">
+                                <i class="fas fa-forward-step"></i>
+                                <div>
+                                    <strong>Review Next Pending</strong>
+                                    <p>Open the next student waiting for verification.</p>
+                                </div>
+                            </div>
+                            <div class="quick-action-item" @click="flagDiscrepancyShortcut">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                <div>
+                                    <strong>Flag Discrepancy</strong>
+                                    <p>Mark a record for follow-up review.</p>
+                                </div>
+                            </div>
+                            <div class="quick-action-item" @click="verifyAll">
+                                <i class="fas fa-circle-check"></i>
+                                <div>
+                                    <strong>Mark Batch Verified</strong>
+                                    <p>Move all pending items to verified status.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+            </div>
+        </div>
+
+            <template v-else-if="currentView === 'queue'">
+                <!-- Quick-Stat Cards matching Registrar style -->
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #f59e0b !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Total Pending</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#d97706;line-height:1.1;">{{ pendingCount }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">students awaiting review</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #22c55e !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Verified Today</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#16a34a;line-height:1.1;">{{ verifiedToday }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">records completed</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #ef4444 !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Discrepancies</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#dc2626;line-height:1.1;">{{ discrepancyCount }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">requires correction</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #3b82f6 !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Completed</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#3b82f6;line-height:1.1;">{{ completedCount }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">finalized verifications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters & Sorting Toolbar Card matching Registrar style -->
+                <div class="card border border-light-subtle rounded-3 shadow-sm mb-3 p-3" style="background:#fafafa;">
+                    <!-- Status pills row -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="fw-bold text-uppercase me-1" style="font-size:0.68rem;letter-spacing:.05em;color:#9ca3af;white-space:nowrap;">
+                            <i class="fa-solid fa-layer-group text-success me-1"></i>Status Filter:
+                        </span>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'All' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('All')">
+                            All <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ students.length }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'Pending' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('Pending')">
+                            Pending <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ pendingCount }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'Verified' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('Verified')">
+                            Verified <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ verifiedToday }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'Discrepancy' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('Discrepancy')">
+                            Discrepancy <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ discrepancyCount }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'Completed' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('Completed')">
+                            Completed <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ completedCount }}</span>
+                        </button>
+                    </div>
+
+                    <!-- Sort Controls Sub-Bar -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 pt-2 border-top border-light-subtle">
+                        <span class="fw-bold text-uppercase me-1" style="font-size:0.68rem;letter-spacing:.05em;color:#9ca3af;white-space:nowrap;">
+                            <i class="fa-solid fa-arrow-down-a-z text-success me-1"></i>Sort By:
+                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <select class="form-select form-select-sm py-1" style="max-width:180px;font-size:0.8rem;border-radius:6px;" v-model="sortBy">
+                                <option value="referenceNumber">Reference ID</option>
+                                <option value="name">Applicant Name</option>
+                                <option value="program">Program Choice</option>
+                                <option value="status">Verification Status</option>
+                            </select>
+                            <button class="btn-pill btn-pill-sm py-1 px-2.5"
+                                    :class="sortDesc ? 'btn-pill-green' : 'btn-pill-outline'"
+                                    @click="sortDesc = !sortDesc"
+                                    title="Toggle Sort Order">
+                                <i :class="sortDesc ? 'fa-solid fa-sort-down' : 'fa-solid fa-sort-up'"></i>
+                                {{ sortDesc ? 'Descending' : 'Ascending' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>Student Document Queue</h3>
+                            <p>Manage document verification status — click column headers to sort</p>
+                        </div>
+                        <span class="badge rounded-pill fw-bold font-monospace px-3 py-2"
+                              :class="filteredStudents.length > 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'">
+                            Showing {{ filteredStudents.length }} of {{ students.length }} Records
+                        </span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('referenceNumber')">
+                                        Ref No. <i :class="getSortIcon('referenceNumber')"></i>
+                                    </th>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('name')">
+                                        Student Name <i :class="getSortIcon('name')"></i>
+                                    </th>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('program')">
+                                        Program <i :class="getSortIcon('program')"></i>
+                                    </th>
+                                    <th>PSA</th>
+                                    <th>Report Card</th>
+                                    <th>Good Moral</th>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('status')">
+                                        Status <i :class="getSortIcon('status')"></i>
+                                    </th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="student in filteredStudents" :key="student.referenceNumber">
+                                    <td><code>{{ student.referenceNumber }}</code></td>
+                                    <td><strong>{{ student.name }}</strong></td>
+                                    <td><span class="badge bg-secondary-subtle text-secondary">{{ student.program }}</span></td>
+                                     <td><span class="doc-status-badge" :class="student.docs && student.docs.psa ? student.docs.psa : 'not-submitted'">{{ (student.docs && typeof student.docs.psa === 'string') ? student.docs.psa.replace('-', ' ') : 'not submitted' }}</span></td>
+                                     <td><span class="doc-status-badge" :class="student.docs && student.docs.reportCard ? student.docs.reportCard : 'not-submitted'">{{ (student.docs && typeof student.docs.reportCard === 'string') ? student.docs.reportCard.replace('-', ' ') : 'not submitted' }}</span></td>
+                                     <td><span class="doc-status-badge" :class="student.docs && student.docs.goodMoral ? student.docs.goodMoral : 'not-submitted'">{{ (student.docs && typeof student.docs.goodMoral === 'string') ? student.docs.goodMoral.replace('-', ' ') : 'not submitted' }}</span></td>
+                                    <td>
+                                        <span class="status-badge" :class="getStatusBadgeClass(student.status)">
+                                            <i class="fa-solid fa-circle-check me-1" v-if="['COMPLETED','CLEARED','VERIFIED'].includes(String(student.status).toUpperCase())"></i>
+                                            <i class="fa-solid fa-clock me-1" v-else-if="String(student.status).toUpperCase() === 'PENDING'"></i>
+                                            <i class="fa-solid fa-spinner fa-spin me-1" v-else-if="String(student.status).toUpperCase() === 'IN_PROGRESS'"></i>
+                                            <i class="fa-solid fa-flag me-1" v-else-if="['FLAGGED','DISCREPANCY'].includes(String(student.status).toUpperCase())"></i>
+                                            {{ formatStatus(student.status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-pill btn-pill-green btn-pill-sm" @click="openReview(student)">Review</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredStudents.length === 0">
+                                    <td colspan="8" class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>No students match your search or filters.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </template>
+
+
+
+            <template v-else-if="currentView === 'logout'">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Logout</h3>
+                            <p>You have been signed out for security.</p>
+                        </div>
+                    </div>
+                    <p class="text-muted">Please close the browser window or sign in again to continue.</p>
+                </section>
+            </template>
+        </main>
+
+    <div class="modal fade" id="verificationModal" tabindex="-1" aria-labelledby="verificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verificationModalLabel">Document Verification — {{ selectedStudent ? selectedStudent.name : '' }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div v-if="selectedStudent" class="row g-4">
+                        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <p class="eyebrow mb-1">Reference Number</p>
+                                <h4 class="mb-0">{{ selectedStudent.referenceNumber }}</h4>
+                            </div>
+                            <span class="status-badge" :class="statusClass(selectedStudent.status)">{{ badgeLabel(selectedStudent.status) }}</span>
+                        </div>
+                        <div class="col-12">
+                            <div class="verification-progress">
+                                <span>{{ verifiedDocsCount }}/3 Verified</span>
+                                <div class="progress-bar-wrap">
+                                    <div class="progress-bar-fill" :style="{ width: (verifiedDocsCount / 3 * 100) + '%' }"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Student Information</h6>
+                            <div class="mb-2"><strong>Name:</strong> {{ selectedStudent.name }}</div>
+                            <div class="mb-2"><strong>Reference No.:</strong> {{ selectedStudent.referenceNumber }}</div>
+                            <div class="mb-2"><strong>Program:</strong> {{ selectedStudent.program }}</div>
+                            <div class="mb-2"><strong>Student Type:</strong> {{ selectedStudent.studentType }}</div>
+
+                            <h6 class="mt-4">Pre-Registration Data</h6>
+                            <div class="mb-2 text-muted text-uppercase small">Name on file</div>
+                            <div class="mb-3">{{ selectedStudent.preRegName }}</div>
+                            <div class="mb-2 text-muted text-uppercase small">Course Applied</div>
+                            <div class="mb-3">{{ selectedStudent.program }}</div>
+                            <div class="mb-2 text-muted text-uppercase small">Date Pre-Registered</div>
+                            <div>{{ selectedStudent.datePreRegistered }}</div>
+
+                            <h6 class="mt-4">Document Checklist</h6>
+                            <div class="doc-checklist-item" :class="selectedStudent.docs.psa">
+                                <div class="doc-checklist-left">
+                                    <i class="fas fa-file-lines"></i>
+                                    <div>
+                                        <div class="doc-checklist-label">PSA Birth Certificate</div>
+                                        <div class="doc-checklist-sub">Original + 1 photocopy</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select class="form-select form-select-sm w-auto" v-model="selectedStudent.docs.psa">
+                                        <option value="not-submitted">Not Submitted</option>
+                                        <option value="submitted">Submitted</option>
+                                        <option value="verified">Verified</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="doc-checklist-item" :class="selectedStudent.docs.reportCard">
+                                <div class="doc-checklist-left">
+                                    <i class="fas fa-file-lines"></i>
+                                    <div>
+                                        <div class="doc-checklist-label">{{ getReportCardLabel(selectedStudent) }}</div>
+                                        <div class="doc-checklist-sub">{{ getReportCardSub(selectedStudent) }}</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select class="form-select form-select-sm w-auto" v-model="selectedStudent.docs.reportCard">
+                                        <option value="not-submitted">Not Submitted</option>
+                                        <option value="submitted">Submitted</option>
+                                        <option value="verified">Verified</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="doc-checklist-item" :class="selectedStudent.docs.goodMoral">
+                                <div class="doc-checklist-left">
+                                    <i class="fas fa-file-lines"></i>
+                                    <div>
+                                        <div class="doc-checklist-label">{{ getGoodMoralLabel(selectedStudent) }}</div>
+                                        <div class="doc-checklist-sub">{{ getGoodMoralSub(selectedStudent) }}</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select class="form-select form-select-sm w-auto" v-model="selectedStudent.docs.goodMoral">
+                                        <option value="not-submitted">Not Submitted</option>
+                                        <option value="submitted">Submitted</option>
+                                        <option value="verified">Verified</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Data Matching Check</h6>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Full Name</span>
+                                    <span :class="selectedStudent.name.toLowerCase().trim() === selectedStudent.preRegName.toLowerCase().trim() ? 'text-success' : 'text-danger'">
+                                        <i :class="selectedStudent.name.toLowerCase().trim() === selectedStudent.preRegName.toLowerCase().trim() ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                                    </span>
+                                </div>
+                                <div class="text-muted small">Pre-Reg: {{ selectedStudent.preRegName }}</div>
+                                <div class="text-dark small">Submitted: {{ selectedStudent.name }}</div>
+                            </div>
+
+                            <div class="panel p-3" style="background: #F9FAFB;">
+                                <div class="panel-header mb-1">
+                                    <div>
+                                        <h4 class="mb-0 text-dark">Enrollment Progress</h4>
+                                    </div>
+                                </div>
+                                <div class="vertical-roadmap-list" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
+                                    <div v-for="(step, idx) in selectedStudent.roadmap" :key="step.stepId" class="d-flex align-items-start gap-3 mb-3 pb-2 border-bottom border-light-subtle text-start">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center border" 
+                                                 :class="{
+                                                     'bg-success text-white border-success': step.status === 'COMPLETED',
+                                                     'bg-warning text-white border-warning': step.status === 'IN_PROGRESS',
+                                                     'bg-danger text-white border-danger': step.status === 'FLAGGED',
+                                                     'bg-white text-muted border-secondary-subtle': step.status === 'PENDING'
+                                                 }"
+                                                 style="width: 28px; height: 28px; font-size: 0.85rem;">
+                                                <i class="fas fa-check" v-if="step.status === 'COMPLETED'"></i>
+                                                <i class="fas fa-flag" v-else-if="step.status === 'FLAGGED'"></i>
+                                                <i :class="getStepIcon(idx)" v-else></i>
+                                            </div>
+                                            <div v-if="idx < selectedStudent.roadmap.length - 1" class="bg-secondary-subtle" style="width: 2px; height: 20px; margin-top: 4px;"></div>
+                                        </div>
+                                        <div class="flex-grow-1" style="min-width: 0;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="small text-dark text-truncate" style="font-size: 0.8rem;">{{ step.title }}</strong>
+                                                <span class="badge font-monospace text-uppercase" 
+                                                      :class="{
+                                                          'bg-success-subtle text-success': step.status === 'COMPLETED',
+                                                          'bg-warning-subtle text-warning-emphasis': step.status === 'IN_PROGRESS',
+                                                          'bg-danger-subtle text-danger': step.status === 'FLAGGED',
+                                                          'bg-light text-muted': step.status === 'PENDING'
+                                                      }" style="font-size: 0.65rem; padding: 2px 6px;">
+                                                    {{ step.status }}
+                                                </span>
+                                            </div>
+                                            <div class="text-muted" style="font-size: 0.7rem; margin-top: 1px;">
+                                                {{ step.station }} · {{ step.location }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-3">Registrar Notes</h6>
+                            <textarea class="form-control" rows="3" v-model="selectedStudent.registrarNotes"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-pill btn-pill-outline" @click="markVerified">Mark as Verified</button>
+                    <button type="button" class="btn-pill btn-pill-green" @click="markCompleted">Mark as Completed</button>
+                    <button type="button" class="btn-pill btn-pill-warning" @click="flagDiscrepancy">Flag Discrepancy</button>
+                    <button type="button" class="btn-pill btn-pill-danger" @click="rejectStudent">Reject</button>
+                    <button type="button" class="btn-pill btn-pill-ghost" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+        </template>
+
+        <!-- Logout Confirm Dialog -->
+        <div v-if="showLogoutConfirm" class="confirm-overlay" @click.self="showLogoutConfirm = false">
+            <div class="confirm-card">
+                <div class="confirm-icon"><i class="fa-solid fa-right-from-bracket text-danger"></i></div>
+                <h4 class="confirm-title">Confirm Logout</h4>
+                <p class="confirm-msg">Are you sure you want to log out of this station?</p>
+                <div class="confirm-actions">
+                    <button class="confirm-btn-cancel" @click="showLogoutConfirm = false">Cancel</button>
+                    <button class="confirm-btn-danger" @click="confirmLogout">Log Out</button>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- close app -->
+
+    <script src="../../shared/libs/bootstrap.bundle.min.js"></script>
+    <script src="../../shared/libs/vue.global.js"></script>
+    <script src="../assets/js/DataBus.js?v=2.3"></script>
+    <script src="assets/js/app.js?v=2.3"></script>
+</body>
+</html>

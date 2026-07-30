@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Processing | Go-on National College</title>
+    <meta name="description" content="Registrar-style payment processing dashboard for student transactions and collections.">
+    <link href="../../shared/libs/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/libs/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="../../shared/libs/fonts/fonts.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../../shared/libs/login.css">
+    <style>
+         [v-cloak] { display: none !important; }
+         
+         .unified-login-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; padding: 10px 14px; font-size: 0.88rem; box-sizing: border-box; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+         .unified-login-input:focus { border-color: rgba(212,175,55,0.6); box-shadow: 0 0 0 3px rgba(212,175,55,0.1); }
+         .unified-login-btn { width: 100%; background: linear-gradient(135deg, #D4AF37, #b8961e); border: none; border-radius: 10px; color: #0b1511; font-weight: 800; padding: 12px; font-size: 0.9rem; cursor: pointer; letter-spacing: 0.5px; margin-top: 6px; transition: background 0.2s, opacity 0.2s; }
+         .unified-login-btn:hover { background: linear-gradient(135deg, #e0bc3e, #c9a622); }
+         .unified-login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+         .unified-login-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 10px 14px; color: #fca5a5; font-size: 0.82rem; margin-bottom: 16px; text-align: left; }
+         /* -- Confirmation Dialog */
+         .confirm-overlay { position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+         .confirm-card { background: #0f2318; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); padding: 36px 36px 28px; width: 100%; max-width: 380px; text-align: center; animation: slideUp 0.2s ease; }
+         @keyframes slideUp { from { transform: translateY(16px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+         .confirm-icon { font-size: 2.2rem; margin-bottom: 14px; }
+         .confirm-title { font-family: 'Outfit', sans-serif; font-weight: 800; color: #fff; font-size: 1.2rem; margin: 0 0 8px; }
+         .confirm-msg { color: rgba(255,255,255,0.55); font-size: 0.85rem; margin: 0 0 26px; line-height: 1.5; }
+         .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+         .confirm-btn-cancel { flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: rgba(255,255,255,0.7); font-weight: 600; padding: 11px; font-size: 0.88rem; cursor: pointer; transition: background 0.2s; }
+         .confirm-btn-cancel:hover { background: rgba(255,255,255,0.12); }
+         /* -- Vertical Timeline Stepper -- */
+         .vertical-stepper { display: flex; flex-direction: column; gap: 14px; padding: 6px 0; position: relative; }
+         .vertical-step-node { display: flex; align-items: center; gap: 12px; position: relative; }
+         .vertical-step-node:not(:last-child)::after {
+             content: ''; position: absolute; left: 17px; top: 34px; bottom: -20px; width: 2px; background: #E5E8EC; z-index: 0;
+         }
+         .vertical-step-node.is-completed:not(:last-child)::after { background: var(--primary-green); }
+         .vertical-step-marker {
+             width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: #FFF; border: 2px solid #E5E8EC; color: #9CA3AF; z-index: 1; transition: all 0.2s ease;
+         }
+         .is-completed .vertical-step-marker { background: var(--primary-green); border-color: var(--primary-green); color: #FFF; }
+         .is-active .vertical-step-marker { background: var(--primary-green); border-color: var(--primary-green); color: #FFF; box-shadow: 0 0 0 4px rgba(0, 106, 78, 0.15); }
+         .vertical-step-content { display: flex; flex-direction: column; text-align: left; }
+         .vertical-step-title { font-size: 0.78rem; font-weight: 700; margin: 0; color: var(--text-dark); line-height: 1.2; }
+         .is-completed .vertical-step-title { color: var(--dark-green); }
+         .is-active .vertical-step-title { color: var(--primary-green); }
+         .vertical-step-status { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #9CA3AF; margin-top: 1px; }
+         .is-completed .vertical-step-status { color: var(--primary-green); }
+         .is-active .vertical-step-status { color: var(--primary-green); }
+     </style>
+</head>
+<body>
+    <div id="app" class="dashboard-shell" v-cloak>
+        <template v-if="currentUser">
+            <aside class="sidebar">
+            <div class="brand-block">
+                <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 10px;">
+                <div>
+                    <h1>Go-on National College</h1>
+                    <p>TREASURY / ACCOUNTING</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-category-group">
+                    <div class="sidebar-category-title">Overview</div>
+                    <a href="#" :class="{ active: currentView === 'dashboard' }" @click.prevent="setView('dashboard')"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+                    <a href="#" :class="{ active: currentView === 'queue' }" @click.prevent="setView('queue')"><i class="fa-solid fa-users-line"></i> Student Queue</a>
+                </div>
+                <div class="sidebar-category-group">
+                    <div class="sidebar-category-title">System</div>
+                    <a href="#" @click.prevent="handleLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-dot"></div>
+                <div class="sidebar-footer-text"><strong>{{ currentUser.name }}</strong> Role: {{ currentUser.role }}</div>
+            </div>
+        </aside>
+
+        <main class="main-panel">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="eyebrow">Treasury Desk</span>
+                    <h2>Payment Processing</h2>
+                </div>
+                <div class="top-bar-actions">
+                    <button class="btn-pill btn-pill-green" @click="setView('queue')"><i class="fa-solid fa-users-line"></i> Open Queue</button>
+                </div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div v-if="currentView === 'dashboard'" class="view-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total in Queue</div>
+                        <div class="stat-value">{{ totalInQueue }}</div>
+                        <div class="stat-meta">Transactions awaiting collection</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Paid Today</div>
+                        <div class="stat-value">{{ paidToday }}</div>
+                        <div class="stat-meta" style="color: var(--primary-green);">Settled payments today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Date &amp; Time (PST)</div>
+                        <div class="stat-value" style="font-size: 1.05rem; line-height: 1.25; margin-top: 8px; font-weight: 700; color: var(--primary-green);">{{ currentDateTime }}</div>
+                        <div class="stat-meta" style="color: var(--primary-gold)">Philippine Standard Time</div>
+                    </div>
+                </div>
+
+                <div class="context-bar">
+                    <div class="context-bar-left">
+                        <h3>Treasury operations at a glance</h3>
+                        <p>Monitor payment flow, queued collections, and cashier performance from the registrar finance lens.</p>
+                    </div>
+                    <div class="context-bar-right">
+                        <button type="button" class="btn-pill btn-pill-outline" @click="setView('queue')"><i class="fa-solid fa-users-line"></i> Open student queue</button>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Recent Transactions</h3>
+                            <p>Latest payment records processed by the treasury unit.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ref No.</th>
+                                    <th>Student Name</th>
+                                    <th>Program</th>
+                                    <th>Payment Type</th>
+                                    <th>Amount Paid</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="student in recentTransactions" :key="student.referenceNumber">
+                                     <td><code>{{ student.referenceNumber }}</code></td>
+                                     <td><strong>{{ student.studentName }}</strong></td>
+                                     <td><span class="badge bg-secondary-subtle text-secondary">{{ student.program }}</span></td>
+                                     <td><span class="badge bg-light text-dark border border-light-subtle">{{ student.payment.paymentType }}</span></td>
+                                     <td><strong class="text-success">₱{{ formatCurrency(student.payment.amountPaid) }}</strong></td>
+                                     <td><span class="text-secondary">₱{{ formatCurrency(student.payment.balance) }}</span></td>
+                                     <td>
+                                         <span class="status-badge" :class="getStatusBadgeClass(student.status)">
+                                             <i class="fa-solid fa-circle-check me-1" v-if="['PAID','COMPLETED','CLEARED'].includes(String(student.status).toUpperCase())"></i>
+                                             <i class="fa-solid fa-clock me-1" v-else-if="String(student.status).toUpperCase() === 'PENDING'"></i>
+                                             <i class="fa-solid fa-spinner fa-spin me-1" v-else-if="String(student.status).toUpperCase() === 'PARTIAL'"></i>
+                                             <i class="fa-solid fa-ban me-1" v-else-if="String(student.status).toUpperCase() === 'REJECTED'"></i>
+                                             {{ formatStatus(student.status) }}
+                                         </span>
+                                     </td>
+                                     <td>
+                                         <button type="button" class="btn-pill btn-pill-sm btn-pill-green" @click="openProcess(student)">Process</button>
+                                     </td>
+                                 </tr>
+                                <tr v-if="recentTransactions.length === 0">
+                                    <td colspan="8" class="text-center py-4 text-muted">No transactions processed today yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div v-else-if="currentView === 'queue'" class="view-section">
+                <!-- Quick-Stat Cards matching Registrar style -->
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #f59e0b !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Pending Payment</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#d97706;line-height:1.1;">{{ pendingCount }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">full balance due</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #3b82f6 !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Partial / Installment</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#3b82f6;line-height:1.1;">{{ partialCount }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">downpayment collected</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #22c55e !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Paid &amp; Settled</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#16a34a;line-height:1.1;">{{ paidToday }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">completed settlements</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100" style="border-left: 4px solid #6b7280 !important;">
+                            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;">Total Queue</div>
+                            <div style="font-size:1.85rem;font-family:'Outfit',sans-serif;font-weight:900;color:#374151;line-height:1.1;">{{ totalInQueue }}</div>
+                            <div style="font-size:0.7rem;color:#9ca3af;">all active accounts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters & Sorting Toolbar Card matching Registrar style -->
+                <div class="card border border-light-subtle rounded-3 shadow-sm mb-3 p-3" style="background:#fafafa;">
+                    <!-- Status pills row -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="fw-bold text-uppercase me-1" style="font-size:0.68rem;letter-spacing:.05em;color:#9ca3af;white-space:nowrap;">
+                            <i class="fa-solid fa-layer-group text-success me-1"></i>Status Filter:
+                        </span>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'All' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('All')">
+                            All <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ students.length }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'PENDING' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('PENDING')">
+                            Pending <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ pendingCount }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'PARTIAL' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('PARTIAL')">
+                            Partial <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ partialCount }}</span>
+                        </button>
+                        <button class="btn-pill btn-pill-sm py-1"
+                                :class="activeFilter === 'PAID' ? 'btn-pill-green' : 'btn-pill-outline'"
+                                @click="setFilter('PAID')">
+                            Paid <span class="ms-1 badge rounded-pill" style="background:rgba(0,0,0,0.07);color:#555;font-size:0.65rem;">{{ paidToday }}</span>
+                        </button>
+                    </div>
+
+                    <!-- Sort Controls Sub-Bar -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 pt-2 border-top border-light-subtle">
+                        <span class="fw-bold text-uppercase me-1" style="font-size:0.68rem;letter-spacing:.05em;color:#9ca3af;white-space:nowrap;">
+                            <i class="fa-solid fa-arrow-down-a-z text-success me-1"></i>Sort By:
+                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <select class="form-select form-select-sm py-1" style="max-width:180px;font-size:0.8rem;border-radius:6px;" v-model="sortBy">
+                                <option value="referenceNumber">Reference ID</option>
+                                <option value="studentName">Student Name</option>
+                                <option value="program">Program Choice</option>
+                                <option value="status">Payment Status</option>
+                            </select>
+                            <button class="btn-pill btn-pill-sm py-1 px-2.5"
+                                    :class="sortDesc ? 'btn-pill-green' : 'btn-pill-outline'"
+                                    @click="sortDesc = !sortDesc"
+                                    title="Toggle Sort Order">
+                                <i :class="sortDesc ? 'fa-solid fa-sort-down' : 'fa-solid fa-sort-up'"></i>
+                                {{ sortDesc ? 'Descending' : 'Ascending' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>Treasury Student Queue</h3>
+                            <p>Manage fee payments, installment ledger balances, and official receipts — click column headers to sort</p>
+                        </div>
+                        <span class="badge rounded-pill fw-bold font-monospace px-3 py-2"
+                              :class="filteredStudents.length > 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'">
+                            Showing {{ filteredStudents.length }} of {{ students.length }} Records
+                        </span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('referenceNumber')">
+                                        Ref No. <i :class="getSortIcon('referenceNumber')"></i>
+                                    </th>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('studentName')">
+                                        Student Name <i :class="getSortIcon('studentName')"></i>
+                                    </th>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('program')">
+                                        Program <i :class="getSortIcon('program')"></i>
+                                    </th>
+                                    <th>Total Assessment</th>
+                                    <th>Amount Paid</th>
+                                    <th>Balance</th>
+                                    <th class="cursor-pointer select-none" @click="toggleSort('status')">
+                                        Status <i :class="getSortIcon('status')"></i>
+                                    </th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="student in filteredStudents" :key="student.referenceNumber">
+                                     <td><code>{{ student.referenceNumber }}</code></td>
+                                     <td><strong>{{ student.studentName }}</strong></td>
+                                     <td><span class="badge bg-secondary-subtle text-secondary">{{ student.program }}</span></td>
+                                     <td><span class="badge bg-light text-dark border border-light-subtle">{{ student.payment.paymentType }}</span></td>
+                                     <td><span class="text-secondary">₱{{ formatCurrency(student.payment.totalFee) }}</span></td>
+                                     <td><strong class="text-success">₱{{ formatCurrency(student.payment.amountPaid) }}</strong></td>
+                                     <td><strong class="text-dark">₱{{ formatCurrency(student.payment.balance) }}</strong></td>
+                                     <td>
+                                         <span class="status-badge" :class="getStatusBadgeClass(student.status)">
+                                             <i class="fa-solid fa-circle-check me-1" v-if="['PAID','COMPLETED','CLEARED'].includes(String(student.status).toUpperCase())"></i>
+                                             <i class="fa-solid fa-clock me-1" v-else-if="String(student.status).toUpperCase() === 'PENDING'"></i>
+                                             <i class="fa-solid fa-spinner fa-spin me-1" v-else-if="String(student.status).toUpperCase() === 'PARTIAL'"></i>
+                                             <i class="fa-solid fa-ban me-1" v-else-if="String(student.status).toUpperCase() === 'REJECTED'"></i>
+                                             {{ formatStatus(student.status) }}
+                                         </span>
+                                     </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn-pill btn-pill-sm btn-pill-green" @click="openProcess(student)">{{ (student.status === 'PAID' || student.status === 'ENROLLED') ? 'View' : 'Process' }}</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+    <!-- Process Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content" v-if="selectedStudent">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Payment Processing  {{ selectedStudent.studentName }}</h5>
+                    <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <!-- Column 1: Student Info & Payment Details Form -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-label text-muted small uppercase">Full Name</div>
+                                <div class="fw-bold text-dark fs-6">{{ selectedStudent.studentName }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-label text-muted small uppercase">Reference Number</div>
+                                <div class="font-monospace text-secondary fw-semibold">{{ selectedStudent.referenceNumber }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-label text-muted small uppercase">Program / Course</div>
+                                <div class="fw-bold text-dark">{{ selectedStudent.program }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-label text-muted small uppercase">Student Type</div>
+                                <div class="badge bg-success-subtle text-success px-2 py-1 rounded">{{ selectedStudent.studentType }}</div>
+                            </div>
+
+                            <!-- Financial Account Summary -->
+                            <div class="panel p-3 mb-3" style="background: #FFFBEB; border: 1px solid #FDE68A;">
+                                <h6 class="mb-2" style="color: #92400E; font-weight: 700;"><i class="fa-solid fa-calculator me-2"></i>Account Ledger Summary</h6>
+                                <div class="row g-2 small">
+                                    <div class="col-6">
+                                        <strong>Total Assessment:</strong>
+                                        <span class="text-dark fw-semibold ms-1">₱{{ formatCurrency(selectedStudent.payment.totalFee) }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Amount Received:</strong>
+                                        <span class="text-success fw-bold ms-1">₱{{ formatCurrency(selectedStudent.payment.amountPaid) }}</span>
+                                    </div>
+                                    <div class="col-12 border-top pt-2 mt-2">
+                                        <strong>Outstanding Balance:</strong>
+                                        <span class="text-danger fw-bold ms-1">₱{{ formatCurrency(selectedStudent.payment.balance) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Collect Payment Details -->
+                            <div class="panel p-3 bg-light border border-light-subtle rounded">
+                                <h6 class="mb-3 text-dark fw-bold" style="font-size: 0.85rem;"><i class="fa-solid fa-hand-holding-dollar me-2 text-success"></i>Collect Payment Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small uppercase fw-bold">Payment Mode</label>
+                                        <select class="form-select" v-model="selectedStudent.payment.paymentType" :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'">
+                                            <option value="Cash">Cash</option>
+                                            <option value="GCash">GCash</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small uppercase fw-bold">Amount to Pay</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem; border-top-left-radius: 9px; border-bottom-left-radius: 9px;">₱</span>
+                                            <input class="form-control border-start-0" type="number" min="1" :max="selectedStudent.payment.balance" v-model.number="payAmountInput" :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" v-if="selectedStudent.payment.paymentType === 'Cash'">
+                                        <label class="form-label text-muted small uppercase fw-bold">Cash Tendered</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem; border-top-left-radius: 9px; border-bottom-left-radius: 9px;">₱</span>
+                                            <input class="form-control border-start-0" type="number" min="0" v-model.number="cashTendered" :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" v-if="selectedStudent.payment.paymentType === 'Cash'">
+                                        <label class="form-label text-muted small uppercase fw-bold">Change Due</label>
+                                        <div class="form-control bg-light border-0 text-success fw-bold">
+                                            ₱{{ formatCurrency(changeDue) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-12 border-top pt-2 mt-2">
+                                        <div class="d-flex justify-content-between text-muted small">
+                                            <span>Current Balance:</span>
+                                            <span class="fw-semibold">₱{{ formatCurrency(selectedStudent.payment.balance) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-success fw-bold small mt-1">
+                                            <span>Payment Amount:</span>
+                                            <span>- ₱{{ formatCurrency(payAmountInput) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-danger fw-bold border-top pt-1 mt-1">
+                                            <span>New Balance:</span>
+                                            <span>₱{{ formatCurrency(newBalance) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Enrollment Roadmap & Observations -->
+                        <div class="col-md-6">
+                            <!-- Verification Stepper -->
+                            <div class="panel p-3 mb-3" style="background: rgba(0, 106, 78, 0.03); border: 1px solid rgba(0, 106, 78, 0.1); border-radius: var(--radius-md);">
+                                <h6 class="mb-3 text-dark fw-bold" style="font-family: var(--font-heading);">Campus Verification Progress</h6>
+                                <div class="vertical-stepper">
+                                    <div v-for="(step, index) in selectedStudent.roadmap" :key="step.stepId"
+                                         class="vertical-step-node"
+                                         :class="{
+                                             'is-completed': step.status === 'COMPLETED',
+                                             'is-active': step.status === 'IN_PROGRESS',
+                                             'is-upcoming': step.status === 'PENDING'
+                                         }">
+                                        <div class="vertical-step-marker">
+                                            <i class="fas fa-check" v-if="step.status === 'COMPLETED'"></i>
+                                            <i class="fas fa-flag" v-else-if="step.status === 'FLAGGED'"></i>
+                                            <i :class="getStepIcon(index)" v-else></i>
+                                        </div>
+                                        <div class="vertical-step-content">
+                                            <span class="vertical-step-title">{{ step.title }}</span>
+                                            <span class="vertical-step-status">{{ step.status }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3" v-if="selectedStudent.payment.paymentType === 'GCash'">
+                                <label class="form-label text-muted small uppercase fw-bold">Transaction / OR Reference</label>
+                                <input class="form-control" type="text" v-model="selectedStudent.payment.transactionRef" placeholder="Enter GCash Ref ID..." :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'">
+                            </div>
+                            <div class="mb-1">
+                                <label class="form-label text-muted small uppercase fw-bold">Cashier Observations / Notes</label>
+                                <textarea class="form-control" rows="4" v-model="selectedStudent.payment.cashierNotes" placeholder="Enter ledger modifications or payment observations here..." :disabled="selectedStudent.status === 'PAID' || selectedStudent.status === 'ENROLLED'"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ledger Payment History -->
+                    <div class="mt-4 border-top pt-3" v-if="selectedStudent.payment.history && selectedStudent.payment.history.length > 0">
+                        <h6 class="mb-3 text-dark fw-bold" style="font-size: 0.85rem;"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Transaction &amp; Payment History Ledger</h6>
+                        <div class="table-responsive">
+                            <table class="data-table small">
+                                <thead>
+                                    <tr>
+                                        <th>Date &amp; Time</th>
+                                        <th>Transaction / OR Ref</th>
+                                        <th>Mode</th>
+                                        <th>Amount Paid</th>
+                                        <th>Cashier</th>
+                                        <th>Observations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="h in selectedStudent.payment.history" :key="h.date">
+                                        <td><code>{{ new Date(h.date).toLocaleString() }}</code></td>
+                                        <td><code>{{ h.reference }}</code></td>
+                                        <td><span class="badge bg-light text-dark border">{{ h.paymentType }}</span></td>
+                                        <td><strong class="text-success">₱{{ formatCurrency(h.amount) }}</strong></td>
+                                        <td>{{ h.cashier }}</td>
+                                        <td><span class="text-muted">{{ h.notes || '-' }}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer gap-2">
+                    <button type="button" class="btn-pill btn-pill-ghost" @click="closeModal">Cancel</button>
+                    <button type="button" class="btn-pill btn-pill-green" @click="recordPayment" v-if="selectedStudent && selectedStudent.status !== 'PAID' && selectedStudent.status !== 'ENROLLED'"><i class="fa-solid fa-circle-check me-1"></i>Record Payment</button>
+                    <button type="button" class="btn-pill btn-pill-green" v-if="selectedStudent && (selectedStudent.status === 'PAID' || selectedStudent.status === 'PARTIAL') && selectedStudent.status !== 'ENROLLED'" @click="markEnrolledAndPrint(selectedStudent)"><i class="fa-solid fa-print me-1"></i>Print Receipt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+        <!-- Printable Receipt Overlay -->
+        <div v-if="receiptData" class="confirm-overlay" style="background: rgba(0, 0, 0, 0.75); z-index: 1100;">
+            <div class="receipt-container bg-white text-dark p-4 rounded shadow-lg position-relative" style="width: 800px; max-width: 95%;">
+                
+                <!-- Print Header & Controls (Hidden during print) -->
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom no-print">
+                    <span class="fw-bold text-success"><i class="fa-solid fa-circle-check me-1"></i> Payment Recorded Successfully</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" @click="closeReceipt">Close &amp; Back to Queue</button>
+                        <button class="btn btn-sm btn-success" @click="printReceipt"><i class="fa-solid fa-print me-1"></i> Print Receipt</button>
+                    </div>
+                </div>
+
+                <!-- Actual Receipt Section (Printed horizontally) -->
+                <div id="printable-receipt-card" class="receipt-horizontal-layout p-4 border border-dark rounded" style="background: #fafafa; font-size: 0.85rem; font-family: 'Courier New', Courier, monospace;">
+                    <div class="row align-items-center border-bottom pb-2 mb-3">
+                        <div class="col-8">
+                            <h4 class="fw-bold m-0" style="color: #004A3C; font-family: sans-serif; letter-spacing: 0.5px; font-size: 1.25rem;">
+                                GO-ON NATIONAL COLLEGE OF THE PHILIPPINES
+                            </h4>
+                            <small class="text-muted">Emilio Aguinaldo Highway, Dasmarias City, Cavite</small>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="fw-bold text-uppercase fs-6" style="color: #cda819;">Official Receipt</div>
+                            <small class="font-monospace text-secondary">OR: {{ receiptData.transactionRef }}</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="mb-1"><strong>Student Name:</strong> {{ receiptData.name }}</div>
+                            <div class="mb-1"><strong>Reference No:</strong> {{ receiptData.refNo }}</div>
+                            <div><strong>Degree Course:</strong> {{ receiptData.program }}</div>
+                        </div>
+                        <div class="col-6 border-start ps-3">
+                            <div class="mb-1"><strong>Payment Date:</strong> {{ receiptData.date }}</div>
+                            <div class="mb-1"><strong>Payment Mode:</strong> {{ receiptData.paymentMode }}</div>
+                            <div><strong>Cashier:</strong> {{ receiptData.cashier }}</div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm table-bordered border-dark text-center align-middle mb-0" style="font-size: 0.82rem;">
+                            <thead class="table-light border-dark">
+                                <tr>
+                                    <th>Particulars</th>
+                                    <th>Total Assessment</th>
+                                    <th>Amount Paid</th>
+                                    <th>Outstanding Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start font-monospace fw-bold">GNCP College Matriculation (AY 2026-2027)</td>
+                                    <td>₱{{ formatCurrency(receiptData.totalFee) }}</td>
+                                    <td class="fw-bold text-success">₱{{ formatCurrency(receiptData.amountPaid) }}</td>
+                                    <td class="fw-bold text-danger">₱{{ formatCurrency(receiptData.balance) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <small class="text-muted" style="font-size:0.7rem; line-height: 1.2;">Disclaimer: This serves as an official electronic receipt of payment validation for Go-on National College of the Philippines. Keep this copy for records.</small>
+                        </div>
+                        <div class="col-4 text-center border-top border-dark pt-2">
+                            <div class="fw-bold" style="font-size: 0.75rem;">AUTHORIZED SIGNATURE</div>
+                            <small class="text-secondary">GNCP Finance &amp; Treasury</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout Confirm Dialog -->
+        <div v-if="showLogoutConfirm" class="confirm-overlay" @click.self="showLogoutConfirm = false">
+            <div class="confirm-card">
+                <div class="confirm-icon"><i class="fa-solid fa-right-from-bracket text-danger"></i></div>
+                <h4 class="confirm-title">Confirm Logout</h4>
+                <p class="confirm-msg">Are you sure you want to log out of this station?</p>
+                <div class="confirm-actions">
+                    <button class="confirm-btn-cancel" @click="showLogoutConfirm = false">Cancel</button>
+                    <button class="confirm-btn-danger" @click="confirmLogout">Log Out</button>
+                </div>
+            </div>
+        </div>
+
+    </template>
+    </div> <!-- close app -->
+
+    <script src="../../shared/libs/bootstrap.bundle.min.js"></script>
+    <script src="../../shared/libs/vue.global.js"></script>
+    <script src="../../shared/libs/sweetalert2.all.min.js"></script>
+    <script src="../assets/js/DataBus.js?v=2.2"></script>
+    <script src="assets/js/app.js?v=2.2.2"></script>
+</body>
+</html>

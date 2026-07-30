@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNCP Student Portal — My Account</title>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="../shared/libs/fonts/fonts.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
+    <!-- Bootstrap CSS Grid/Utilities only -->
+    <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
+    <!-- Inline styles to keep it ultra-clean and avoid extra stylesheet download issues -->
+    <style>
+        :root {
+            --primary-green: #006A4E;
+            --primary-green-hover: #00533C;
+            --primary-green-light: rgba(0, 106, 78, 0.08);
+            --primary-gold: #D4AF37;
+            --dark-green: #003D2B;
+            --white: #FFFFFF;
+            --light-bg: #F0F2F5;
+            --gray-border: #E5E8EC;
+            --text-dark: #1A1D23;
+            --text-muted: #6B7280;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        [v-cloak] { display: none !important; }
+        body {
+            margin: 0;
+            font-family: var(--font-body);
+            background: var(--light-bg);
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        /* Login Interface style */
+        .login-overlay {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--dark-green) 0%, #001A12 100%);
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-header img {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
+        .login-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            color: var(--dark-green);
+            margin-bottom: 5px;
+        }
+
+        .login-sub {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--gray-border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            margin-bottom: 18px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .login-input:focus {
+            border-color: var(--primary-green);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-green);
+            border: none;
+            color: var(--white);
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: var(--primary-green-hover);
+        }
+
+        .login-error {
+            background: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            color: #B91C1C;
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        /* Dashboard Styles */
+        .portal-header {
+            background: var(--dark-green);
+            color: var(--white);
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-block img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .brand-block h1 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .brand-block p {
+            font-size: 0.75rem;
+            color: var(--primary-gold);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .profile-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            border: 1px solid var(--gray-border);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .student-photo {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            border: 3px solid var(--primary-green-light);
+            font-size: 3rem;
+            object-fit: cover;
+        }
+
+        .student-meta h2 {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark-green);
+            margin: 0 0 5px 0;
+        }
+
+        .student-meta p {
+            margin: 0 0 4px 0;
+            color: var(--text-muted);
+        }
+
+        .status-pill {
+            display: inline-block;
+            background: var(--primary-green-light);
+            color: var(--primary-green);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 992px) {
+            .grid-layout { grid-template-columns: 1fr; }
+            .profile-card { flex-direction: column; text-align: center; }
+        }
+
+        .info-panel {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--gray-border);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            margin-bottom: 30px;
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--dark-green);
+            margin-bottom: 20px;
+            border-bottom: 1.5px solid var(--gray-border);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Timeline styles */
+        .station-timeline {
+            position: relative;
+            padding-left: 24px;
+            border-left: 2px solid var(--gray-border);
+            margin-left: 10px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px;
+            top: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--gray-border);
+            border: 2.5px solid var(--white);
+            box-shadow: 0 0 0 2px var(--gray-border);
+        }
+
+        .timeline-item.completed::before {
+            background: var(--primary-green);
+            box-shadow: 0 0 0 2px var(--primary-green);
+        }
+
+        .timeline-item.skipped::before {
+            background: var(--text-muted);
+            box-shadow: 0 0 0 2px var(--text-muted);
+        }
+
+        .timeline-item.active::before {
+            background: var(--primary-gold);
+            box-shadow: 0 0 0 2px var(--primary-gold);
+        }
+
+        .timeline-title {
+            font-weight: 700;
+            font-size: 0.92rem;
+            margin: 0;
+        }
+
+        .timeline-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin: 2px 0 0 0;
+        }
+
+        .timeline-date {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Confirm Overlay */
+        .confirm-overlay {
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0, 106, 78, 0.4);
+            backdrop-filter: blur(4px);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            z-index: 2000;
+        }
+        .confirm-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid var(--gray-border);
+        }
+        .confirm-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        .confirm-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            color: var(--dark-green);
+            margin-bottom: 10px;
+        }
+        .confirm-msg {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .confirm-btn-cancel, .confirm-btn-danger {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+        .confirm-btn-cancel {
+            background: #F3F4F6;
+            color: var(--text-dark);
+        }
+        .confirm-btn-danger {
+            background: #DC2626;
+            color: var(--white);
+        }
+
+        /* Navigation Tabs */
+        .portal-tabs {
+            background: var(--white);
+            border-bottom: 2px solid var(--gray-border);
+            display: flex;
+            gap: 0;
+            padding: 0 40px;
+        }
+
+        .portal-tabs button {
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 14px 22px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: -2px;
+        }
+
+        .portal-tabs button:hover {
+            color: var(--primary-green);
+        }
+
+        .portal-tabs button.active {
+            color: var(--primary-green);
+            border-bottom-color: var(--primary-green);
+        }
+
+        /* Personal Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .info-item .info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .info-item .info-value {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <!-- Student Login View -->
+        <div v-if="!currentStudent" class="login-overlay">
+            <div class="login-card">
+                <div class="login-header">
+                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal">
+                    <h3 class="login-title">Student Portal</h3>
+                    <p class="login-sub">Access your official student profile &amp; clearance roadmap</p>
+                </div>
+
+                <div v-if="loginError" class="login-error">
+                    <i class="fas fa-triangle-exclamation" style="margin-right:6px;"></i>{{ loginError }}
+                </div>
+
+                <form @submit.prevent="handleLogin">
+                    <input type="text" class="login-input" v-model="loginForm.studentId" required placeholder="Permanent Student ID (e.g. GNCP-2026-xxxx)">
+                    <input type="password" class="login-input" v-model="loginForm.password" required placeholder="Account Password">
+                    <button type="submit" class="login-btn" :disabled="isLoggingIn">
+                        <span v-if="isLoggingIn">Signing in...</span>
+                        <span v-else>Sign In</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Student Dashboard View -->
+        <template v-else>
+            <header class="portal-header">
+                <div class="brand-block">
+                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal">
+                    <div>
+                        <h1>Go-on National College</h1>
+                        <p>Official Student Portal</p>
+                    </div>
+                </div>
+                <button class="logout-btn" @click="handleLogout"><i class="fa-solid fa-right-from-bracket me-1"></i> Sign Out</button>
+            </header>
+
+            <!-- Navigation Tabs -->
+            <nav class="portal-tabs">
+                <button :class="{ active: activeTab === 'home' }" @click="activeTab = 'home'">
+                    <i class="fa-solid fa-house"></i> Home
+                </button>
+                <button :class="{ active: activeTab === 'dashboard' }" @click="activeTab = 'dashboard'">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </button>
+                <button :class="{ active: activeTab === 'courses' }" @click="activeTab = 'courses'">
+                    <i class="fa-solid fa-book"></i> My Courses
+                </button>
+            </nav>
+
+            <div class="main-container">
+
+                <!-- ══ HOME TAB: Profile + Personal Info ════════════════════════════ -->
+                <template v-if="activeTab === 'home'">
+                    <!-- Welcome & Profile Summary -->
+                    <div class="profile-card">
+                        <div v-if="profile.photo">
+                            <img :src="'../stations/it-center/assets/uploads/' + profile.photo" @error="profile.photo = null" class="student-photo" alt="Student Photo">
+                        </div>
+                        <div v-else class="student-photo">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="student-meta">
+                            <h2>{{ profile.name }}</h2>
+                            <p>Student ID: <strong>{{ profile.id }}</strong> · Program: <strong>{{ profile.program }}</strong></p>
+                            <p>Institutional Email: <strong>{{ profile.email }}</strong></p>
+                            <div class="mt-2">
+                                <span class="status-pill"><i class="fa-solid fa-circle-check me-1"></i> {{ profile.status }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information Panel -->
+                    <div class="info-panel">
+                        <h3 class="panel-title"><i class="fa-solid fa-address-card"></i> Personal Information</h3>
+                        <div v-if="profile.personalInfo" class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">First Name</div>
+                                <div class="info-value">{{ profile.personalInfo.firstName || '—' }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Middle Name</div>
+                                <div class="info-value">{{ profile.personalInfo.middleName || '—' }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Last Name</div>
+                                <div class="info-value">{{ profile.personalInfo.lastName || '—' }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Mobile Number</div>
+                                <div class="info-value">{{ profile.personalInfo.phone || '—' }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Personal Email</div>
+                                <div class="info-value" style="word-break:break-all;">{{ profile.personalInfo.email || '—' }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Birth Date</div>
+                                <div class="info-value">{{ profile.personalInfo.birthDate || '—' }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Gender</div>
+                                <div class="info-value">{{ profile.personalInfo.gender || '—' }}</div>
+                            </div>
+                            <div class="info-item" style="grid-column: 1/-1;">
+                                <div class="info-label">Home Address</div>
+                                <div class="info-value">{{ profile.personalInfo.address || '—' }}</div>
+                            </div>
+                        </div>
+                        <div v-else class="text-muted small">
+                            <i class="fa-solid fa-circle-info me-1"></i> Personal information is not available yet.
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ══ DASHBOARD TAB: Academic, Financial, Medical ═══════════════════ -->
+                <template v-if="activeTab === 'dashboard'">
+                    <div class="grid-layout">
+                        <!-- Academic & Financial Status Logs -->
+                        <div>
+                            <!-- Academic Section -->
+                            <div class="info-panel">
+                                <h3 class="panel-title"><i class="fa-solid fa-graduation-cap"></i> Academic Enrollment Details</h3>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <span class="text-muted small d-block">Degree Course</span>
+                                        <strong>{{ profile.program }}</strong>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <span class="text-muted small d-block">Year Classification</span>
+                                        <strong>{{ profile.yearLevel }}</strong>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <span class="text-muted small d-block">Advising NSTP Selection</span>
+                                        <strong>{{ helpdesk ? helpdesk.nstp : 'Not evaluated' }}</strong>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <span class="text-muted small d-block">Sections Assigned</span>
+                                        <div v-if="enrollment && enrollment.sections && Object.keys(enrollment.sections).length > 0" class="d-flex flex-wrap gap-1 mt-1">
+                                            <span v-for="(secCode, subCode) in enrollment.sections" :key="subCode" class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.72rem; padding: 4px 8px; border: 1px solid rgba(25, 135, 84, 0.2);">
+                                                {{ subCode }}: {{ secCode }}
+                                            </span>
+                                        </div>
+                                        <strong v-else class="text-muted" style="font-size:0.85rem;">No sections assigned</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Ledger Section -->
+                            <div class="info-panel" v-if="payment">
+                                <h3 class="panel-title"><i class="fa-solid fa-receipt"></i> Tuition billing ledger</h3>
+                                <div class="row g-3">
+                                    <div class="col-sm-4">
+                                        <span class="text-muted small d-block">Scheme selected</span>
+                                        <strong>{{ payment.paymentType || 'CASH' }}</strong>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <span class="text-muted small d-block">Total tuition assessed</span>
+                                        <strong>₱{{ formatCurrency(payment.totalFee) }}</strong>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <span class="text-muted small d-block">Remaining balance</span>
+                                        <strong class="text-danger">₱{{ formatCurrency(payment.balance) }}</strong>
+                                    </div>
+                                    <div class="col-12" v-if="scholarship && scholarship.status === 'COMPLETED'">
+                                        <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success small mb-0 py-2">
+                                            <i class="fa-solid fa-award me-1"></i> Scholarship discount applied successfully: <strong>{{ scholarship.scholarshipName || 'Scholarship' }}</strong> (<strong>{{ scholarship.discountPercent || 100 }}% Discount</strong>).
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Medical Clearance Section -->
+                            <div class="info-panel" v-if="medical">
+                                <h3 class="panel-title"><i class="fa-solid fa-heart-pulse"></i> Medical Clearance Findings</h3>
+                                <div class="row g-3">
+                                    <div class="col-sm-4">
+                                        <span class="text-muted small d-block">Overall Fitness</span>
+                                        <span class="badge text-uppercase" :class="{
+                                            'bg-success-subtle text-success border border-success-subtle': medical.status === 'fit',
+                                            'bg-warning-subtle text-warning-emphasis border border-warning-subtle': medical.status === 'conditional',
+                                            'bg-danger-subtle text-danger border border-danger-subtle': medical.status === 'unfit'
+                                        }">{{ medical.status || 'pending' }}</span>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <span class="text-muted small d-block">PE &amp; NSTP Status</span>
+                                        <strong>PE: {{ medical.peFitness || 'not-assessed' }} · NSTP: {{ medical.nstpFitness || 'not-assessed' }}</strong>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <span class="text-muted small d-block">Verified By</span>
+                                        <strong>{{ medical.verifiedBy || 'TBA' }}</strong>
+                                    </div>
+                                    <div class="col-12" v-if="medical.notes">
+                                        <div class="p-3 bg-light rounded-3 border">
+                                            <div class="text-muted small mb-1"><i class="fa-solid fa-comment-medical me-1"></i> Clinician Consultation Notes:</div>
+                                            <p class="mb-0 text-dark small font-monospace">{{ medical.notes }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Station Timeline roadmap -->
+                        <div>
+                            <div class="info-panel">
+                                <h3 class="panel-title"><i class="fa-solid fa-map-location-dot"></i> Enrollment Roadmap Clearance</h3>
+                                <div class="station-timeline">
+                                    <div v-for="step in roadmap" :key="step.stepId" class="timeline-item" :class="step.status.toLowerCase()">
+                                        <h4 class="timeline-title">{{ step.title }}</h4>
+                                        <p class="timeline-desc">{{ step.station }} · {{ step.location }}</p>
+                                        <p class="timeline-date" v-if="step.updatedAt">
+                                            <i class="fa-solid fa-clock me-1"></i> Completed: {{ new Date(step.updatedAt).toLocaleDateString() }}
+                                        </p>
+                                        <p class="timeline-date text-warning" v-else>
+                                            <i class="fa-solid fa-hourglass-start me-1"></i> Pending
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ══ MY COURSES TAB: Enrolled Subjects & Schedules ═════════════════ -->
+                <template v-if="activeTab === 'courses'">
+                    <div class="info-panel">
+                        <h3 class="panel-title"><i class="fa-solid fa-list-check"></i> Enrolled Subjects &amp; Schedules</h3>
+                        <div v-if="(helpdesk && helpdesk.advisedSubjects && helpdesk.advisedSubjects.length > 0) || (subjects && subjects.length > 0)" class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.8rem; border-color: rgba(0,0,0,0.05);">
+                                <thead class="table-light text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Subject Title</th>
+                                        <th class="text-center">Units</th>
+                                        <th class="text-center">Class Section</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="sub in (helpdesk && helpdesk.advisedSubjects && helpdesk.advisedSubjects.length > 0 ? helpdesk.advisedSubjects : subjects)" :key="sub.code">
+                                        <td class="font-monospace fw-semibold text-secondary">{{ sub.code }}</td>
+                                        <td class="fw-bold text-dark">{{ sub.title }}</td>
+                                        <td class="text-center">{{ parseInt(sub.lecture_units || sub.lectureUnits || 0) + parseInt(sub.lab_units || sub.labUnits || 0) }}</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.75rem;">
+                                                {{ (enrollment && enrollment.sections) ? (enrollment.sections[sub.code] || 'TBA') : 'TBA' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else class="text-muted small text-center py-4">
+                            <i class="fa-solid fa-circle-info me-1"></i> No subjects have been assigned yet. Please complete the Academic Advising station.
+                        </div>
+                    </div>
+                </template>
+
+            </div><!-- /.main-container -->
+        </template>
+
+        <!-- Logout Confirm Modal -->
+        <div v-if="showLogoutConfirm" class="confirm-overlay" @click.self="showLogoutConfirm = false">
+            <div class="confirm-card">
+                <div class="confirm-icon"><i class="fa-solid fa-right-from-bracket text-danger"></i></div>
+                <h4 class="confirm-title">Confirm Sign Out</h4>
+                <p class="confirm-msg">Are you sure you want to log out of the student portal?</p>
+                <div class="confirm-actions">
+                    <button class="confirm-btn-cancel" @click="showLogoutConfirm = false">Cancel</button>
+                    <button class="confirm-btn-danger" @click="confirmLogout">Sign Out</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script imports -->
+    <script src="../shared/libs/vue.global.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const currentStudent = ref(null);
+                const isLoggingIn = ref(false);
+                const loginError = ref('');
+                const loginForm = reactive({
+                    studentId: '',
+                    password: ''
+                });
+
+                // Dashboard Data
+                const profile = ref({});
+                const roadmap = ref([]);
+                const requirements = ref(null);
+                const medical = ref(null);
+                const scholarship = ref(null);
+                const payment = ref(null);
+                const helpdesk = ref(null);
+                const enrollment = ref(null);
+                const subjects = ref([]);
+
+                // Navigation tab state ('home' | 'dashboard' | 'courses')
+                const activeTab = ref('home');
+
+                const checkSession = () => {
+                    const stored = sessionStorage.getItem('gncp_portal_student');
+                    if (stored) {
+                        currentStudent.value = JSON.parse(stored);
+                        fetchDashboardData();
+                    }
+                };
+
+                const handleLogin = () => {
+                    isLoggingIn.value = true;
+                    loginError.value = '';
+
+                    fetch('backend/api.php?action=login_student', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(loginForm)
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        isLoggingIn.value = false;
+                        if (result.success && result.data) {
+                            currentStudent.value = result.data;
+                            sessionStorage.setItem('gncp_portal_student', JSON.stringify(result.data));
+                            fetchDashboardData();
+                        } else {
+                            loginError.value = result.error || 'Failed to authenticate.';
+                        }
+                    })
+                    .catch(() => {
+                        isLoggingIn.value = false;
+                        loginError.value = 'Failed to connect to portal server.';
+                    });
+                };
+
+                const fetchDashboardData = () => {
+                    if (!currentStudent.value) return;
+
+                    fetch(`backend/api.php?action=get_student_dashboard&studentId=${currentStudent.value.id}`)
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            profile.value = result.data.profile;
+                            roadmap.value = result.data.roadmap;
+                            requirements.value = result.data.requirements;
+                            medical.value = result.data.medical;
+                            scholarship.value = result.data.scholarship;
+                            payment.value = result.data.payment;
+                            helpdesk.value = result.data.helpdesk;
+                            enrollment.value = result.data.enrollment;
+                            subjects.value = result.data.subjects || [];
+                        }
+                    });
+                };
+
+                const showLogoutConfirm = ref(false);
+
+                const handleLogout = () => {
+                    showLogoutConfirm.value = true;
+                };
+
+                const confirmLogout = () => {
+                    showLogoutConfirm.value = false;
+                    currentStudent.value = null;
+                    sessionStorage.removeItem('gncp_portal_student');
+                    window.location.reload();
+                };
+
+                const formatCurrency = (val) => {
+                    if (!val) return '0';
+                    return Number(val).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                };
+
+                onMounted(() => {
+                    checkSession();
+                });
+
+                return {
+                    currentStudent,
+                    isLoggingIn,
+                    loginError,
+                    loginForm,
+                    profile,
+                    roadmap,
+                    requirements,
+                    medical,
+                    scholarship,
+                    payment,
+                    helpdesk,
+                    enrollment,
+                    subjects,
+                    activeTab,
+                    handleLogin,
+                    showLogoutConfirm,
+                    handleLogout,
+                    confirmLogout,
+                    formatCurrency
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

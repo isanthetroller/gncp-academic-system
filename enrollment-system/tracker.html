@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNCP — Student Enrollment Tracker Portal</title>
+    
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="/systemforsia/shared/libs/fonts/fonts.css">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="tracker-app" v-cloak>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg portal-navbar shadow-sm sticky-top">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="../school-website/index.html">
+                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="portal-logo me-3">
+                    <div class="portal-brand-text">
+                        <span class="portal-brand-main">GO-ON NATIONAL</span>
+                        <span class="portal-brand-sub">ENROLLMENT TRACKER PORTAL</span>
+                    </div>
+                </a>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="index.html" class="btn btn-outline-light btn-exit-portal">
+                        <i class="fas fa-plus-circle me-2"></i>New Registration
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container my-5">
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 VIEW 1: LOGIN FORM
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <div v-if="currentView === 'LOGIN'" class="row justify-content-center py-4">
+                <div class="col-md-7 col-lg-5">
+                    <div class="card wizard-card shadow-lg border-0">
+                        <div class="card-body p-4 p-md-5 text-center">
+                            <div class="tracker-login-icon mb-4">
+                                <i class="fas fa-route"></i>
+                            </div>
+                            <h3 class="step-title mb-2">Track Your Enrollment</h3>
+                            <p class="text-muted small mb-4">Enter your temporary student credentials received after completing your online pre-registration.</p>
+
+                            <div v-if="loginError" class="alert alert-danger text-start small mb-4 py-2 px-3">
+                                <i class="fas fa-circle-exclamation me-2"></i>{{ loginError }}
+                            </div>
+
+                            <form @submit.prevent="handleLogin">
+                                <div class="text-start mb-3">
+                                    <label class="form-label-custom">Temporary Student ID</label>
+                                    <input type="text" class="form-control portal-input font-monospace text-uppercase" 
+                                           v-model="loginForm.tempStudentId" 
+                                           placeholder="e.g. GNCP-2026-123456" required>
+                                </div>
+                                <div class="text-start mb-4">
+                                    <label class="form-label-custom">Access PIN Code</label>
+                                    <input type="password" class="form-control portal-input font-monospace" 
+                                           v-model="loginForm.tempPin" 
+                                           placeholder="6-digit PIN" maxlength="6" required>
+                                </div>
+                                <button type="submit" class="btn btn-pill btn-pill-green w-100 py-3" :disabled="isLoading">
+                                    <span v-if="isLoading"><i class="fas fa-spinner fa-spin me-2"></i>Verifying...</span>
+                                    <span v-else><i class="fas fa-right-to-bracket me-2"></i>Access Tracker Dashboard</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 VIEW 2: LOADING STATE
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <div v-if="currentView === 'LOADING'" class="text-center py-5">
+                <div class="spinner-border text-success mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+                <h5 class="fw-bold text-dark">Loading your enrollment status...</h5>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 VIEW 3: DASHBOARD
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <div v-if="currentView === 'DASHBOARD' && enrollmentData" class="row justify-content-center">
+                <div class="col-xl-10">
+                    
+                    <!-- Student Profile Header Banner -->
+                    <div class="tracker-profile-header card shadow-sm border-0 mb-4 p-4 rounded-4">
+                        <div class="row align-items-center g-3">
+                            <div class="col-md-8 text-center text-md-start">
+                                <span class="badge bg-success-subtle text-success fw-bold px-3 py-2 rounded-pill mb-2 text-uppercase font-monospace">
+                                    {{ enrollmentData.tempStudentId }}
+                                </span>
+                                <h3 class="fw-bold text-dark mb-1">
+                                    {{ enrollmentData.form.firstName }} {{ enrollmentData.form.lastName }}
+                                </h3>
+                                <p class="text-muted mb-0 small">
+                                    <i class="fas fa-graduation-cap me-2 text-primary-gold"></i>
+                                    {{ enrollmentData.form.courseCode }} — {{ getStudentTypeLabel(enrollmentData.form.studentType) }}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center text-md-end border-start-md">
+                                <div class="text-muted small mb-1">Overall Account Status</div>
+                                <span class="badge fs-6 px-3 py-2 rounded-pill" :class="enrollmentData.status === 'ENROLLED' ? 'bg-success' : (enrollmentData.status.toLowerCase() === 'approved' ? 'bg-info text-dark' : (enrollmentData.status === 'Rejected' ? 'bg-danger text-white' : 'bg-warning text-dark'))">
+                                    <i :class="enrollmentData.status === 'ENROLLED' ? 'fas fa-check-circle me-1' : (enrollmentData.status.toLowerCase() === 'approved' ? 'fas fa-thumbs-up me-1' : (enrollmentData.status === 'Rejected' ? 'fas fa-circle-xmark me-1' : 'fas fa-clock me-1'))"></i>
+                                    {{ enrollmentData.status === 'ENROLLED' ? 'OFFICIALLY ENROLLED' : (enrollmentData.status.toLowerCase() === 'approved' ? 'APPLICATION APPROVED' : (enrollmentData.status === 'Rejected' ? 'APPLICATION REJECTED' : 'PRE-REGISTERED')) }}
+                                </span>
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" @click="logout">
+                                        <i class="fas fa-right-from-bracket me-1"></i>Sign Out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enrolled Credentials Card -->
+                    <div class="card shadow-sm border-0 mb-4 p-4 rounded-4" style="background-color: rgba(25, 135, 84, 0.08); border-left: 5px solid #198754 !important;" v-if="enrollmentData.status === 'ENROLLED'">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="bg-white p-3 rounded-circle text-success shadow-sm">
+                                <i class="fas fa-id-card fs-3"></i>
+                            </div>
+                            <div>
+                                <span class="badge bg-success text-white fw-bold px-2 py-1 rounded mb-2" style="font-size: 0.7rem;">OFFICIAL CREDENTIALS</span>
+                                <h5 class="fw-bold text-dark mb-1">Your Enrollment is Finalized!</h5>
+                                <p class="text-dark small mb-3">Welcome to Go-on National College of the Philippines. Your student account is now active. Please use these credentials to log in to the Student Portal.</p>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <div class="p-3 bg-white rounded-3 border">
+                                            <div class="text-muted small mb-1">Permanent Student ID</div>
+                                            <strong class="text-dark fs-5 font-monospace">{{ enrollmentData.permanentId }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="p-3 bg-white rounded-3 border">
+                                            <div class="text-muted small mb-1">Institutional Email</div>
+                                            <strong class="text-dark fs-6 font-monospace">{{ enrollmentData.institutionalEmail }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rejection Reason Card -->
+                    <div class="card shadow-sm border-0 mb-4 p-4 rounded-4" style="background-color: rgba(239, 68, 68, 0.08); border-left: 5px solid #dc2626 !important;" v-if="enrollmentData.status === 'Rejected'">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="bg-white p-3 rounded-circle text-danger shadow-sm">
+                                <i class="fas fa-circle-xmark fs-3"></i>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger text-white fw-bold px-2 py-1 rounded mb-2" style="font-size: 0.7rem;">REGISTRATION DISAPPROVED</span>
+                                <h5 class="fw-bold text-dark mb-1">Your Application was Rejected</h5>
+                                <p class="text-dark small mb-3">We regret to inform you that your online pre-registration application has been rejected by the Registrar Office.</p>
+                                <div class="p-3 bg-white bg-opacity-75 rounded-3 border border-danger-subtle">
+                                    <div class="text-danger fw-bold small mb-1"><i class="fas fa-comment-dots me-1"></i>Registrar Coordinator Notes:</div>
+                                    <p class="mb-0 text-dark small font-monospace">{{ enrollmentData.registrarNotes || 'No specific notes provided. Please contact the Registrar Coordinator.' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar Summary Card -->
+                    <div class="card shadow-sm border-0 mb-4 p-4 rounded-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-dark mb-0"><i class="fas fa-chart-line me-2 text-primary-green"></i>Campus Verification Progress</h6>
+                            <span class="fw-bold text-primary-green font-monospace fs-5" v-if="enrollmentData.status !== 'Rejected'">{{ completedCount }} / {{ enrollmentData.roadmap.length }} Steps Done</span>
+                            <span class="fw-bold text-danger font-monospace fs-5" v-else>Process Discontinued</span>
+                        </div>
+                        <div class="progress enrollment-progress-bar mb-2" style="height: 12px; border-radius: 99px; background-color: #E9ECEF;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                 :class="enrollmentData.status === 'Rejected' ? 'bg-danger' : 'bg-success'"
+                                 :style="{ width: (enrollmentData.status === 'Rejected' ? 100 : progressPercent) + '%' }"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Started: {{ formatDate(enrollmentData.createdAt) }}</span>
+                            <span :class="enrollmentData.status === 'Rejected' ? 'text-danger fw-bold' : ''">
+                                {{ enrollmentData.status === 'Rejected' ? 'Application Terminated' : progressPercent + '% Complete' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Next Step Spotlight Card (hidden if application is rejected) -->
+                    <div class="card shadow-sm border-0 mb-4 p-4 rounded-4" style="background-color: var(--primary-green-light); border-left: 5px solid var(--primary-green) !important;" v-if="nextPendingStep && enrollmentData.status !== 'Rejected'">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="bg-white p-3 rounded-circle text-success shadow-sm">
+                                <i class="fas fa-bullseye fs-3"></i>
+                            </div>
+                            <div>
+                                <span class="badge bg-success text-white fw-bold px-2 py-1 rounded mb-2 uppercase" style="font-size: 0.7rem;">ACTION REQUIRED NEXT</span>
+                                <h5 class="fw-bold text-dark mb-1">{{ nextPendingStep.title }}</h5>
+                                <p class="text-dark small mb-2">{{ nextPendingStep.description }}</p>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-white text-dark border"><i class="fas fa-location-dot me-1 text-danger"></i>Location: {{ nextPendingStep.station }} ({{ nextPendingStep.location }})</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full Roadmap Live Timeline -->
+                    <div class="card shadow-sm border-0 p-4 p-md-5 rounded-4">
+                        <h5 class="fw-bold text-dark mb-4"><i class="fas fa-list-check me-2 text-primary-green"></i>Detailed Station Status Timeline</h5>
+
+                        <div class="campus-station-timeline">
+                            <div v-for="(step, idx) in enrollmentData.roadmap" :key="step.stepId" 
+                                 class="campus-station" 
+                                 :class="{ 
+                                     'station-done': step.status === 'COMPLETED' && enrollmentData.status !== 'Rejected',
+                                     'station-active': step.status === 'IN_PROGRESS' && enrollmentData.status !== 'Rejected',
+                                     'opacity-50': enrollmentData.status === 'Rejected' && step.status !== 'COMPLETED'
+                                 }">
+                                
+                                <!-- Status Marker Circle -->
+                                <div class="station-marker" :class="{
+                                    'marker-done': step.status === 'COMPLETED' && enrollmentData.status !== 'Rejected',
+                                    'bg-warning text-dark border-warning': step.status === 'IN_PROGRESS' && enrollmentData.status !== 'Rejected',
+                                    'bg-danger border-danger text-white': enrollmentData.status === 'Rejected' && step.status !== 'COMPLETED'
+                                }">
+                                    <i class="fas fa-check" v-if="step.status === 'COMPLETED' && enrollmentData.status !== 'Rejected'"></i>
+                                    <i class="fas fa-xmark" v-else-if="enrollmentData.status === 'Rejected' && step.status !== 'COMPLETED'"></i>
+                                    <span v-else>{{ idx + 1 }}</span>
+                                </div>
+
+                                <!-- Step Details Content -->
+                                <div class="station-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="station-badge">{{ step.station }} · {{ step.location }}</div>
+                                        
+                                        <!-- Status Pill -->
+                                        <span class="badge rounded-pill px-3 py-1" :class="{
+                                            'bg-success-subtle text-success': step.status === 'COMPLETED' && enrollmentData.status !== 'Rejected',
+                                            'bg-warning-subtle text-dark': step.status === 'IN_PROGRESS' && enrollmentData.status !== 'Rejected',
+                                            'bg-secondary-subtle text-secondary': step.status === 'PENDING' && enrollmentData.status !== 'Rejected',
+                                            'bg-danger-subtle text-danger': enrollmentData.status === 'Rejected' && step.status !== 'COMPLETED'
+                                        }">
+                                            <i :class="{
+                                                'fas fa-circle-check me-1': step.status === 'COMPLETED' && enrollmentData.status !== 'Rejected',
+                                                'fas fa-spinner fa-spin me-1': step.status === 'IN_PROGRESS' && enrollmentData.status !== 'Rejected',
+                                                'fas fa-hourglass-start me-1': step.status === 'PENDING' && enrollmentData.status !== 'Rejected',
+                                                'fas fa-ban me-1': enrollmentData.status === 'Rejected' && step.status !== 'COMPLETED'
+                                            }"></i>
+                                            {{ enrollmentData.status === 'Rejected' && step.status !== 'COMPLETED' ? 'CANCELLED' : step.status }}
+                                        </span>
+                                    </div>
+
+                                    <h6 class="station-name fs-6 mb-1">{{ step.title }}</h6>
+                                    <p class="station-desc text-muted mb-2">{{ step.description }}</p>
+                                    
+                                    <div v-if="step.updatedAt" class="text-muted" style="font-size: 0.75rem;">
+                                        <i class="fas fa-clock-rotate-left me-1"></i>Updated: {{ formatDate(step.updatedAt) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Vue 3 Global Build from CDN -->
+    <script src="../shared/libs/vue.global.js"></script>
+
+    <!-- ApiService Abstraction -->
+    <script src="assets/js/services/ApiService.js"></script>
+
+    <!-- Tracker App JS -->
+    <script src="assets/js/TrackerApp.js"></script>
+</body>
+</html>

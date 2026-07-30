@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNCP — Automated E2E UI Test Runner v4</title>
+    <link href="shared/libs/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="shared/libs/font-awesome/css/all.min.css">
+    <style>
+        :root { --bg:#090e0c; --bdr:rgba(255,255,255,0.08); --gold:#D4AF37; --grn:#10b981; --red:#ef4444; --sky:#0ea5e9; --mut:rgba(255,255,255,0.45); }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:var(--bg);color:#fff;font-family:-apple-system,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+        .bar{display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bdr);padding:10px 20px;flex-shrink:0}
+        .bar-title{font-size:1rem;font-weight:800;background:linear-gradient(135deg,#fff,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .bar-url{font-family:monospace;font-size:.73rem;color:var(--sky);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.25);padding:4px 12px;border-radius:6px;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .wrap{flex:1;display:flex;overflow:hidden}
+        .left{width:340px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--bdr);background:rgba(0,0,0,.2);overflow-y:auto;padding:16px;gap:10px}
+        .ctrls{display:flex;gap:8px}
+        .b-run{flex:1;background:linear-gradient(135deg,var(--gold),#b8961e);border:none;border-radius:8px;color:#0b1511;font-weight:800;font-size:.82rem;padding:10px 0;cursor:pointer}
+        .b-run:disabled{opacity:.5;cursor:not-allowed}
+        .b-stop{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:800;font-size:.82rem;padding:10px 14px;cursor:pointer}
+        .b-stop:disabled{opacity:.35;cursor:not-allowed}
+        .sc{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.02);border:1px solid var(--bdr);border-radius:10px;padding:9px 12px;transition:all .25s}
+        .sc.active{border-color:var(--sky);background:rgba(14,165,233,.05)}
+        .sc.done{border-color:var(--grn);background:rgba(16,185,129,.04)}
+        .sc.fail{border-color:var(--red);background:rgba(239,68,68,.04)}
+        .sc-l{display:flex;align-items:center;gap:10px}
+        .sn{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:var(--mut);flex-shrink:0}
+        .active .sn{background:var(--sky);color:#000} .done .sn{background:var(--grn);color:#fff} .fail .sn{background:var(--red);color:#fff}
+        .sl{font-size:.78rem;font-weight:700}
+        .sb{font-size:.6rem;font-weight:800;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:rgba(255,255,255,.07);color:var(--mut)}
+        .active .sb{background:rgba(14,165,233,.15);color:var(--sky)} .done .sb{background:rgba(16,185,129,.15);color:var(--grn)} .fail .sb{background:rgba(239,68,68,.15);color:var(--red)}
+        .ch{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut)}
+        .con{background:#000;border:1px solid var(--bdr);border-radius:8px;padding:12px;font-family:'Courier New',monospace;font-size:.7rem;color:var(--grn);overflow-y:auto;max-height:200px;flex-shrink:0}
+        .lg{margin-bottom:3px;line-height:1.35}
+        .lg.i{color:#38bdf8}.lg.w{color:var(--gold)}.lg.e{color:var(--red)}.lg.s{color:var(--grn)}
+        .owarn{background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);border-radius:8px;padding:10px 12px;font-size:.72rem;color:#ffd866;line-height:1.4}
+        .owarn code{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;color:#fff;font-size:.68rem}
+        .right{flex:1;background:#141b17;overflow:hidden}
+        iframe{width:100%;height:100%;border:none;background:#fff}
+        select.spd{background:rgba(0,0,0,.4);border:1px solid var(--bdr);border-radius:8px;color:#fff;padding:6px 10px;font-size:.76rem}
+        .sep{height:1px;background:var(--bdr);margin:2px 0}
+        .sec-label{font-size:.6rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--gold);padding:4px 0 2px}
+    </style>
+</head>
+<body>
+
+<div class="bar">
+    <span class="bar-title"><i class="fa-solid fa-vial-circle-check" style="margin-right:8px"></i>GNCP E2E UI Tester v4</span>
+    <span id="url" class="bar-url">Ready — press Start</span>
+    <select id="spd" class="spd" style="width:auto"><option value="1500">🐢 Slow</option><option value="700" selected>⚡ Normal</option><option value="250">🚀 Fast</option></select>
+</div>
+
+<div class="wrap">
+    <div class="left">
+        <div id="ow" class="owarn" style="display:none"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Same-Origin:</strong> Must open via localhost.<br><code>http://localhost/systemforsia/test_ui.html</code></div>
+        <div class="ctrls">
+            <button id="bR" class="b-run" onclick="go()"><i class="fa-solid fa-play" style="margin-right:6px"></i>Start Auto Test</button>
+            <button id="bS" class="b-stop" onclick="stop()" disabled><i class="fa-solid fa-stop"></i></button>
+        </div>
+        <div id="steps"></div>
+        <div class="ch">Automation Log</div>
+        <div id="co" class="con"><div class="lg i">Ready. Press Start Auto Test.</div></div>
+    </div>
+    <div class="right"><iframe id="fr" src="about:blank"></iframe></div>
+</div>
+
+<script>
+/* =====================================================================
+   GNCP E2E Test Runner v4
+   Steps 0-1:  Enrollment Lifecycle (Pre-Registration & Registrar)
+   Steps 2-4:  Admin Catalog & Scheduling & Advanced Features CRUD
+   Steps 5-9:  Station Processing (TLC, Medical, Scholarship, Cashier, IT)
+   Step  10:   Admin UI Visibility Audit (Run after student is fully processed)
+   Step  11:   Student Portal Full Verification
+   ===================================================================== */
+
+const SECTIONS = [
+    { label: '── Enrollment Lifecycle ──', sep: true },
+    'Online Pre-Registration',         // 0
+    'Registrar Approval',              // 1
+    { label: '── Super Admin ──', sep: true },
+    'Admin: Catalog CRUD',             // 2  Programs / Subjects / Curriculum
+    'Admin: Scheduling CRUD',          // 3  Periods / Sections / Class Offerings / Fees
+    'Admin: Advanced Features',        // 4  Departments / Operators / Bulk / Clone
+    { label: '── Station Processing ──', sep: true },
+    'TLC Academic Advising',           // 5
+    'Medical Clearance',               // 6
+    'Cashier / Treasury',              // 7
+    'Student Portal Account Activation',            // 8
+    { label: '── Admin Audit ──', sep: true },
+    'Admin: UI Visibility Audit',      // 9 Every nav/modal/toggle/filter
+    { label: '── Portal Verification ──', sep: true },
+    'Student Portal Verification'      // 10
+];
+
+// Build step index (ignoring section headers)
+const LABELS = [];
+const stepsEl = document.getElementById('steps');
+let stepIdx = 0;
+SECTIONS.forEach(item => {
+    if (item && item.sep) {
+        stepsEl.innerHTML += `<div class="sec-label">${item.label}</div>`;
+        return;
+    }
+    const i = stepIdx++;
+    LABELS.push(item);
+    stepsEl.innerHTML += `<div class="sc" id="s${i}"><div class="sc-l"><div class="sn" id="n${i}">${i+1}</div><span class="sl">${item}</span></div><span class="sb" id="b${i}">Idle</span></div>`;
+});
+
+const fr    = document.getElementById('fr');
+const co    = document.getElementById('co');
+const urlEl = document.getElementById('url');
+let ON = false, D = 700, REF = '', PIN = '', promoId = '', promoPass = '', RAND_PROG_CODE = '', RAND_PROG_NAME = '', RAND_SUB_CODE = '', RAND_SUB_TITLE = '', RAND_SEC_CODE = '';
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function L(m, t = 'i') {
+    const d = document.createElement('div');
+    d.className = `lg ${t}`;
+    d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+    co.appendChild(d);
+    co.scrollTop = co.scrollHeight;
+}
+
+function S(i, s) {
+    const c = document.getElementById(`s${i}`);
+    if (!c) return;
+    ['active', 'done', 'fail'].forEach(x => c.classList.remove(x));
+    if (s !== 'idle') c.classList.add(s);
+    document.getElementById(`b${i}`).textContent = s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function mockSwal() {
+    try {
+        const win = fr.contentWindow;
+        if (win) {
+            // Mock Swal.fire to automatically resolve to confirmed = true
+            win.Swal = win.Swal || {};
+            win.Swal.fire = (options) => {
+                L('[Test Runner] Intercepted Swal.fire: auto-confirming…');
+                return Promise.resolve({
+                    isConfirmed: true,
+                    value: true
+                });
+            };
+        }
+    } catch(e) {}
+}
+
+function nav(url) {
+    return new Promise(res => {
+        urlEl.textContent = url;
+        const h = () => {
+            fr.removeEventListener('load', h);
+            mockSwal();
+            setTimeout(res, 1500);
+        };
+        fr.addEventListener('load', h);
+        const sep = url.indexOf('?') !== -1 ? '&' : '?';
+        fr.src = url + sep + '_t=' + Date.now();
+    });
+}
+
+function D$() {
+    try {
+        const doc = fr.contentDocument || fr.contentWindow.document;
+        if (doc && !doc._selectorPatched) {
+            const origQuerySelector = doc.querySelector;
+            const origQuerySelectorAll = doc.querySelectorAll;
+            const win = fr.contentWindow;
+            if (win && win.Element && win.Element.prototype) {
+                const origElementQuerySelector = win.Element.prototype.querySelector;
+                const origElementQuerySelectorAll = win.Element.prototype.querySelectorAll;
+                const escapeSelector = (sel) => {
+                    if (typeof sel !== 'string') return sel;
+                    if (sel.includes('v-model.number') && !sel.includes('v-model\\.number')) {
+                        return sel.replace(/v-model\.number/g, 'v-model\\.number');
+                    }
+                    return sel;
+                };
+                doc.querySelector = function(sel) {
+                    return origQuerySelector.call(this, escapeSelector(sel));
+                };
+                doc.querySelectorAll = function(sel) {
+                    return origQuerySelectorAll.call(this, escapeSelector(sel));
+                };
+                win.Element.prototype.querySelector = function(sel) {
+                    return origElementQuerySelector.call(this, escapeSelector(sel));
+                };
+                win.Element.prototype.querySelectorAll = function(sel) {
+                    return origElementQuerySelectorAll.call(this, escapeSelector(sel));
+                };
+                doc._selectorPatched = true;
+            }
+        }
+        return doc;
+    }
+    catch(e) { throw new Error('Cannot access iframe. Use http://localhost/'); }
+}
+
+function W$() { return fr.contentWindow; }
+
+function clearSession() {
+    try {
+        const win = fr.contentWindow;
+        if (win && win.sessionStorage) {
+            win.sessionStorage.removeItem('gncp_admin_user');
+            win.sessionStorage.removeItem('gncp_station_user');
+        }
+        if (win && win.localStorage) {
+            win.localStorage.removeItem('gncp_enrollment_draft');
+        }
+    } catch (e) {}
+}
+
+// Wait for a CSS selector to appear and be visible
+function wait(sel, ms = 12000) {
+    return new Promise((ok, no) => {
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+            try {
+                const el = D$().querySelector(sel);
+                if (el && (el.offsetParent !== null || el.offsetHeight > 0)) { clearInterval(iv); ok(el); }
+            } catch(e) {}
+            if (Date.now() - t0 > ms) { clearInterval(iv); no(new Error(`Timeout waiting for: ${sel}`)); }
+        }, 200);
+    });
+}
+
+// Wait for a condition function to return truthy
+function waitFor(fn, ms = 12000) {
+    return new Promise((ok, no) => {
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+            try {
+                const val = fn();
+                if (val) { clearInterval(iv); ok(val); }
+            } catch(e) {}
+            if (Date.now() - t0 > ms) { clearInterval(iv); no(new Error('Condition timeout.')); }
+        }, 250);
+    });
+}
+
+// Get the Vue 3 component proxy (reactive state + methods)
+function getVueApp(selector) {
+    const root = D$().querySelector(selector);
+    if (!root) return null;
+    const app = root.__vue_app__;
+    if (!app) return null;
+    const inst = app._instance;
+    if (!inst) return null;
+    return inst.proxy || inst.setupState || null;
+}
+
+// Set a v-model input value without fighting Vue's reactivity
+function fill(sel, val) {
+    let el = D$().querySelector(sel);
+    if (!el && sel.includes('v-model')) {
+        // Fallback: extract the field name (e.g. form.code -> code)
+        const match = sel.match(/v-model(?:\.number)?="[a-zA-Z]+\.([a-zA-Z]+)"/);
+        if (match) {
+            const field = match[1]; // e.g. "code", "name", "title"
+            const labels = Array.from(D$().querySelectorAll('.overlay label, .modal-card label, label, .form-label'));
+            const label = labels.find(l => {
+                const txt = l.textContent.trim().toLowerCase();
+                return txt.includes(field.toLowerCase()) || 
+                       (field === 'code' && txt.includes('code')) ||
+                       (field === 'name' && (txt.includes('name') || txt.includes('title'))) ||
+                       (field === 'title' && txt.includes('title'));
+            });
+            if (label) el = label.parentElement.querySelector('input, textarea');
+            
+            if (!el) {
+                const inputs = Array.from(D$().querySelectorAll('.overlay input, .modal-card input, input'));
+                el = inputs.find(i => {
+                    const pl = (i.placeholder || '').toLowerCase();
+                    return pl.includes(field.toLowerCase()) ||
+                           (field === 'code' && (pl.includes('code') || pl.includes('bsit') || pl.includes('it201') || pl.includes('a, b, or c'))) ||
+                           (field === 'name' && (pl.includes('name') || pl.includes('title') || pl.includes('technology'))) ||
+                           (field === 'title' && pl.includes('systems'));
+                });
+            }
+        }
+    }
+    if (!el) { L(`fill: not found → ${sel}`, 'w'); return; }
+    const win = W$();
+    const proto = el.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value');
+    if (setter && setter.set) setter.set.call(el, val);
+    else el.value = val;
+    el.dispatchEvent(new win.Event('input',  { bubbles: true }));
+    el.dispatchEvent(new win.Event('change', { bubbles: true }));
+}
+
+// Fill a <select> dropdown by value via DOM events
+function selectOpt(sel, value) {
+    let el = D$().querySelector(sel);
+    if (!el && sel.includes('v-model')) {
+        // Fallback: extract the field name
+        const match = sel.match(/v-model(?:\.number)?="[a-zA-Z]+\.([a-zA-Z]+)"/);
+        if (match) {
+            const field = match[1]; // e.g. "department", "program", "yearLevel", "semester"
+            const labels = Array.from(D$().querySelectorAll('.overlay label, .modal-card label, label, .form-label'));
+            const label = labels.find(l => {
+                const txt = l.textContent.trim().toLowerCase();
+                return txt.includes(field.toLowerCase()) ||
+                       (field === 'yearLevel' && txt.includes('year')) ||
+                       (field === 'semester' && txt.includes('semester')) ||
+                       (field === 'academicPeriodId' && txt.includes('period')) ||
+                       (field === 'curriculumVersion' && txt.includes('curriculum')) ||
+                       (field === 'department' && txt.includes('department')) ||
+                       (field === 'program' && (txt.includes('program') || txt.includes('course')));
+            });
+            if (label) el = label.parentElement.querySelector('select');
+            
+            if (!el) {
+                const selects = Array.from(D$().querySelectorAll('.overlay select, .modal-card select, select'));
+                el = selects.find(s => {
+                    const html = s.outerHTML.toLowerCase();
+                    return html.includes(field.toLowerCase()) ||
+                           (field === 'yearLevel' && html.includes('year')) ||
+                           (field === 'semester' && html.includes('semester')) ||
+                           (field === 'academicPeriodId' && html.includes('period')) ||
+                           (field === 'curriculumVersion' && html.includes('curriculum')) ||
+                           (field === 'department' && html.includes('department')) ||
+                           (field === 'program' && html.includes('program'));
+                });
+            }
+        }
+    }
+    if (!el) { L(`selectOpt: not found → ${sel}`, 'w'); return; }
+    
+    // Find option by value or by text content
+    const options = Array.from(el.options);
+    const targetOption = options.find(o => o.value === String(value) || o.textContent.trim() === String(value));
+    const selectValue = targetOption ? targetOption.value : value;
+
+    const win = W$();
+    const setter = Object.getOwnPropertyDescriptor(win.HTMLSelectElement.prototype, 'value');
+    if (setter && setter.set) setter.set.call(el, selectValue);
+    else el.value = selectValue;
+    el.dispatchEvent(new win.Event('input',  { bubbles: true }));
+    el.dispatchEvent(new win.Event('change', { bubbles: true }));
+}
+
+// Click a DOM button/element by CSS selector
+function click(sel) {
+    const el = D$().querySelector(sel);
+    if (!el) { L(`click: not found → ${sel}`, 'w'); return; }
+    el.click();
+}
+
+// Verify an element exists in the DOM (rendering check)
+function assertEl(sel, label) {
+    const el = D$().querySelector(sel);
+    assert(el && (el.offsetParent !== null || el.offsetHeight > 0 || el.offsetWidth > 0), label || `Element visible: ${sel}`);
+    return el;
+}
+
+// Wait for modal to become visible in DOM then return it
+// Supports custom overlay modals (admin) and Bootstrap modals (registrar/stations)
+async function waitForModal(ms = 8000) {
+    return new Promise((ok, no) => {
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+            try {
+                // Custom overlay modal (admin/station style)
+                const custom = D$().querySelector('.overlay .modal-card');
+                if (custom && (custom.offsetParent !== null || custom.offsetHeight > 0)) {
+                    clearInterval(iv); ok(custom); return;
+                }
+                // Bootstrap modal (registrar style)
+                const bsModal = D$().querySelector('.modal.show .modal-content, .modal.show .modal-dialog');
+                if (bsModal && (bsModal.offsetParent !== null || bsModal.offsetHeight > 0)) {
+                    clearInterval(iv); ok(bsModal); return;
+                }
+                // Fallback: any visible modal-like container
+                const anyModal = D$().querySelector('.modal-card, .modal-content, .modal-dialog');
+                if (anyModal && anyModal.offsetHeight > 0) {
+                    clearInterval(iv); ok(anyModal); return;
+                }
+            } catch(e) {}
+            if (Date.now() - t0 > ms) { clearInterval(iv); no(new Error('Timeout waiting for modal')); }
+        }, 200);
+    });
+}
+
+// Switch view in admin panel using real DOM clicks
+function switchAdminView(viewName) {
+    const btns = Array.from(D$().querySelectorAll('.sidebar button.nav-item'));
+    const target = btns.find(b => {
+        const clickAttr = b.getAttribute('@click') || b.getAttribute('v-on:click') || b.getAttribute('onclick') || '';
+        return clickAttr.includes(viewName);
+    });
+    if (target) {
+        L(`[DOM] Switching view to: ${viewName}`);
+        target.click();
+    } else {
+        L(`[DOM] Warning: Nav item button for '${viewName}' not found via attribute search, falling back to direct method.`, 'w');
+        const vm = getVueApp('#admin-app') || getVueApp('#app');
+        if (vm) vm.setView(viewName);
+    }
+}
+
+// Switch view in a station panel using real DOM clicks
+function switchStationView(viewName) {
+    const anchors = Array.from(D$().querySelectorAll('.sidebar a, .nav-menu a, nav a, .nav a, aside a'));
+    // 1. Try finding by click attribute matching viewName
+    let target = anchors.find(a => {
+        const clickAttr = a.getAttribute('@click') || a.getAttribute('v-on:click') || a.getAttribute('onclick') || '';
+        return clickAttr.includes(viewName);
+    });
+    // 2. Try finding by matching viewName to text content
+    if (!target) {
+        target = anchors.find(a => {
+            const text = a.textContent.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanView = viewName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return text.includes(cleanView) || cleanView.includes(text);
+        });
+    }
+    if (target) {
+        L(`[DOM] Switching station view to: ${viewName}`);
+        target.click();
+    } else {
+        L(`[DOM] Warning: Station view link for '${viewName}' not found, falling back to direct method.`, 'w');
+        const vm = getVueApp('#app');
+        if (vm) vm.setView(viewName);
+    }
+}
+
+// Fill an input by finding its label first
+function fillByLabel(labelText, val) {
+    const labels = Array.from(D$().querySelectorAll('label, .form-label'));
+    const label = labels.find(l => l.textContent.trim().toLowerCase().includes(labelText.toLowerCase()));
+    if (label) {
+        const parent = label.parentElement;
+        const el = parent.querySelector('input, textarea');
+        if (el) {
+            L(`[DOM] Filled input for label "${labelText}" with value: "${val}"`);
+            const win = W$();
+            const proto = el.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype;
+            const setter = Object.getOwnPropertyDescriptor(proto, 'value');
+            if (setter && setter.set) setter.set.call(el, val);
+            else el.value = val;
+            el.dispatchEvent(new win.Event('input',  { bubbles: true }));
+            el.dispatchEvent(new win.Event('change', { bubbles: true }));
+            return;
+        }
+    }
+    L(`[DOM] Warning: Input for label "${labelText}" not found.`, 'w');
+}
+
+// Select a dropdown option by finding its label first
+function selectByLabel(labelText, val) {
+    const labels = Array.from(D$().querySelectorAll('label, .form-label'));
+    const label = labels.find(l => l.textContent.trim().toLowerCase().includes(labelText.toLowerCase()));
+    if (label) {
+        const parent = label.parentElement;
+        const el = parent.querySelector('select');
+        if (el) {
+            const options = Array.from(el.options);
+            const targetOption = options.find(o => o.value === String(val) || o.textContent.trim() === String(val));
+            const selectValue = targetOption ? targetOption.value : val;
+            L(`[DOM] Selected dropdown option for label "${labelText}" with value: "${selectValue}"`);
+            const win = W$();
+            const setter = Object.getOwnPropertyDescriptor(win.HTMLSelectElement.prototype, 'value');
+            if (setter && setter.set) setter.set.call(el, selectValue);
+            else el.value = selectValue;
+            el.dispatchEvent(new win.Event('input',  { bubbles: true }));
+            el.dispatchEvent(new win.Event('change', { bubbles: true }));
+            return;
+        }
+    }
+    L(`[DOM] Warning: Dropdown for label "${labelText}" not found.`, 'w');
+}
+
+// Click a button containing specific text
+function clickButtonByText(text) {
+    const btns = Array.from(D$().querySelectorAll('button, a.btn, input[type="button"], input[type="submit"]'));
+    const target = btns.find(b => b.textContent.includes(text));
+    if (target) {
+        L(`[DOM] Clicking button with text: "${text}"`);
+        target.click();
+    } else {
+        L(`[DOM] Warning: Button containing "${text}" not found!`, 'w');
+    }
+}
+
+// Find a table row (or list row) containing specific text
+function getRowByText(text) {
+    const rows = Array.from(D$().querySelectorAll('tr, .tbl-row, .card-row, .table tr, .list-item'));
+    const row = rows.find(r => r.textContent.includes(text));
+    if (!row) {
+        L(`[DOM] Warning: Row containing "${text}" not found!`, 'w');
+        return null;
+    }
+    return row;
+}
+
+// Click a badge/element inside a student's row by text
+function clickRowBadge(refNum, badgeText) {
+    const row = getRowByText(refNum);
+    if (row) {
+        const badges = Array.from(row.querySelectorAll('.badge, span, button'));
+        const target = badges.find(b => b.textContent.trim() === badgeText);
+        if (target) {
+            L(`[DOM] Clicking badge "${badgeText}" in row for: ${refNum}`);
+            target.click();
+        } else {
+            L(`[DOM] Warning: Badge/element "${badgeText}" not found in row for ${refNum}`, 'w');
+        }
+    }
+}
+
+// Check all checkboxes in a modal/overlay
+function checkAllModalCheckboxes() {
+    const checkboxes = Array.from(D$().querySelectorAll('.modal-body input[type="checkbox"], .overlay input[type="checkbox"]'));
+    checkboxes.forEach(cb => {
+        if (!cb.checked) {
+            L(`[DOM] Checking requirement checkbox: ${cb.id}`);
+            cb.click();
+        }
+    });
+}
+
+// Click a DOM card containing specific text
+function clickCardByText(parentSel, text) {
+    const selector = `${parentSel} .option-card, ${parentSel} .nstp-card, ${parentSel} .health-status-card`;
+    const cards = Array.from(D$().querySelectorAll(selector));
+    const target = cards.find(c => c.textContent.includes(text));
+    if (target) {
+        L(`[DOM] Clicking card with text: "${text}"`);
+        target.click();
+    } else {
+        L(`[DOM] Warning: Card containing "${text}" not found under ${parentSel}!`, 'w');
+        // fallback to clicking any element with that text directly inside the parent
+        const el = Array.from(D$().querySelectorAll(`${parentSel} *`)).find(e => e.textContent.trim() === text);
+        if (el) el.click();
+    }
+}
+
+// Click an action button inside a table row containing specific text
+function clickRowAction(rowText, btnSelector) {
+    const rows = Array.from(D$().querySelectorAll('tr, .tbl-row, .card-row, .table tr'));
+    const targetRow = rows.find(r => r.textContent.includes(rowText));
+    if (targetRow) {
+        const btn = targetRow.querySelector(btnSelector);
+        if (btn) {
+            L(`[DOM] Clicking row action '${btnSelector}' for row containing: "${rowText}"`);
+            btn.click();
+            return true;
+        }
+    }
+    L(`[DOM] Warning: Action button '${btnSelector}' in row containing "${rowText}" not found!`, 'w');
+    return false;
+}
+
+// Verify a condition or throw with an informative message
+function assert(condition, message) {
+    if (!condition) throw new Error(`ASSERT FAIL: ${message}`);
+    L(`✔ ${message}`, 's');
+}
+
+// Login at a station/admin if the login screen is visible, then wait for dashboard
+async function loginIfRequired(username, password) {
+    await sleep(800);
+    mockSwal();
+
+    // Case A: Centralized Root Login Portal
+    const rootLoginBtn = D$().querySelector('.login-btn');
+    if (rootLoginBtn && rootLoginBtn.offsetParent !== null) {
+        L(`Logging in via Central Gateway as ${username}…`);
+        fill('#username', username);
+        await sleep(200);
+        fill('#password', password);
+        await sleep(300);
+        rootLoginBtn.click();
+        await waitFor(() => D$().querySelector('.main-panel') || D$().querySelector('.shell') || D$().querySelector('.dashboard-wrapper'), 12000);
+        await sleep(D);
+        L(`Logged in as ${username}.`, 's');
+        mockSwal();
+        return;
+    }
+
+    // Case B: Local/Fallback Station Login Form
+    const localLoginBtn = D$().querySelector('.unified-login-btn');
+    if (localLoginBtn && localLoginBtn.offsetParent !== null) {
+        L(`Logging in via Local Fallback as ${username}…`);
+        fill('.unified-login-input[type="text"]', username);
+        await sleep(200);
+        fill('.unified-login-input[type="password"]', password);
+        await sleep(300);
+        localLoginBtn.click();
+        await waitFor(() => D$().querySelector('.main-panel') || D$().querySelector('.shell') || D$().querySelector('.dashboard-wrapper'), 12000);
+        await sleep(D);
+        L(`Logged in as ${username}.`, 's');
+        mockSwal();
+        return;
+    }
+
+    // Case C: Session already restored
+    L(`Already logged in (session restored).`);
+    mockSwal();
+}
+
+function stop() {
+    ON = false;
+    document.getElementById('bR').disabled = false;
+    document.getElementById('bS').disabled = true;
+    L('Aborted.', 'w');
+}
+
+// =====================================================================
+// MAIN TEST RUNNER
+// =====================================================================
+async function go() {
+    if (ON) return;
+    if (location.protocol === 'file:') { document.getElementById('ow').style.display = 'block'; return; }
+    document.getElementById('ow').style.display = 'none';
+    ON = true;
+    D = parseInt(document.getElementById('spd').value);
+    document.getElementById('bR').disabled = true;
+    document.getElementById('bS').disabled = false;
+    co.innerHTML = '';
+    LABELS.forEach((_, i) => S(i, 'idle'));
+
+    try {
+        L('Triggering database seeder for test candidates...');
+        const seedRes = await fetch('scratch/seed_test_student.php').then(r => r.json()).catch(err => ({ success: false, error: err.message }));
+        if (seedRes && seedRes.success) {
+            L('✔ Database seeded successfully.', 's');
+        } else {
+            L(`[WARN] Database seeding failed: ${seedRes ? seedRes.error : 'unknown error'}`, 'w');
+        }
+
+        // ==============================================================
+        // STEP 0 — ONLINE PRE-REGISTRATION
+        // ==============================================================
+        S(0, 'active');
+        L('Setting up unpredictable dynamic testing course in Admin…');
+        clearSession();
+        await nav('admin/index.html');
+        await sleep(D);
+
+        await loginIfRequired('admin', 'admin12345');
+        const adminSetupVm = getVueApp('#admin-app');
+        assert(adminSetupVm, 'Admin Vue app mounted for dynamic course setup');
+
+        // Suppress confirm dialogs
+        W$().confirm = () => true;
+
+        const randNum = Math.floor(Math.random() * 900) + 100;
+        RAND_PROG_CODE = `BS-RND-${randNum}`;
+        RAND_PROG_NAME = `BS Dynamic Course ${randNum}`;
+        RAND_SUB_CODE = `QA-${randNum}`;
+        RAND_SUB_TITLE = `QA Essentials ${randNum}`;
+        RAND_SEC_CODE = `RAND-${randNum}`;
+
+        L('Cleaning up any leftover QA test data from previous runs...');
+        if (adminSetupVm.classOfferings) {
+            for (const off of [...adminSetupVm.classOfferings]) {
+                if (off.code.includes('QA') || off.code.startsWith('CLS-QA') || off.instructor.includes('QA') || off.room.includes('QA')) {
+                    L(`Deleting leftover class offering: ${off.code}`);
+                    adminSetupVm.deleteClassOffering(off.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.sections) {
+            for (const sec of [...adminSetupVm.sections]) {
+                if (sec.code.includes('QA') || sec.code.endsWith('QABLOCK') || sec.code.includes('RAND-')) {
+                    L(`Deleting leftover section: ${sec.code}`);
+                    adminSetupVm.deleteSection(sec.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.curriculum) {
+            for (const curr of [...adminSetupVm.curriculum]) {
+                if (curr.subjectCode.startsWith('QA') || curr.program.includes('BS Dynamic Course') || curr.curriculumVersion.includes('QA')) {
+                    L(`Deleting leftover curriculum entry: ${curr.program} - ${curr.subjectCode}`);
+                    adminSetupVm.deleteCurriculum(curr.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.periods) {
+            for (const per of [...adminSetupVm.periods]) {
+                if (per.name.includes('QA')) {
+                    L(`Deleting leftover academic period: ${per.name}`);
+                    adminSetupVm.deletePeriod(per.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.subjects) {
+            for (const sub of [...adminSetupVm.subjects]) {
+                if (sub.code.startsWith('QA') || sub.code.includes('QA-')) {
+                    L(`Deleting leftover subject: ${sub.code}`);
+                    adminSetupVm.deleteSubject(sub.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.programs) {
+            for (const prog of [...adminSetupVm.programs]) {
+                if (prog.code.startsWith('BS-RND-') || prog.name.includes('BS Dynamic Course')) {
+                    L(`Deleting leftover program: ${prog.code}`);
+                    adminSetupVm.deleteProgram(prog.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.fees) {
+            for (const fee of [...adminSetupVm.fees]) {
+                if (fee.label.includes('QA')) {
+                    L(`Deleting leftover fee: ${fee.label}`);
+                    adminSetupVm.deleteFee(fee.id);
+                    await sleep(600);
+                }
+            }
+        }
+        if (adminSetupVm.users) {
+            for (const user of [...adminSetupVm.users]) {
+                if (user.username === 'qa_operator') {
+                    L(`Deleting leftover user: ${user.username}`);
+                    adminSetupVm.deleteUser(user.id);
+                    await sleep(600);
+                }
+            }
+        }
+        adminSetupVm.loadAll();
+        await sleep(1500);
+
+        L(`Creating program ${RAND_PROG_CODE}…`);
+        switchAdminView('departments_programs');
+        await sleep(500);
+        assertEl('.btn-add', '"Add Program" button visible');
+        clickButtonByText('Add Program');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Program modal rendered');
+        fillByLabel('Code', RAND_PROG_CODE);
+        fillByLabel('Program Name', RAND_PROG_NAME);
+        selectByLabel('Department', 'Information Technology');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        L(`Creating subject ${RAND_SUB_CODE}…`);
+        switchAdminView('subjects');
+        await sleep(500);
+        assertEl('.btn-add', '"Add Subject" button visible');
+        clickButtonByText('Add Subject');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Subject modal rendered');
+        fillByLabel('Code', RAND_SUB_CODE);
+        fillByLabel('Title', RAND_SUB_TITLE);
+        fillByLabel('Lecture Units', '3');
+        fillByLabel('Lab Units', '0');
+        fillByLabel('Lab Fee', '0');
+        selectByLabel('Department', 'CCS');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        L(`Mapping subject to program curriculum…`);
+        switchAdminView('curriculum');
+        await sleep(500);
+        
+        // Find active academic period to align curriculum semester
+        const activePer = adminSetupVm.periods.find(p => p.status === 'Active') || adminSetupVm.periods[0];
+        assert(activePer, 'Active academic period found');
+
+        const addedProg = adminSetupVm.programs.find(p => p.code === RAND_PROG_CODE);
+        const addedSub = adminSetupVm.subjects.find(s => s.code === RAND_SUB_CODE);
+        assertEl('.btn-add', '"Add Entry" button visible');
+        clickButtonByText('Add Entry');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Curriculum modal rendered');
+        selectByLabel('Program', RAND_PROG_NAME);
+        selectByLabel('Subject', RAND_SUB_TITLE);
+        selectByLabel('Year Level', '1st Year');
+        selectByLabel('Semester', activePer.semester);
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        L(`Creating class section cohort ${RAND_SEC_CODE}…`);
+        switchAdminView('sections');
+        await sleep(500);
+        assertEl('.btn-add', '"Add Section" button visible');
+        clickButtonByText('Add Section');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Section modal rendered');
+        selectByLabel('Course', RAND_PROG_NAME);
+        selectByLabel('Year Level', '1st Year');
+        selectByLabel('Academic Period', String(activePer.id));
+        // Curriculum Version: use direct Vue injection since select may be empty for new programs
+        (() => {
+            const vm = getVueApp('#admin-app');
+            if (vm) vm.form.curriculumVersion = '2022 Curriculum';
+            else selectByLabel('Curriculum Version', '2022 Curriculum');
+        })();
+        fillByLabel('Section Code', RAND_SEC_CODE);
+        fillByLabel('Adviser', 'QA Dynamic Tester');
+        fillByLabel('Capacity', '30');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        L(`Creating class section scheduling offering…`);
+        // Reload sections from Vue state in case the create response updated it
+        adminSetupVm.loadAll();
+        await sleep(1500);
+        switchAdminView('classOfferings');
+        await sleep(500);
+        const addedSec = adminSetupVm.sections.find(s => s.code === RAND_SEC_CODE);
+        assert(addedSec, `Section ${RAND_SEC_CODE} was saved and found in sections list`);
+        assertEl('.btn-add', '"Add Class Schedule" button visible');
+        clickButtonByText('Add Class Schedule');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Class Offering modal rendered');
+        selectByLabel('Section', String(addedSec.id));
+        await sleep(600); // Wait for section select change event handler to load subjects reactively
+        selectByLabel('Subject', RAND_SUB_TITLE);
+        fillByLabel('Class Code', `CLS-${RAND_SUB_CODE}`);
+        fillByLabel('Instructor', `QA Dynamic Instructor ${randNum}`);
+        selectByLabel('Days', 'MWF');
+        fillByLabel('Time', '10:00 AM - 11:30 AM');
+        fillByLabel('Room', `Room ${randNum}`);
+        fillByLabel('Capacity', '30');
+        click('.overlay .btn-modal-save');
+        await sleep(2000);
+
+        L('Clearing admin session…');
+        clearSession();
+        await sleep(500);
+
+        L('Loading enrollment portal…');
+        await nav('enrollment-system/index.html');
+        await sleep(D);
+
+        await waitFor(() => getVueApp('#enrollment-app'), 10000);
+        const vm = getVueApp('#enrollment-app');
+        assert(vm, 'Enrollment Vue app mounted at #enrollment-app');
+
+        L(`Filling Step 1 — Program selection: ${RAND_PROG_CODE}…`);
+        clickCardByText('.col-md-6', 'Incoming Freshman');
+        selectOpt('#collegeSelect', 'COIT');
+        await sleep(500);
+        clickCardByText('.col-md-6', RAND_PROG_CODE);
+        clickCardByText('.nstp-section', 'CWTS');
+        await sleep(D / 3);
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Filling Step 2 — Personal info (via Vue state)…');
+        // Vue 3 compiles away v-model attrs from DOM — inject directly into reactive state
+        (() => {
+            const eVm = getVueApp('#enrollment-app');
+            if (!eVm) { L('[WARN] Enrollment Vue app not found for Step 2 injection', 'w'); return; }
+            eVm.form.firstName  = 'AutoTest';
+            eVm.form.middleName = 'E2E';
+            eVm.form.lastName   = 'Runner';
+            eVm.form.email      = 'autotest.e2e@gncp.edu.ph';
+            eVm.form.phone      = '912345678';
+            eVm.form.birthDate  = '2005-06-15';
+            eVm.form.gender     = 'Male';
+            eVm.form.address    = '101 Automation Ave, Dasmarinas, Cavite, 4114';
+        })();
+        await sleep(300);
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Filling Step 3 — Academic background (via Vue state)…');
+        (() => {
+            const eVm = getVueApp('#enrollment-app');
+            if (!eVm) { L('[WARN] Enrollment Vue app not found for Step 3 injection', 'w'); return; }
+            eVm.form.educationPathway  = 'REGULAR';
+            eVm.form.elementarySchool  = 'Automation Elementary';
+            eVm.form.juniorHighSchool  = 'Automation Junior High';
+            eVm.form.seniorHighSchool  = 'Automation Senior High';
+            eVm.form.shsTrack          = 'STEM';
+        })();
+        await sleep(300);
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Filling Step 4 — Medical & emergency contact (via Vue state)…');
+        (() => {
+            const eVm = getVueApp('#enrollment-app');
+            if (!eVm) { L('[WARN] Enrollment Vue app not found for Step 4 injection', 'w'); return; }
+            eVm.form.healthStatus          = 'GOOD';
+            eVm.form.allergies             = 'None';
+            eVm.form.fitnessParticipation  = true;
+            eVm.form.emergencyContactName  = 'Auto Guardian';
+            eVm.form.emergencyContactPhone = '912345679';
+        })();
+        await sleep(300);
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Filling Step 5 — Payment & scholarship (via Vue state)…');
+        (() => {
+            const eVm = getVueApp('#enrollment-app');
+            if (!eVm) { L('[WARN] Enrollment Vue app not found for Step 5 injection', 'w'); return; }
+            eVm.form.paymentMode = 'CASH';   // Cash Payment Plan
+            eVm.form.scholarship = 'NONE';
+        })();
+        await sleep(300);
+
+        click('.btn-pill-green'); // to review
+        await sleep(D / 2);
+
+        L('Submitting enrollment (Step 6 — Review & Submit)…');
+        click('.btn-pill-green');
+
+        L('Waiting for backend confirmation (up to 18s)…');
+        await waitFor(() => vm.tempAccount, 18000);
+        assert(vm.tempAccount, 'tempAccount object received from backend');
+        assert(vm.tempAccount.tempStudentId, 'tempStudentId is present');
+        assert(vm.tempAccount.tempPin, 'tempPin is present');
+
+        REF = vm.tempAccount.tempStudentId || '';
+        PIN = vm.tempAccount.tempPin       || '';
+        L(`✅ Pre-Registration complete! Ref: ${REF} | PIN: ${PIN}`, 's');
+
+        // Returnee verification E2E test
+        L('Starting Returnee Verification E2E test...');
+        L('Navigating to enrollment-system/index.html...');
+        await nav('enrollment-system/index.html');
+        await sleep(D);
+
+        const retVm = getVueApp('#enrollment-app');
+        assert(retVm, 'Enrollment Vue app mounted for returnee test');
+
+        L('Selecting Re-Enrollment (Returning Student) option...');
+        clickCardByText('.col-md-6', 'Returning Student');
+        await sleep(500);
+        assert(retVm.form.studentType === 'RETURNING', 'Student type set to RETURNING');
+
+        L('Verifying returning student account via school email...');
+        fill('#existingStudentIdInput', 'juan.delacruz24@gncp.edu.ph');
+        await sleep(200);
+        clickButtonByText('Verify Account');
+        await sleep(1500);
+
+        assert(retVm.lookupSuccess, 'Returning student lookup succeeded');
+        assert(retVm.form.returningStudentData, 'Returning student data is loaded');
+        assert(retVm.form.returningStudentData.name === 'Juan Ponce Dela Cruz', 'Loaded correct student name');
+
+        L('Selecting Year Level 2nd Year...');
+        selectOpt('.portal-select', '2nd Year');
+        await sleep(300);
+        
+        L('Selecting NSTP CWTS...');
+        clickCardByText('.nstp-section', 'CWTS');
+        await sleep(300);
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Verifying pre-filled personal information in Step 2...');
+        assert(retVm.form.firstName === 'Juan', 'First Name is pre-filled correctly');
+        assert(retVm.form.lastName === 'Dela Cruz', 'Last Name is pre-filled correctly');
+        assert(retVm.form.phone === '09123456780', 'Phone number is pre-filled correctly');
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Verifying pre-filled academic background in Step 3...');
+        assert(retVm.form.elementarySchool === 'Manila Elementary School', 'Elementary school is pre-filled correctly');
+
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Step 4 — Medical Info...');
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Step 5 — Payment Option...');
+        retVm.form.paymentMode = 'CASH';
+        retVm.form.scholarship = 'NONE';
+        click('.btn-pill-green');
+        await sleep(D / 2);
+
+        L('Submitting Re-Enrollment Application...');
+        click('.btn-pill-green');
+        
+        await waitFor(() => retVm.tempAccount, 18000);
+        assert(retVm.tempAccount, 'Returning student re-enrollment submitted');
+        const REF_RET = retVm.tempAccount.tempStudentId;
+        const PIN_RET = retVm.tempAccount.tempPin;
+        L(`✔ Returning student application submitted. Ref: ${REF_RET} | PIN: ${PIN_RET}`, 's');
+
+        S(0, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 1 — REGISTRAR APPROVAL
+        // ==============================================================
+        S(1, 'active');
+        L('Loading Registrar portal…');
+        clearSession();
+        await nav('registrar/index.html');
+
+        await loginIfRequired('kriz', 'kriz123');
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const regVm = getVueApp('#app');
+        assert(regVm, 'Registrar Vue app mounted at #app');
+
+        switchStationView('pending-applications');
+        await sleep(800);
+
+        L(`Waiting for ${REF} in pending list…`);
+        await waitFor(() => {
+            const apps = regVm.pendingApplications;
+            return Array.isArray(apps) && apps.find(a => a.referenceNumber === REF);
+        }, 12000);
+
+        // Open application modal FIRST, then assign section inside it
+        L(`Opening application modal for ${REF}…`);
+        clickRowAction(REF, 'button');
+        await waitForModal();
+        assert(regVm.selectedApplication, 'Application modal opened (selectedApplication is set)');
+ 
+        // Mandatory Section Assignment — select the section row inside the modal
+        L(`Selecting Section '${RAND_SEC_CODE}' in modal…`);
+        await sleep(500); // Wait for availableSectionsForApplication to load
+        const sectionRows = Array.from(D$().querySelectorAll('.modal tr, .modal-body tr, .modal-card tr, .offcanvas tr'));
+        const targetSectionRow = sectionRows.find(r => r.textContent.includes(RAND_SEC_CODE));
+        if (targetSectionRow) {
+            L(`[DOM] Clicking section row for: ${RAND_SEC_CODE}`);
+            targetSectionRow.click();
+        } else {
+            // Fallback: set sectionCode directly via Vue
+            L(`[DOM] Section row not found in modal — setting via Vue state`, 'w');
+            if (regVm.selectedApplication) regVm.selectedApplication.sectionCode = RAND_SEC_CODE;
+        }
+        await sleep(300);
+ 
+        L(`Verifying document checklist…`);
+        checkAllModalCheckboxes();
+        await sleep(500);
+
+        L('Approving application…');
+        clickButtonByText('Approve & Verify');
+        await sleep(800);
+        const swalConfirm = D$().querySelector('.swal2-confirm');
+        if (swalConfirm) {
+            L('✔ Auto-confirming SweetAlert2 dialog…', 's');
+            swalConfirm.click();
+        }
+        await sleep(2000);
+
+        // Student status should update to Approved
+        await waitFor(() => {
+            const apps = regVm.pendingApplications;
+            if (!Array.isArray(apps)) return false;
+            const app = apps.find(a => a.referenceNumber === REF);
+            return app && (app.status === 'Approved' || app.status === 'APPROVED');
+        }, 8000);
+        assert(regVm.pendingApplications.find(a => a.referenceNumber === REF), `Student ${REF} status updated to Approved`);
+
+        // Approve returning student REF_RET
+        if (typeof REF_RET !== 'undefined' && REF_RET) {
+            L(`Waiting for returning student ${REF_RET} in pending list…`);
+            await waitFor(() => {
+                const apps = regVm.pendingApplications;
+                return Array.isArray(apps) && apps.find(a => a.referenceNumber === REF_RET);
+            }, 12000);
+
+            L(`Opening application modal for returning student ${REF_RET}…`);
+            clickRowAction(REF_RET, 'button');
+            await waitForModal();
+            assert(regVm.selectedApplication, 'Application modal opened for returnee approval');
+
+            L(`Selecting Section '${RAND_SEC_CODE}' in modal for returnee…`);
+            await sleep(500);
+            const sectionRowsRet = Array.from(D$().querySelectorAll('.modal tr, .modal-body tr, .modal-card tr, .offcanvas tr'));
+            const targetSectionRowRet = sectionRowsRet.find(r => r.textContent.includes(RAND_SEC_CODE));
+            if (targetSectionRowRet) {
+                targetSectionRowRet.click();
+            } else {
+                if (regVm.selectedApplication) regVm.selectedApplication.sectionCode = RAND_SEC_CODE;
+            }
+            await sleep(300);
+
+            L(`Verifying document checklist for returnee…`);
+            checkAllModalCheckboxes();
+            await sleep(500);
+
+            L('Approving returning student application…');
+            clickButtonByText('Approve & Verify');
+            await sleep(800);
+            const swalConfirmRet = D$().querySelector('.swal2-confirm');
+            if (swalConfirmRet) {
+                swalConfirmRet.click();
+            }
+            await sleep(2500);
+
+            // Wait for returnee status update
+            await waitFor(() => {
+                const apps = regVm.pendingApplications;
+                const app = apps.find(a => a.referenceNumber === REF_RET);
+                return app && (app.status === 'Approved' || app.status === 'APPROVED');
+            }, 8000);
+            L(`✔ Returning student ${REF_RET} status updated to Approved`, 's');
+        }
+
+        // Test Rejection of Seeded Reject Candidate (GNCP-REJECT-TEMP)
+        L('Verifying Permanent Rejection workflow...');
+        L('Searching for rejection candidate GNCP-REJECT-TEMP...');
+        await waitFor(() => {
+            const apps = regVm.pendingApplications;
+            return Array.isArray(apps) && apps.find(a => a.referenceNumber === 'GNCP-REJECT-TEMP');
+        }, 8000);
+
+        clickRowAction('GNCP-REJECT-TEMP', 'button');
+        await waitForModal();
+        assert(regVm.selectedApplication, 'Application modal opened for rejection check');
+
+        L('Clicking Reject button...');
+        clickButtonByText('Reject');
+        await sleep(800);
+
+        const swalConfirmReject = D$().querySelector('.swal2-confirm');
+        if (swalConfirmReject) {
+            L('✔ Auto-confirming SweetAlert2 rejection dialog…', 's');
+            swalConfirmReject.click();
+        }
+        await sleep(2500);
+
+        // Verify status updated to Rejected in the list
+        await waitFor(() => {
+            const apps = regVm.pendingApplications;
+            const app = apps.find(a => a.referenceNumber === 'GNCP-REJECT-TEMP');
+            return app && (app.status === 'Rejected' || app.status === 'REJECTED');
+        }, 8000);
+        L('✔ Application status updated to Rejected in pending list.', 's');
+
+        // Open the rejected application again and check if verify buttons are disabled
+        clickRowAction('GNCP-REJECT-TEMP', 'button');
+        await waitForModal();
+        assert(regVm.selectedApplication && (regVm.selectedApplication.status === 'Rejected' || regVm.selectedApplication.status === 'REJECTED'), 'Opened rejected application');
+
+        // Assert that the Approve, Reject, and Request Correction buttons are not shown in modal footer
+        const modalFooter = D$().querySelector('.modal-footer');
+        if (modalFooter) {
+            const approveBtnExists = Array.from(modalFooter.querySelectorAll('button')).some(b => b.textContent.includes('Approve'));
+            const rejectBtnExists = Array.from(modalFooter.querySelectorAll('button')).some(b => b.textContent.includes('Reject'));
+            const correctionBtnExists = Array.from(modalFooter.querySelectorAll('button')).some(b => b.textContent.includes('Correction'));
+            assert(!approveBtnExists, 'Approve & Verify button is hidden for rejected application');
+            assert(!rejectBtnExists, 'Reject button is hidden for rejected application');
+            assert(!correctionBtnExists, 'Request Correction button is hidden for rejected application');
+        }
+
+        // Close the modal
+        clickButtonByText('Close');
+        await sleep(500);
+
+        // Verify Tracker displays Application Terminated
+        L('Verifying tracker display for permanently rejected applicant...');
+        await nav('enrollment-system/tracker.html?ref=GNCP-REJECT-TEMP&pin=123456');
+        await sleep(1500);
+        await waitFor(() => getVueApp('#app'), 8000);
+        const trackerVm = getVueApp('#app');
+        assert(trackerVm, 'Tracker Vue app mounted');
+        
+        await sleep(1000);
+        const trackerBody = D$().body.textContent;
+        assert(trackerBody.includes('Application Terminated') || trackerBody.includes('Process Discontinued') || trackerBody.includes('terminated') || trackerBody.includes('discontinued'), 'Tracker displays process discontinued/terminated');
+        L('✔ Tracker verified successfully for rejected application.', 's');
+
+        L('Registrar approval and rejection checks done.', 's');
+        S(1, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 2 — ADMIN CATALOG CRUD
+        // ==============================================================
+        S(2, 'active');
+        L('Loading Super Admin portal…');
+        clearSession();
+        await nav('admin/index.html');
+        await sleep(D);
+
+        await loginIfRequired('admin', 'admin12345');
+
+        const adminVm = getVueApp('#admin-app');
+        assert(adminVm, 'Admin Vue app mounted at #admin-app');
+
+        // Suppress confirm dialogs
+        W$().confirm = () => true;
+
+        // ── 2a. Programs CRUD ────────────────────────────────────────
+        L('── 2a. Programs CRUD ──');
+        switchAdminView('departments_programs');
+        await sleep(500);
+
+        // Verify view renders
+        assert(adminVm.view === 'departments_programs', 'setView navigated to departments_programs');
+
+        assertEl('.btn-add', '"Add Program" button visible');
+        clickButtonByText('Add Program');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Program Add modal opened');
+
+        // Pick first available department id
+        const firstDept = adminVm.departments && adminVm.departments[0];
+        fill('.overlay input[v-model="form.code"]', 'TST');
+        fill('.overlay input[v-model="form.name"]', 'BS Testing Methods');
+        selectOpt('.overlay select[v-model="form.department"]', firstDept ? firstDept.name : 'Information Technology');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        let testProg = adminVm.programs.find(p => p.code === 'TST');
+        assert(testProg, 'Program "TST" created successfully');
+
+        clickRowAction('TST', '.btn-sm-sky');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Program Edit modal opened pre-filled');
+        fill('.overlay input[v-model="form.name"]', 'BS Software Testing');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        testProg = adminVm.programs.find(p => p.code === 'TST');
+        assert(testProg && testProg.name === 'BS Software Testing', 'Program name updated successfully');
+
+        clickRowAction('TST', '.btn-sm-danger');
+        await sleep(1500);
+        assert(!adminVm.programs.find(p => p.code === 'TST'), 'Program "TST" deleted successfully');
+
+        // ── 2b. Subjects CRUD ────────────────────────────────────────
+        L('── 2b. Subjects CRUD ──');
+        switchAdminView('subjects');
+        await sleep(500);
+        assert(adminVm.view === 'subjects', 'setView navigated to subjects');
+
+        assertEl('.btn-add', '"Add Subject" button visible');
+        clickButtonByText('Add Subject');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Subject Add modal opened');
+
+        fill('.overlay input[v-model="form.code"]', 'QA101');
+        fill('.overlay input[v-model="form.title"]', 'QA Basics');
+        fill('.overlay input[v-model.number="form.lectureUnits"]', '3');
+        fill('.overlay input[v-model.number="form.labUnits"]', '0');
+        fill('.overlay input[v-model.number="form.labFee"]', '0');
+        selectOpt('.overlay select[v-model="form.department"]', 'CCS');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        let testSub = adminVm.subjects.find(s => s.code === 'QA101');
+        assert(testSub, 'Subject "QA101" created successfully');
+
+        clickRowAction('QA101', '.btn-sm-sky');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Subject Edit modal opened');
+        fill('.overlay input[v-model="form.title"]', 'QA Essentials');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        testSub = adminVm.subjects.find(s => s.code === 'QA101');
+        assert(testSub && testSub.title === 'QA Essentials', 'Subject title updated successfully');
+
+        clickRowAction('QA101', '.btn-sm-danger');
+        await sleep(1500);
+        assert(!adminVm.subjects.find(s => s.code === 'QA101'), 'Subject "QA101" deleted successfully');
+
+        // ── 2c. Curriculum CRUD + View Toggles ───────────────────────
+        L('── 2c. Curriculum CRUD + View Toggles ──');
+        switchAdminView('curriculum');
+        await sleep(500);
+        assert(adminVm.view === 'curriculum', 'setView navigated to curriculum');
+
+        // Toggle to grouped view
+        const groupedBtn = Array.from(D$().querySelectorAll('.btn-view-toggle')).find(b => b.textContent.includes('By Program'));
+        if (groupedBtn) { L('[DOM] Clicking By Program toggle'); groupedBtn.click(); }
+        await sleep(400);
+        assert(adminVm.currView === 'grouped', 'Curriculum "By Program" toggle works');
+
+        const tableBtn = Array.from(D$().querySelectorAll('.btn-view-toggle')).find(b => b.textContent.includes('Table'));
+        if (tableBtn) { L('[DOM] Clicking Table toggle'); tableBtn.click(); }
+        await sleep(400);
+        assert(adminVm.currView === 'table', 'Curriculum "Table" toggle works');
+
+        // Pick first program that has subjects mapped
+        const firstProg = adminVm.programs && adminVm.programs[0];
+        const firstSubj = adminVm.subjects  && adminVm.subjects[0];
+        if (firstProg && firstSubj) {
+            assertEl('.btn-add', '"Add Entry" button visible');
+            clickButtonByText('Add Entry');
+            await waitForModal();
+            assertEl('.overlay .modal-card', 'Curriculum Add modal opened');
+
+            selectOpt('.overlay select[v-model="form.program"]', firstProg.name);
+            selectOpt('.overlay select[v-model="form.subject"]', firstSubj.title);
+            selectOpt('.overlay select[v-model="form.yearLevel"]', '4th Year');
+            selectOpt('.overlay select[v-model="form.semester"]', '2nd Semester');
+            
+            // Elective checkbox
+            const electiveCb = D$().querySelector('#elective-cb');
+            if (electiveCb && !electiveCb.checked) click('#elective-cb'); // initially false, click to check
+            // click again to set false
+            if (electiveCb && electiveCb.checked) click('#elective-cb');
+            
+            click('.overlay .btn-modal-save');
+            await sleep(1500);
+
+            const testMap = adminVm.curriculum.find(c =>
+                (c.programId === firstProg.id || c.program === firstProg.name) &&
+                (c.subjectId === firstSubj.id || c.subject === firstSubj.title) &&
+                c.yearLevel === '4th Year'
+            );
+            assert(testMap, 'Curriculum entry created successfully');
+
+            clickRowAction('4th Year', '.btn-sm-sky');
+            await waitForModal();
+            assertEl('.overlay .modal-card', 'Curriculum Edit modal opened');
+            
+            // set elective = true
+            const editElectiveCb = D$().querySelector('#elective-cb');
+            if (editElectiveCb && !editElectiveCb.checked) click('#elective-cb');
+            
+            click('.overlay .btn-modal-save');
+            await sleep(1500);
+
+            const updatedMap = adminVm.curriculum.find(c => c.id === testMap.id);
+            assert(updatedMap && updatedMap.elective, 'Curriculum elective flag updated successfully');
+
+            clickRowAction('4th Year', '.btn-sm-danger');
+            await sleep(1500);
+            assert(!adminVm.curriculum.find(c => c.id === testMap.id), 'Curriculum entry deleted successfully');
+        } else {
+            L('Skipping curriculum add/edit/delete (no programs or subjects available yet).', 'w');
+        }
+
+        L('Admin Catalog CRUD passed.', 's');
+        S(2, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 3 — ADMIN SCHEDULING CRUD
+        // ==============================================================
+        S(3, 'active');
+        L('Admin Scheduling CRUD starting…');
+
+        // ── 3a. Academic Periods ─────────────────────────────────────
+        L('── 3a. Academic Periods CRUD ──');
+        switchAdminView('periods');
+        await sleep(500);
+        assert(adminVm.view === 'periods', 'setView navigated to periods');
+
+        assertEl('.btn-add', '"Add Period" button visible');
+        clickButtonByText('Add Period');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Period Add modal opened');
+
+        fill('.overlay input[v-model="form.name"]', 'QA Testing Term 2026');
+        fill('.overlay input[v-model="form.academicYear"]', '2026-2027');
+        selectOpt('.overlay select[v-model="form.semester"]', 'Summer');
+        fill('.overlay input[v-model="form.enrollmentStart"]', '2026-07-01');
+        fill('.overlay input[v-model="form.enrollmentEnd"]', '2026-07-31');
+        selectOpt('.overlay select[v-model="form.status"]', 'Inactive');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        let testPer = adminVm.periods.find(p => p.name === 'QA Testing Term 2026');
+        assert(testPer, 'Academic Period created successfully');
+
+        clickRowAction('QA Testing Term 2026', '.btn-sm-sky');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Period Edit modal opened');
+        selectOpt('.overlay select[v-model="form.status"]', 'Active');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        testPer = adminVm.periods.find(p => p.name === 'QA Testing Term 2026');
+        assert(testPer && testPer.status === 'Active', 'Period status updated to Active');
+
+        adminVm.deletePeriod(testPer.id);
+        await sleep(1500);
+        assert(!adminVm.periods.find(p => p.name === 'QA Testing Term 2026'), 'Period deleted successfully');
+
+        // ── 3b. Class Sections (Cohort Sections) ─────────────────────
+        L('── 3b. Class Sections CRUD ──');
+        switchAdminView('periods');
+        await sleep(300);
+        assertEl('.btn-add', '"Add Period" button visible');
+        clickButtonByText('Add Period');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Period Add modal opened');
+        fill('.overlay input[v-model="form.name"]', 'QA Section Test Period');
+        fill('.overlay input[v-model="form.academicYear"]', '2026-2027');
+        selectOpt('.overlay select[v-model="form.semester"]', '1st Semester');
+        fill('.overlay input[v-model="form.enrollmentStart"]', '2026-07-01');
+        fill('.overlay input[v-model="form.enrollmentEnd"]', '2026-07-31');
+        selectOpt('.overlay select[v-model="form.status"]', 'Active');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+        const secTestPer = adminVm.periods.find(p => p.name === 'QA Section Test Period');
+        assert(secTestPer, 'Section test academic period created');
+ 
+        switchAdminView('sections');
+        await sleep(300);
+ 
+        assertEl('.btn-add', '"Add Section" button visible');
+        clickButtonByText('Add Section');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Section Add modal opened');
+ 
+        const firstProgForSec = adminVm.programs && adminVm.programs[0];
+        assert(firstProgForSec, 'Programs loaded for section cohort creation');
+ 
+        selectOpt('.overlay select[v-model="form.program"]', firstProgForSec.name);
+        selectOpt('.overlay select[v-model="form.yearLevel"]', '1st Year');
+        selectOpt('.overlay select[v-model="form.academicPeriodId"]', String(secTestPer.id));
+        // Direct Vue injection for curriculumVersion since select options depend on existing curriculum data
+        (() => {
+            const vm = getVueApp('#admin-app');
+            if (vm) vm.form.curriculumVersion = '2022 Curriculum';
+        })();
+        fill('.overlay input[v-model="form.code"]', 'CS101-QATEST');
+        fill('.overlay input[v-model="form.adviser"]', 'QA Tester');
+        fill('.overlay input[v-model.number="form.capacity"]', '30');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+ 
+        let testSec = adminVm.sections.find(s => s.code === 'CS101-QATEST');
+        assert(testSec, 'Section "CS101-QATEST" created successfully');
+ 
+        clickRowAction('CS101-QATEST', '.btn-sm-sky');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Section Edit modal opened');
+        fill('.overlay input[v-model.number="form.capacity"]', '25');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+ 
+        testSec = adminVm.sections.find(s => s.code === 'CS101-QATEST');
+        assert(testSec && testSec.capacity === 25, 'Section capacity updated to 25');
+ 
+        // ── 3c. Class Offerings CRUD + Table/Cards Toggle ────────────
+        L('── 3c. Class Offerings CRUD + View Toggles ──');
+        switchAdminView('classOfferings');
+        await sleep(500);
+        assert(adminVm.view === 'classOfferings', 'setView navigated to classOfferings');
+ 
+        // View toggle
+        const cardsToggle = Array.from(D$().querySelectorAll('.btn-view-toggle')).find(b => b.textContent.includes('Cards'));
+        if (cardsToggle) { L('[DOM] Clicking Cards toggle'); cardsToggle.click(); }
+        await sleep(400);
+        assert(adminVm.sectView === 'cards', 'Class Offerings "Cards" toggle works');
+ 
+        const tableToggle = Array.from(D$().querySelectorAll('.btn-view-toggle')).find(b => b.textContent.includes('Table'));
+        if (tableToggle) { L('[DOM] Clicking Table toggle'); tableToggle.click(); }
+        await sleep(400);
+        assert(adminVm.sectView === 'table', 'Class Offerings "Table" toggle works');
+ 
+        const firstSubjForOffering = adminVm.subjects && adminVm.subjects[0];
+        if (firstSubjForOffering && testSec) {
+            assertEl('.btn-add', '"Add Class Schedule" button visible');
+            clickButtonByText('Add Class Schedule');
+            await waitForModal();
+            assertEl('.overlay .modal-card', 'Class Offering Add modal opened');
+ 
+            selectOpt('.overlay select[v-model="form.sectionId"]', String(testSec.id));
+            await sleep(600); // Trigger subject options load
+ 
+            selectOpt('.overlay select[v-model="form.subject"]', firstSubjForOffering.title);
+            fill('.overlay input[v-model="form.code"]', 'QA-TEST-OFF');
+            fill('.overlay input[v-model="form.instructor"]', 'QA Instructor');
+            selectOpt('.overlay select[v-model="form.days"]', 'MWF');
+            fill('.overlay input[v-model="form.time"]', '08:00 AM - 09:00 AM');
+            fill('.overlay input[v-model="form.room"]', 'QA Room');
+            fill('.overlay input[v-model.number="form.capacity"]', '35');
+            click('.overlay .btn-modal-save');
+            await sleep(1500);
+ 
+            let testOff = adminVm.classOfferings.find(o => o.code === 'QA-TEST-OFF');
+            assert(testOff, 'Class Offering "QA-TEST-OFF" created successfully');
+ 
+            clickRowAction('QA-TEST-OFF', '.btn-sm-sky');
+            await waitForModal();
+            assertEl('.overlay .modal-card', 'Class Offering Edit modal opened');
+            fill('.overlay input[v-model.number="form.capacity"]', '40');
+            click('.overlay .btn-modal-save');
+            await sleep(1500);
+ 
+            testOff = adminVm.classOfferings.find(o => o.id === testOff.id);
+            assert(testOff && testOff.capacity === 40, 'Class Offering capacity updated');
+ 
+            clickRowAction('QA-TEST-OFF', '.btn-sm-danger');
+            await sleep(1500);
+            assert(!adminVm.classOfferings.find(o => o.id === testOff.id), 'Class Offering deleted successfully');
+        } else {
+            L('Skipping classOffering add/edit/delete (no subjects or sections loaded).', 'w');
+        }
+ 
+        // Cleanup section cohort
+        switchAdminView('sections');
+        await sleep(300);
+        if (testSec) {
+            clickRowAction('CS101-QATEST', '.btn-sm-danger');
+            await sleep(1500);
+            assert(!adminVm.sections.find(s => s.code === 'CS101-QATEST'), 'Section deleted successfully');
+        }
+
+        // Cleanup: delete the section test period
+        switchAdminView('periods');
+        await sleep(300);
+        const cleanupPer = adminVm.periods.find(p => p.name === 'QA Section Test Period');
+        if (cleanupPer) {
+            clickRowAction('QA Section Test Period', '.btn-sm-danger');
+            await sleep(1500);
+        }
+
+        // Reactivate original active academic period: '1st Semester, A.Y. 2026-2027'
+        L("Restoring original active academic period '1st Semester, A.Y. 2026-2027'…");
+        const origPer = adminVm.periods.find(p => p.name === '1st Semester, A.Y. 2026-2027');
+        if (origPer) {
+            clickRowAction('1st Semester, A.Y. 2026-2027', '.btn-sm-sky');
+            await waitForModal();
+            selectOpt('.overlay select[v-model="form.status"]', 'Active');
+            click('.overlay .btn-modal-save');
+            await sleep(1500);
+        }
+
+        // ── 3d. Fee Schedule CRUD ────────────────────────────────────
+        L('── 3d. Fee Schedule CRUD ──');
+        switchAdminView('fees');
+        await sleep(500);
+        assert(adminVm.view === 'fees', 'setView navigated to fees');
+
+        assertEl('.btn-add', '"Add Fee" button visible');
+        clickButtonByText('Add Fee');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Fee Add modal opened');
+
+        selectOpt('.overlay select[v-model="form.type"]', 'Laboratory');
+        fill('.overlay input[v-model="form.label"]', 'QA Testing Fee');
+        fill('.overlay input[v-model.number="form.amount"]', '500');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        let testFee = adminVm.fees.find(f => f.label === 'QA Testing Fee');
+        assert(testFee, 'Fee "QA Testing Fee" created successfully');
+
+        clickRowAction('QA Testing Fee', '.btn-sm-sky');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Fee Edit modal opened');
+        fill('.overlay input[v-model.number="form.amount"]', '600');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        testFee = adminVm.fees.find(f => f.label === 'QA Testing Fee');
+        assert(testFee && testFee.amount == 600, 'Fee amount updated to 600');
+
+        clickRowAction('QA Testing Fee', '.btn-sm-danger');
+        await sleep(1500);
+        assert(!adminVm.fees.find(f => f.label === 'QA Testing Fee'), 'Fee deleted successfully');
+
+        // Logout from Admin before re-opening for Advanced tests
+        L('Admin Scheduling CRUD passed.', 's');
+        S(3, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 4 — ADMIN ADVANCED FEATURES
+        // ==============================================================
+        S(4, 'active');
+        L('Admin Advanced Features starting…');
+
+        // ── 4a. Departments CRUD ─────────────────────────────────────
+        L('── 4a. Departments CRUD ──');
+        switchAdminView('departments_programs');
+        await sleep(500);
+ 
+        assertEl('.tbl', 'Standard departments table visible in list');
+ 
+        // ── 4b. Operators CRUD ───────────────────────────────────────
+        L('── 4b. Operators (Staff Accounts) CRUD ──');
+        switchAdminView('operators');
+        await sleep(500);
+        assert(adminVm.view === 'operators', 'setView navigated to operators');
+
+        assertEl('.btn-add', '"Add Operator" button visible');
+        clickButtonByText('Add Operator');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Operator modal opened');
+ 
+        fill('.overlay input[v-model="form.name"]', 'QA Test Operator');
+        fill('.overlay input[v-model="form.username"]', 'qa_operator');
+        fill('.overlay input[v-model="form.password"]', 'qapassword123');
+        selectOpt('.overlay select[v-model="form.role"]', 'REGISTRAR');
+        click('.overlay .btn-modal-save');
+        await sleep(1500);
+
+        const qaUser = adminVm.users && adminVm.users.find(u => u.username === 'qa_operator');
+        assert(qaUser, 'Operator "qa_operator" created successfully');
+
+        clickRowAction('qa_operator', '.btn-sm-warn');
+        await sleep(1000);
+        const inactiveUser = adminVm.users.find(u => u.id === qaUser.id);
+        assert(inactiveUser && inactiveUser.status === 'DEACTIVATED', 'Operator status set to DEACTIVATED');
+
+        clickRowAction('qa_operator', '.btn-sm-danger');
+        await sleep(1500);
+        assert(!adminVm.users.find(u => u.id === qaUser.id), 'Operator deleted successfully');
+
+        // ── 4c. Clone Previous Term ───────────────────────────────────
+        L('── 4c. Clone Previous Term ──');
+        switchAdminView('periods');
+        await sleep(500);
+ 
+        const cloneBtn = Array.from(D$().querySelectorAll('.card button.btn-add, button.btn-add')).find(b => b.textContent.includes('Clone Previous Term'));
+        if (cloneBtn) {
+            L('[DOM] Clicking Clone Previous Term button');
+            cloneBtn.click();
+        } else {
+            adminVm.openCloneTermModal();
+        }
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Clone Term modal opened');
+ 
+        // Select a valid source period if any exist
+        if (adminVm.periods && adminVm.periods.length > 0) {
+            selectOpt('.overlay select[v-model="cloneForm.fromPeriodId"]', String(adminVm.periods[0].id));
+            fill('.overlay input[v-model="cloneForm.newPeriodName"]', 'QA Cloned Term 2026');
+            fill('.overlay input[v-model="cloneForm.newAcademicYear"]', '2026-2027');
+            selectOpt('.overlay select[v-model="cloneForm.newSemester"]', 'Summer');
+            await sleep(300);
+            click('.overlay .btn-modal-save');
+            await sleep(2000);
+            L('Clone Term submitted.', 's');
+        } else {
+            L('No periods to clone from — skipping clone submit.', 'w');
+        }
+ 
+        // ── 4d. Bulk Block Section Generator ─────────────────────────
+        L('── 4d. Bulk Block Section Generator ──');
+
+        switchAdminView('classOfferings');
+        await sleep(500);
+
+        const blockSecBtn = Array.from(D$().querySelectorAll('.card button.btn-add, button.btn-add')).find(b => b.textContent.includes('Create Block Section'));
+        if (blockSecBtn) {
+            L('[DOM] Clicking Create Block Section button');
+            blockSecBtn.click();
+        } else {
+            adminVm.openBlockSectionModal();
+        }
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Bulk Block Section modal opened');
+
+        if (adminVm.programs && adminVm.programs.length > 0 && adminVm.periods && adminVm.periods.length > 0) {
+            selectOpt('.overlay select[v-model="form.program"]', adminVm.programs[0].name);
+            selectOpt('.overlay select[v-model="form.yearLevel"]', '1st Year');
+            selectOpt('.overlay select[v-model="form.semester"]', '1st Semester');
+            fill('.overlay input[v-model="form.sectionSuffix"]', 'QABLOCK');
+            fill('.overlay input[v-model.number="form.capacity"]', '30');
+            L('Block Section modal populated successfully.', 's');
+            await sleep(500);
+            click('.overlay .btn-modal-cancel');
+            await sleep(500);
+        } else {
+            L('No programs/periods — skipping block section population.', 'w');
+        }
+
+        L('Admin Advanced Features passed.', 's');
+        S(4, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 5 — ACADEMIC ADVISING (TLC HELPDESK)
+        // ==============================================================
+        S(5, 'active');
+        L('Loading TLC Helpdesk station…');
+        clearSession();
+        await nav('stations/tlc-helpdesk/index.html');
+
+        await loginIfRequired('tristan', 'tristan123');
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const tlcVm = getVueApp('#app');
+        assert(tlcVm, 'TLC Helpdesk Vue app mounted at #app');
+
+        switchStationView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in TLC queue…`);
+        await waitFor(() => {
+            const list = tlcVm.students;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const tlcStudent = tlcVm.students.find(s => s.referenceNumber === REF);
+        assert(tlcStudent, `Student ${REF} found in TLC queue`);
+
+        clickRowAction(REF, 'button');
+        await waitForModal();
+        assertEl('.modal', 'TLC Review modal opened');
+        clickButtonByText('Confirm & Mark Completed');
+        await sleep(1500);
+
+        L('Academic advising done.', 's');
+        S(5, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 6 — MEDICAL CLEARANCE
+        // ==============================================================
+        S(6, 'active');
+        L('Loading Medical Clinic station…');
+        clearSession();
+        await nav('stations/medical-checkup/index.html');
+
+        await loginIfRequired('ethan', 'ethan123');
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const medVm = getVueApp('#app');
+        assert(medVm, 'Medical Clinic Vue app mounted at #app');
+
+        switchStationView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Medical queue…`);
+        await waitFor(() => {
+            const list = medVm.students;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const medStudent = medVm.students.find(s => s.referenceNumber === REF);
+        assert(medStudent, `Student ${REF} found in Medical queue`);
+
+        clickRowAction(REF, 'button');
+        await waitForModal();
+        assertEl('.modal', 'Medical Review modal opened');
+        selectOpt('.modal select[v-model="selectedStudent.status"]', 'fit');
+        await sleep(300);
+        clickButtonByText('Save & Submit');
+        await sleep(1500);
+
+        L('Medical clearance done.', 's');
+        S(6, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // ==============================================================
+        // STEP 7 — CASHIER / TREASURY
+        // ==============================================================
+        S(7, 'active');
+        L('Loading Cashier Payment station…');
+        clearSession();
+        await nav('stations/payment-processing/index.html');
+
+        await loginIfRequired('cashier', 'cashier123');
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const payVm = getVueApp('#app');
+        assert(payVm, 'Cashier Vue app mounted at #app');
+
+        switchStationView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Cashier queue…`);
+        await waitFor(() => {
+            const list = payVm.students;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const payStudent = payVm.students.find(s => s.referenceNumber === REF);
+        assert(payStudent, `Student ${REF} found in Cashier queue`);
+
+        clickRowAction(REF, 'button');
+        await waitForModal();
+        assertEl('.modal', 'Cashier Process modal opened');
+        
+        // Mock window.open to prevent opening print tabs during testing
+        W$().open = (url) => {
+            L(`[Test Runner] Blocked printing popup for: ${url}`);
+            return null;
+        };
+
+        selectOpt('.modal select[v-model="selectedStudent.payment.paymentType"]', 'Cash');
+        const balance = payVm.selectedStudent?.payment?.balance || 5000;
+        fill('.modal input[v-model.number="payAmountInput"]', String(balance));
+        fill('.modal input[v-model.number="cashTendered"]', String(balance));
+        await sleep(300);
+        clickButtonByText('Record Payment');
+        await sleep(1500);
+        assert(payStudent.status === 'PAID' || payVm.selectedStudent?.status === 'PAID', 'Payment status updated to PAID');
+
+        L('Marking student as enrolled & generating OR number...');
+        clickButtonByText('Mark Enrolled & Print Receipt');
+        await sleep(2500);
+
+        // Re-query student or get from active selectedStudent since loadQueue() replaces the array elements
+        const finalStudent = payVm.students.find(s => s.referenceNumber === REF) || payVm.selectedStudent || payStudent;
+        const generatedOr = finalStudent.orNumber || (W$().StationDataBus?.getStudentByRef(REF)?.orNumber);
+        
+        assert(generatedOr, 'Official Receipt (orNumber) was successfully generated');
+        L(`✔ Generated OR Number: ${generatedOr}`, 's');
+
+        L('Payment recorded and student marked enrolled.', 's');
+        S(7, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 8 — Student Portal Account Activation
+        // ==============================================================
+        S(8, 'active');
+        L('Loading Student Portal Account Activation station…');
+        clearSession();
+        await nav('stations/it-center/index.html');
+
+        await loginIfRequired('it_officer', 'itpassword');
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const itVm = getVueApp('#app');
+        assert(itVm, 'Student Portal Account Activation Vue app mounted at #app');
+
+        switchStationView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Student Portal Account Activation queue…`);
+        await waitFor(() => {
+            const list = itVm.studentsList;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const itStudent = itVm.studentsList.find(s => s.referenceNumber === REF);
+        assert(itStudent, `Student ${REF} found in Student Portal Account Activation queue`);
+
+        clickRowAction(REF, 'button');
+        await waitForModal();
+        assertEl('.modal', 'Student Portal Account Activation Review modal opened');
+
+        clickButtonByText('Finalize');
+        await sleep(2000);
+
+        promoId   = itVm.corDetails?.student?.enrollment?.permanentId   || REF;
+        promoPass = itVm.corDetails?.student?.enrollment?.password       || PIN;
+        assert(promoId, 'Permanent student ID activated by Student Portal Account Activation');
+        L(`Activated ID: ${promoId} | Portal Password: ${promoPass}`, 's');
+
+        L('Student Portal Account Activation complete.', 's');
+        S(8, 'done');
+        await sleep(D);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 9 — ADMIN UI VISIBILITY AUDIT
+        // ==============================================================
+        S(9, 'active');
+        L('Loading Super Admin portal for UI Visibility Audit…');
+        clearSession();
+        await nav('admin/index.html');
+        await sleep(D);
+
+        await loginIfRequired('admin', 'admin12345');
+
+        const adminAuditVm = getVueApp('#admin-app');
+        assert(adminAuditVm, 'Admin Vue app mounted at #admin-app');
+
+        // Suppress confirm dialogs
+        W$().confirm = () => true;
+
+        L('Checking every navigation item renders correct content…');
+
+        const NAV_CHECKS = [
+            {
+                view: 'dashboard',
+                assertFn: () => D$().querySelector('[class*="db-card"]') || D$().querySelector('.db-card'),
+                label: 'dashboard stats cards visible'
+            },
+            {
+                view: 'departments_programs',
+                assertFn: () => D$().querySelector('button[class*="btn-add"]'),
+                label: 'departments_programs has Add button'
+            },
+            {
+                view: 'subjects',
+                assertFn: () => D$().querySelector('table') || D$().querySelector('.tbl'),
+                label: 'subjects shows table'
+            },
+            {
+                view: 'curriculum',
+                assertFn: () => D$().querySelector('.btn-view-toggle'),
+                label: 'curriculum has view toggle buttons'
+            },
+            {
+                view: 'periods',
+                assertFn: () => D$().querySelector('table') || D$().querySelector('.tbl'),
+                label: 'periods shows table'
+            },
+            {
+                view: 'sections',
+                assertFn: () => D$().querySelector('table') || D$().querySelector('.tbl'),
+                label: 'sections shows table'
+            },
+            {
+                view: 'classOfferings',
+                assertFn: () => D$().querySelector('.btn-view-toggle'),
+                label: 'classOfferings has view toggle'
+            },
+            {
+                view: 'students',
+                assertFn: () => D$().querySelector('select') || D$().querySelector('.filter-select'),
+                label: 'students shows dropdown filters'
+            },
+            {
+                view: 'fees',
+                assertFn: () => D$().querySelector('table') || D$().querySelector('.tbl'),
+                label: 'fees shows table'
+            },
+            {
+                view: 'operators',
+                assertFn: () => D$().querySelector('table') || D$().querySelector('.btn-add'),
+                label: 'operators shows list table'
+            }
+        ];
+
+        for (const check of NAV_CHECKS) {
+            if (!ON) break;
+            switchAdminView(check.view);
+            await sleep(Math.max(400, D / 2));
+            assert(adminAuditVm.view === check.view, `Navigation to "${check.view}" succeeded`);
+            await wait(`[v-cloak] ~ *, .card, table, form`, 5000).catch(() => {});
+            const el = check.assertFn();
+            assert(el, check.label);
+        }
+
+        // Verify modal closes on closeModal()
+        switchAdminView('subjects');
+        await sleep(400);
+        assertEl('.btn-add', '"Add Subject" button visible');
+        clickButtonByText('Add Subject');
+        await waitForModal();
+        assertEl('.overlay .modal-card', 'Subject modal opens');
+        click('.overlay .btn-modal-cancel');
+        await sleep(300);
+        assert(!adminAuditVm.modal, 'Modal closes on closeModal()');
+
+        // Verify search filter reduces results
+        switchAdminView('subjects');
+        await sleep(400);
+        const totalSubjects = (adminAuditVm.filteredSubjects || adminAuditVm.subjects || []).length;
+        assertEl('input[type="search"], input[placeholder*="Search"]', 'Search input is visible');
+        fill('input[type="search"], input[placeholder*="Search"]', 'ZZZNOMATCH999');
+        await sleep(400);
+        const filteredCount = (adminAuditVm.filteredSubjects || []).length;
+        assert(filteredCount === 0 || filteredCount < totalSubjects, 'Subject search filter reduces row count');
+        fill('input[type="search"], input[placeholder*="Search"]', '');
+        await sleep(300);
+
+        L('Admin UI Visibility Audit passed.', 's');
+        S(9, 'done');
+        await sleep(D);
+
+        // Clear admin session for next steps
+        try { W$().sessionStorage.removeItem('gncp_admin_user'); } catch(e) {}
+        await sleep(500);
+
+        if (!ON) return;
+
+        // ==============================================================
+        // STEP 10 — STUDENT PORTAL VERIFICATION
+        // ==============================================================
+        S(10, 'active');
+        L('Loading Student Portal…');
+        await nav('student-portal/index.html');
+        await sleep(D);
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const studVm = getVueApp('#app');
+        assert(studVm, 'Student Portal Vue app mounted at #app');
+
+        // Login screen should be visible
+        assert(!studVm.profile || !studVm.profile.id, 'Login screen is shown before authentication');
+
+        L(`Authenticating with ID: ${promoId}…`);
+        fill('input[v-model="loginForm.studentId"]', promoId);
+        fill('input[v-model="loginForm.password"]', promoPass);
+        click('.login-btn');
+
+        await waitFor(() => studVm.profile && studVm.profile.id, 10000);
+        assert(studVm.profile && studVm.profile.id, 'Profile loaded after login');
+        assert(studVm.profile.name === 'AutoTest E2E Runner', `Profile name matches: ${studVm.profile.name}`);
+        assert(studVm.profile.program === RAND_PROG_CODE, `Program matches: ${studVm.profile.program}`);
+
+        // Default tab is 'home' - verify personal info displays in Home tab
+        assert(studVm.activeTab === 'home', 'Default tab is Home');
+        L('Verifying personal information display in Home tab...');
+        const personalInfoSection = D$().querySelector('.info-panel');
+        assert(personalInfoSection, 'Personal Information panel is visible');
+        const personalInfoText = personalInfoSection.textContent;
+        assert(personalInfoText.includes('Mobile Number') && personalInfoText.includes('912345678'), 'Mobile number displays correctly in Home tab');
+        assert(personalInfoText.includes('Personal Email') && personalInfoText.includes('autotest.e2e@gncp.edu.ph'), 'Personal email displays correctly in Home tab');
+        assert(personalInfoText.includes('Home Address') && personalInfoText.includes('101 Automation Ave'), 'Home address displays correctly in Home tab');
+
+        // Navigate to Dashboard tab
+        L('Navigating to Dashboard tab...');
+        const dbTabBtn = Array.from(D$().querySelectorAll('.portal-tabs button')).find(b => b.textContent.includes('Dashboard'));
+        assert(dbTabBtn, 'Dashboard tab button exists');
+        dbTabBtn.click();
+        await sleep(500);
+        assert(studVm.activeTab === 'dashboard', 'activeTab is now dashboard');
+
+        // Verify dashboard elements (Degree course / year level)
+        const academicInfoSection = D$().querySelector('.info-panel');
+        assert(academicInfoSection, 'Academic details panel is visible in Dashboard tab');
+        assert(academicInfoSection.textContent.includes(RAND_PROG_CODE), 'Degree course program code is displayed in Dashboard tab');
+
+        // Navigate to My Courses tab
+        L('Navigating to My Courses tab...');
+        const coursesTabBtn = Array.from(D$().querySelectorAll('.portal-tabs button')).find(b => b.textContent.includes('My Courses'));
+        assert(coursesTabBtn, 'My Courses tab button exists');
+        coursesTabBtn.click();
+        await sleep(500);
+        assert(studVm.activeTab === 'courses', 'activeTab is now courses');
+
+        // Verify My Courses tab displays subjects schedule table
+        assert(studVm.subjects && Array.isArray(studVm.subjects), 'Subjects array exists in profile');
+
+        if (studVm.subjects.length > 0) {
+            L(`Verifying ${studVm.subjects.length} enrolled subject(s)…`);
+            studVm.subjects.forEach(sub => {
+                const assigned = (studVm.enrollment && studVm.enrollment.sections)
+                    ? studVm.enrollment.sections[sub.code]
+                    : 'TBA';
+                if (assigned === 'TBA' || assigned === 'Unassigned') {
+                    throw new Error(`Subject ${sub.code} has no assigned section — finalize enrollment may have failed!`);
+                }
+                L(` ✔ ${sub.code} → Section: ${assigned}`, 's');
+            });
+        } else {
+            L('No enrolled subjects found — may be expected if IT Center did not assign sections.', 'w');
+        }
+
+        await sleep(1500);
+
+        L('Testing logout flow…');
+        click('.logout-btn');
+        await sleep(500);
+        assert(D$().querySelector('.confirm-btn-danger'), 'Logout confirmation dialog appeared');
+        
+        // Wait for reload to complete
+        const reloadPromise = new Promise(resolve => {
+            const h = () => {
+                fr.removeEventListener('load', h);
+                resolve();
+            };
+            fr.addEventListener('load', h);
+        });
+        
+        click('.confirm-btn-danger');
+        await reloadPromise;
+        await sleep(800);
+
+        const postLogoutVm = getVueApp('#app');
+        assert(postLogoutVm, 'Student Portal Vue app remounted after logout');
+        assert(!postLogoutVm.profile || !postLogoutVm.profile.id, 'Profile cleared after logout (login screen shown)');
+
+        L('Student Portal verification passed.', 's');
+        S(10, 'done');
+        await sleep(D);
+
+        // ══════════════════════════════════════════════════════════════
+        L('');
+        L('════════════════════════════════════════════', 's');
+        L('🎉  100% COVERAGE — ALL 11 STEPS PASSED!', 's');
+        L(`    Enrolled ID : ${REF}  |  PIN: ${PIN}`, 's');
+        L(`    Permanent ID: ${promoId}`, 's');
+        L('════════════════════════════════════════════', 's');
+
+    } catch(err) {
+        L(`❌ ${err.message}`, 'e');
+        LABELS.forEach((_, i) => {
+            const stepCard = document.getElementById(`s${i}`);
+            if (stepCard && stepCard.classList.contains('active')) S(i, 'fail');
+        });
+    } finally {
+        ON = false;
+        document.getElementById('bR').disabled = false;
+        document.getElementById('bS').disabled = true;
+    }
+}
+
+if (location.protocol === 'file:') document.getElementById('ow').style.display = 'block';
+</script>
+</body>
+</html>

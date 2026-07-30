@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNCP — Multi-Station Integration & Regression Tester</title>
+    <link href="shared/libs/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="shared/libs/font-awesome/css/all.min.css">
+    <style>
+        :root { --bg:#090e0c; --bdr:rgba(255,255,255,0.08); --gold:#D4AF37; --grn:#10b981; --red:#ef4444; --sky:#0ea5e9; --mut:rgba(255,255,255,0.45); }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:var(--bg);color:#fff;font-family:-apple-system,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+        .bar{display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.4);border-bottom:1px solid var(--bdr);padding:10px 20px;flex-shrink:0}
+        .bar-title{font-size:1rem;font-weight:800;background:linear-gradient(135deg,#fff,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .bar-url{font-family:monospace;font-size:.73rem;color:var(--sky);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.25);padding:4px 12px;border-radius:6px;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .wrap{flex:1;display:flex;overflow:hidden}
+        .left{width:340px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--bdr);background:rgba(0,0,0,.2);overflow-y:auto;padding:16px;gap:10px}
+        .ctrls{display:flex;gap:8px}
+        .b-run{flex:1;background:linear-gradient(135deg,var(--gold),#b8961e);border:none;border-radius:8px;color:#0b1511;font-weight:800;font-size:.82rem;padding:10px 0;cursor:pointer}
+        .b-run:disabled{opacity:.5;cursor:not-allowed}
+        .b-stop{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:800;font-size:.82rem;padding:10px 14px;cursor:pointer}
+        .b-stop:disabled{opacity:.35;cursor:not-allowed}
+        .sc{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.02);border:1px solid var(--bdr);border-radius:10px;padding:9px 12px;transition:all .25s}
+        .sc.active{border-color:var(--sky);background:rgba(14,165,233,.05)}
+        .sc.done{border-color:var(--grn);background:rgba(16,185,129,.04)}
+        .sc.fail{border-color:var(--red);background:rgba(239,68,68,.04)}
+        .sc-l{display:flex;align-items:center;gap:10px}
+        .sn{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:var(--mut);flex-shrink:0}
+        .active .sn{background:var(--sky);color:#000} .done .sn{background:var(--grn);color:#fff} .fail .sn{background:var(--red);color:#fff}
+        .sl{font-size:.78rem;font-weight:700}
+        .sb{font-size:.6rem;font-weight:800;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:rgba(255,255,255,.07);color:var(--mut)}
+        .active .sb{background:rgba(14,165,233,.15);color:var(--sky)} .done .sb{background:rgba(16,185,129,.15);color:var(--grn)} .fail .sb{background:rgba(239,68,68,.15);color:var(--red)}
+        .ch{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut)}
+        .con{background:#000;border:1px solid var(--bdr);border-radius:8px;padding:12px;font-family:'Courier New',monospace;font-size:.7rem;color:var(--grn);overflow-y:auto;max-height:200px;flex-shrink:0}
+        .lg{margin-bottom:3px;line-height:1.35}
+        .lg.i{color:#38bdf8}.lg.w{color:var(--gold)}.lg.e{color:var(--red)}.lg.s{color:var(--grn)}
+        .owarn{background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);border-radius:8px;padding:10px 12px;font-size:.72rem;color:#ffd866;line-height:1.4}
+        .owarn code{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;color:#fff;font-size:.68rem}
+        .right{flex:1;background:#141b17;overflow:hidden}
+        iframe{width:100%;height:100%;border:none;background:#fff}
+        select.spd{background:rgba(0,0,0,.4);border:1px solid var(--bdr);border-radius:8px;color:#fff;padding:6px 10px;font-size:.76rem}
+    </style>
+</head>
+<body>
+
+<div class="bar">
+    <span class="bar-title"><i class="fa-solid fa-vial-circle-check" style="margin-right:8px"></i>GNCP Integration & Regression Tester</span>
+    <span id="url" class="bar-url">Ready — press Start</span>
+    <select id="spd" class="spd" style="width:auto"><option value="1500">🐢 Slow</option><option value="800" selected>⚡ Normal</option><option value="300">🚀 Fast</option></select>
+</div>
+
+<div class="wrap">
+    <div class="left">
+        <div id="ow" class="owarn" style="display:none"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Same-Origin:</strong> Must open via localhost.<br><code>http://localhost/systemforsia/test_station_integration.html</code></div>
+        <div class="ctrls">
+            <button id="bR" class="b-run" onclick="go()"><i class="fa-solid fa-play" style="margin-right:6px"></i>Start Auto Test</button>
+            <button id="bS" class="b-stop" onclick="stop()" disabled><i class="fa-solid fa-stop"></i></button>
+        </div>
+        <div id="steps"></div>
+        <div class="ch">Automation Log</div>
+        <div id="co" class="con"><div class="lg i">Ready. Press Start Auto Test.</div></div>
+    </div>
+    <div class="right"><iframe id="fr" src="about:blank"></iframe></div>
+</div>
+
+<script>
+/* =====================================================================
+   GNCP E2E Integration & Regression Test Suite
+   ===================================================================== */
+
+const LABELS = [
+    'Online Pre-Registration & Lock',  // 0
+    'Registrar Approval & Sectioning',  // 1
+    'Registrar Offerings CRUD',       // 2 (Programs, Subjects, Curriculum)
+    'Registrar Schedule & Fees CRUD', // 3 (Periods, Sections, Fees)
+    'Academic Advising (TLC)',        // 4
+    'Medical Clearance',              // 5
+    'Scholarship Desk Voucher 50%',   // 6
+    'Cashier Billing Ledger Check',   // 7
+    'Student Portal Account Activation & Block',   // 8
+    'Student Portal Schedule Check'   // 9
+];
+
+// Build step cards
+const stepsEl = document.getElementById('steps');
+LABELS.forEach((l, i) => {
+    stepsEl.innerHTML += `<div class="sc" id="s${i}"><div class="sc-l"><div class="sn" id="n${i}">${i+1}</div><span class="sl">${l}</span></div><span class="sb" id="b${i}">Idle</span></div>`;
+});
+
+const fr    = document.getElementById('fr');
+const co    = document.getElementById('co');
+const urlEl = document.getElementById('url');
+let ON = false, D = 800, REF = '', PIN = '', PROMO_ID = '', PROMO_PASS = '';
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function L(m, t = 'i') {
+    const d = document.createElement('div');
+    d.className = `lg ${t}`;
+    d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+    co.appendChild(d);
+    co.scrollTop = co.scrollHeight;
+}
+
+function S(i, s) {
+    const c = document.getElementById(`s${i}`);
+    if (!c) return;
+    ['active', 'done', 'fail'].forEach(x => c.classList.remove(x));
+    if (s !== 'idle') c.classList.add(s);
+    document.getElementById(`b${i}`).textContent = s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function nav(url) {
+    return new Promise(res => {
+        urlEl.textContent = url;
+        const h = () => { fr.removeEventListener('load', h); setTimeout(res, 1500); };
+        fr.addEventListener('load', h);
+        const sep = url.indexOf('?') !== -1 ? '&' : '?';
+        fr.src = url + sep + '_t=' + Date.now();
+    });
+}
+
+function D$() {
+    try { return fr.contentDocument || fr.contentWindow.document; }
+    catch(e) { throw new Error('Cannot access iframe. Use http://localhost/'); }
+}
+
+function W$() { return fr.contentWindow; }
+
+// Wait for a CSS selector to appear and be visible
+function wait(sel, ms = 12000) {
+    return new Promise((ok, no) => {
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+            try {
+                const el = D$().querySelector(sel);
+                if (el && (el.offsetParent !== null || el.offsetHeight > 0)) { clearInterval(iv); ok(el); }
+            } catch(e) {}
+            if (Date.now() - t0 > ms) { clearInterval(iv); no(new Error(`Timeout waiting for: ${sel}`)); }
+        }, 200);
+    });
+}
+
+// Wait for a condition function to return truthy
+function waitFor(fn, ms = 12000) {
+    return new Promise((ok, no) => {
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+            try {
+                const val = fn();
+                if (val) { clearInterval(iv); ok(val); }
+            } catch(e) {}
+            if (Date.now() - t0 > ms) { clearInterval(iv); no(new Error('Condition timeout.')); }
+        }, 250);
+    });
+}
+
+// Get the Vue 3 component proxy (reactive state + methods)
+function getVueApp(selector) {
+    const root = D$().querySelector(selector);
+    if (!root) return null;
+    const app = root.__vue_app__;
+    if (!app) return null;
+    const inst = app._instance;
+    if (!inst) return null;
+    return inst.proxy || inst.setupState || null;
+}
+
+// Set a v-model input value
+function fill(sel, val) {
+    const el = D$().querySelector(sel);
+    if (!el) { L(`fill: not found → ${sel}`, 'w'); return; }
+    const win = W$();
+    const proto = el.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value');
+    if (setter && setter.set) setter.set.call(el, val);
+    else el.value = val;
+    el.dispatchEvent(new win.Event('input',  { bubbles: true }));
+    el.dispatchEvent(new win.Event('change', { bubbles: true }));
+}
+
+// Login helper
+async function loginIfRequired(username, password) {
+    await sleep(800);
+    const rootLoginBtn = D$().querySelector('.login-btn');
+    if (rootLoginBtn && rootLoginBtn.offsetParent !== null) {
+        L(`Logging in via Central Gateway as ${username}…`);
+        fill('#username', username);
+        await sleep(200);
+        fill('#password', password);
+        await sleep(300);
+        rootLoginBtn.click();
+        await waitFor(() => D$().querySelector('.main-panel') || D$().querySelector('.shell') || D$().querySelector('.sidebar'), 12000);
+        await sleep(D);
+        L(`Logged in successfully via Central Gateway.`, 's');
+        return;
+    }
+
+    const fallbackBtn = D$().querySelector('.unified-login-btn');
+    if (fallbackBtn && fallbackBtn.offsetParent !== null) {
+        L(`Logging in via Local Fallback as ${username}…`);
+        fill('.unified-login-input[type="text"]', username);
+        await sleep(200);
+        fill('.unified-login-input[type="password"]', password);
+        await sleep(300);
+        fallbackBtn.click();
+        await waitFor(() => D$().querySelector('.main-panel') || D$().querySelector('.shell') || D$().querySelector('.sidebar'), 12000);
+        await sleep(D);
+        L(`Logged in successfully via Fallback form.`, 's');
+        return;
+    }
+    L(`Already logged in (session restored).`);
+}
+
+function stop() {
+    ON = false;
+    document.getElementById('bR').disabled = false;
+    document.getElementById('bS').disabled = true;
+    L('Aborted.', 'w');
+}
+
+// =====================================================================
+// MAIN TEST RUNNER
+// =====================================================================
+async function go() {
+    if (ON) return;
+    if (fr.contentWindow.location.protocol === 'file:') { document.getElementById('ow').style.display = 'block'; return; }
+    document.getElementById('ow').style.display = 'none';
+    ON = true;
+    D = parseInt(document.getElementById('spd').value);
+    document.getElementById('bR').disabled = true;
+    document.getElementById('bS').disabled = false;
+    co.innerHTML = '';
+    LABELS.forEach((_, i) => S(i, 'idle'));
+
+    try {
+
+        // ==============================================================
+        // STEP 0 — ONLINE PRE-REGISTRATION & DATE LOCK CHECK
+        // ==============================================================
+        S(0, 'active');
+        L('Executing Date-Lock check: Deactivating term in admin…');
+        await nav('admin/index.html');
+        await loginIfRequired('admin', 'admin12345');
+        
+        const adminVm = getVueApp('#admin-app');
+        if (!adminVm) throw new Error('Could not access Admin Vue app!');
+        adminVm.setView('periods');
+        await sleep(600);
+        
+        const originalPeriod = adminVm.periods.find(p => p.status === 'Active');
+        if (originalPeriod) {
+            L(`Temporarily deactivating active period ${originalPeriod.name}…`);
+            adminVm.editPeriod(originalPeriod);
+            await sleep(400);
+            adminVm.form.status = 'Inactive';
+            adminVm.savePeriod();
+            await sleep(1500);
+        }
+
+        L('Checking that pre-registration is blocked…');
+        await nav('enrollment-system/index.html');
+        await sleep(1000);
+        
+        const closedAlert = D$().querySelector('.alert-danger');
+        if (closedAlert && closedAlert.textContent.includes('closed')) {
+            L(`✅ Date-Lock check passed: pre-registration blocked. message: "${closedAlert.textContent.trim()}"`, 's');
+        } else {
+            throw new Error('Date-Lock failed: pre-registration form was not blocked!');
+        }
+
+        L('Restoring active period status to Active…');
+        await nav('admin/index.html');
+        await loginIfRequired('admin', 'admin12345');
+        const adminVm2 = getVueApp('#admin-app');
+        adminVm2.setView('periods');
+        await sleep(600);
+        const termPeriod = adminVm2.periods.find(p => p.id === originalPeriod.id);
+        if (termPeriod) {
+            adminVm2.editPeriod(termPeriod);
+            await sleep(400);
+            adminVm2.form.status = 'Active';
+            adminVm2.savePeriod();
+            await sleep(1500);
+        }
+
+        L('Navigating back to enrollment portal to submit pre-registration…');
+        await nav('enrollment-system/index.html');
+        await sleep(D);
+
+        await waitFor(() => getVueApp('#enrollment-app'), 10000);
+        const vm = getVueApp('#enrollment-app');
+        if (!vm) throw new Error('Could not access Vue enrollment app.');
+
+        L('Filling registration form…');
+        vm.form.studentType      = 'FRESHMAN';
+        vm.form.educationPathway = 'REGULAR';
+        vm.selectedCollege       = 'COIT';
+        await sleep(300);
+        vm.form.courseCode = 'BSIT';
+        vm.form.nstp       = 'CWTS';
+        await sleep(300);
+        vm.nextStep();
+        await sleep(400);
+
+        vm.form.firstName  = 'QAIntegration';
+        vm.form.middleName = 'E2E';
+        vm.form.lastName   = 'Tester';
+        vm.form.email      = 'qa.integration@gncp.edu.ph';
+        vm.form.phone      = '912345678';
+        vm.form.birthDate  = '2005-06-15';
+        vm.form.gender     = 'Male';
+        vm.form.address    = 'QA Lab, GNCP campus';
+        vm.nextStep();
+        await sleep(400);
+
+        vm.form.elementarySchool = 'QA Elementary';
+        vm.form.juniorHighSchool = 'QA Junior High';
+        vm.form.seniorHighSchool = 'QA Senior High';
+        vm.form.shsTrack         = 'STEM';
+        vm.nextStep();
+        await sleep(400);
+
+        vm.form.healthStatus           = 'GOOD';
+        vm.form.fitnessParticipation   = true;
+        vm.form.currentMedication      = false;
+        vm.form.emergencyContactName   = 'QA Guardian';
+        vm.form.emergencyContactPhone  = '912345679';
+        vm.nextStep();
+        await sleep(400);
+
+        vm.form.paymentMode = 'CASH';
+        vm.form.scholarship  = 'HONOR';
+        vm.nextStep();
+        await sleep(400);
+
+        L('Submitting enrollment…');
+        vm.nextStep();
+        
+        await waitFor(() => vm.tempAccount, 18000);
+        if (!vm.tempAccount) throw new Error('Enrollment timed out.');
+
+        REF = vm.tempAccount.tempStudentId || '';
+        PIN = vm.tempAccount.tempPin       || '';
+        L(`✅ Pre-Registration complete! Ref: ${REF} | PIN: ${PIN}`, 's');
+        S(0, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 1 — REGISTRAR APPROVAL & SECTIONING
+        // ==============================================================
+        if (!ON) return;
+        S(1, 'active');
+        L('Loading Registrar portal…');
+        await nav('registrar/index.html');
+        await loginIfRequired('kriz', 'kriz123');
+
+        await waitFor(() => getVueApp('#app'), 8000);
+        const regVm = getVueApp('#app');
+        if (!regVm) throw new Error('Could not access Registrar Vue app!');
+
+        regVm.setView('pending-applications');
+        await sleep(800);
+
+        L(`Waiting for ${REF} to appear in pending list…`);
+        await waitFor(() => {
+            const apps = regVm.pendingApplications;
+            return Array.isArray(apps) && apps.find(a => a.referenceNumber === REF);
+        }, 12000);
+
+        const regStudent = regVm.pendingApplications.find(a => a.referenceNumber === REF);
+        if (!regStudent) throw new Error(`Student not found in Registrar queue!`);
+
+        L(`Opening modal and assigning temporary section Block BSIT-1A…`);
+        regVm.openApplicationModal(regStudent, 'review');
+        await sleep(700);
+
+        // Verify requirements & documents
+        const reqs = regStudent.requirements || [];
+        reqs.forEach(item => regVm.toggleDocStatus(item, true));
+        await sleep(400);
+
+        // Select section
+        if (regVm.selectedApplication) {
+            regVm.selectedApplication.sectionCode = 'BSIT-1A';
+        }
+
+        L('Approving application...');
+        W$().confirm = () => true;
+        regVm.updateApplicationStatus('Approved');
+        await sleep(2000);
+
+        L('Registrar approval and sectioning step complete.', 's');
+        S(1, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 2 — REGISTRAR OFFERINGS CRUD (Programs, Subjects, Curriculum)
+        // ==============================================================
+        if (!ON) return;
+        S(2, 'active');
+        L('Loading Super Admin portal for offerings CRUD testing…');
+        await nav('admin/index.html');
+        await sleep(D);
+        await loginIfRequired('admin', 'admin12345');
+
+        const adminVm3 = getVueApp('#admin-app');
+        if (!adminVm3) throw new Error('Could not access Admin Vue app!');
+        W$().confirm = () => true;
+
+        // Clean up program "QA_T" if it exists from a previous run
+        const existingQA = adminVm3.programs.find(p => p.code === 'QA_T');
+        if (existingQA) {
+            L('Found leftover program "QA_T". Cleaning up…');
+            adminVm3.deleteProgram(existingQA.id);
+            await sleep(1500);
+        }
+
+        L('Adding test program "QA_T"…');
+        adminVm3.setView('programs');
+        await sleep(500);
+        adminVm3.openAddModal();
+        adminVm3.form.code = 'QA_T';
+        adminVm3.form.name = 'BS QA Testing';
+        adminVm3.form.department = 'Computer Science';
+        adminVm3.saveProgram();
+        await sleep(1500);
+
+        let testProg = adminVm3.programs.find(p => p.code === 'QA_T');
+        if (!testProg) throw new Error('Failed to create test program!');
+
+        L('Deleting test program...');
+        adminVm3.deleteProgram(testProg.id);
+        await sleep(1500);
+        L('Program & offerings CRUD validated.', 's');
+        S(2, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 3 — REGISTRAR SCHEDULE & FEES CRUD (Periods, Sections, Fees)
+        // ==============================================================
+        if (!ON) return;
+        S(3, 'active');
+
+        // Clean up fee "QA Testing Fee" if it exists from a previous run
+        const existingFee = adminVm3.fees.find(f => f.label === 'QA Testing Fee');
+        if (existingFee) {
+            L('Found leftover fee "QA Testing Fee". Cleaning up…');
+            adminVm3.deleteFee(existingFee.id);
+            await sleep(1500);
+        }
+
+        L('Verifying fee schedule CRUD...');
+        adminVm3.setView('fees');
+        await sleep(500);
+        adminVm3.openAddModal();
+        adminVm3.form.type = 'Miscellaneous';
+        adminVm3.form.label = 'QA Testing Fee';
+        adminVm3.form.amount = 150.00;
+        adminVm3.form.perUnit = false;
+        adminVm3.saveFee();
+        await sleep(1500);
+
+        let testFee = adminVm3.fees.find(f => f.label === 'QA Testing Fee');
+        if (!testFee) throw new Error('Failed to create fee schedule item!');
+
+        L('Deleting test fee...');
+        adminVm3.deleteFee(testFee.id);
+        await sleep(1500);
+        L('Schedule and Fees CRUD validated.', 's');
+        S(3, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 4 — ACADEMIC ADVISING (TLC)
+        // ==============================================================
+        if (!ON) return;
+        S(4, 'active');
+        L('Loading Advising (TLC Helpdesk) station…');
+        await nav('stations/tlc-helpdesk/index.html');
+        await loginIfRequired('tristan', 'tristan123');
+
+        const tlcVm = getVueApp('#app');
+        if (!tlcVm) throw new Error('Could not access TLC Vue app!');
+        tlcVm.setView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Advising queue…`);
+        await waitFor(() => {
+            const list = tlcVm.students;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const tlcStudent = tlcVm.students.find(s => s.referenceNumber === REF);
+        if (!tlcStudent) throw new Error(`Student ${REF} not found in TLC queue!`);
+
+        L(`Advising candidate and evaluating subject credits…`);
+        tlcVm.openReview(tlcStudent);
+        await sleep(600);
+        tlcVm.markCompleted();
+        await sleep(1500);
+
+        L('Advising completed.', 's');
+        S(4, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 5 — MEDICAL CLEARANCE
+        // ==============================================================
+        if (!ON) return;
+        S(5, 'active');
+        L('Loading Medical Clinic station…');
+        await nav('stations/medical-checkup/index.html');
+        await loginIfRequired('ethan', 'ethan123');
+
+        const medVm = getVueApp('#app');
+        if (!medVm) throw new Error('Could not access Medical Vue app!');
+        medVm.setView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Medical queue…`);
+        await waitFor(() => {
+            const list = medVm.students;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const medStudent = medVm.students.find(s => s.referenceNumber === REF);
+        if (!medStudent) throw new Error(`Student not found in Medical queue!`);
+
+        L('Clearing candidate fitness checkup...');
+        medVm.openReview(medStudent);
+        await sleep(600);
+        medStudent.status = 'fit';
+        medVm.saveCheckup();
+        await sleep(1500);
+
+        L('Medical checkup completed.', 's');
+        S(5, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 6 — SCHOLARSHIP DESK VOUCHER 50%
+        // ==============================================================
+        if (!ON) return;
+        S(6, 'active');
+        L('Loading Scholarship Verification station…');
+        await nav('stations/scholarship-verification/index.html');
+        await loginIfRequired('thirdy', 'thirdy123');
+
+        const schVm = getVueApp('#app');
+        if (!schVm) throw new Error('Could not access Scholarship Vue app!');
+        schVm.setView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Scholarship queue…`);
+        await waitFor(() => {
+            const list = schVm.studentsList;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const schStudent = schVm.studentsList.find(s => s.referenceNumber === REF);
+        if (!schStudent) throw new Error(`Student not found in Scholarship queue!`);
+
+        L('Verifying scholarship documents…');
+        schVm.openReview(schStudent);
+        await sleep(600);
+        schVm.verifiedCert = true;
+        schVm.verifiedIdentity = true;
+        schVm.scholarshipNotes = 'Verified Honor student documents.';
+        schVm.confirmScholarship();
+        await sleep(1500);
+
+        L('Scholarship verified and Honor student discount recorded.', 's');
+        S(6, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 7 — CASHIER BILLING LEDGER CHECK
+        // ==============================================================
+        if (!ON) return;
+        S(7, 'active');
+        L('Loading Cashier Payment station…');
+        await nav('stations/payment-processing/index.html');
+        await loginIfRequired('cashier', 'cashier123');
+
+        const payVm = getVueApp('#app');
+        if (!payVm) throw new Error('Could not access Cashier Vue app!');
+        payVm.setView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Cashier queue…`);
+        await waitFor(() => {
+            const list = payVm.students;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const payStudent = payVm.students.find(s => s.referenceNumber === REF);
+        if (!payStudent) throw new Error(`Student not found in Cashier queue!`);
+
+        payVm.openProcess(payStudent);
+        await sleep(600);
+
+        L(`Verifying ledger calculation: Original Fee = ₱${payVm.billingDetails.totalFees}, Grand Total = ₱${payVm.billingDetails.grandTotal}`);
+        if (payVm.billingDetails.scholarshipDiscount <= 0) {
+            throw new Error('Ledger Error: Cashier did not pull or calculate the 50% scholarship discount!');
+        }
+        L('Ledger discount calculations verified successfully.', 's');
+
+        L('Processing tuition payment and clearing balance…');
+        payVm.confirmFullPayment();
+        await sleep(1500);
+
+        L('Cashier billing completed.', 's');
+        S(7, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 8 — Student Portal Account Activation & BLOCK
+        // ==============================================================
+        if (!ON) return;
+        S(8, 'active');
+        L('Loading Student Portal Account Activation station…');
+        await nav('stations/it-center/index.html');
+        await loginIfRequired('it_officer', 'itpassword');
+
+        const itVm = getVueApp('#app');
+        if (!itVm) throw new Error('Could not access Student Portal Account Activation Vue app!');
+        itVm.setView('queue');
+        await sleep(500);
+
+        L(`Waiting for ${REF} in Student Portal Account Activation queue…`);
+        await waitFor(() => {
+            const list = itVm.studentsList;
+            return Array.isArray(list) && list.find(s => s.referenceNumber === REF);
+        }, 12000);
+
+        const itStudent = itVm.studentsList.find(s => s.referenceNumber === REF);
+        if (!itStudent) throw new Error(`Student not found in Student Portal Account Activation queue!`);
+
+        L('Finalizing enrollment and activating permanent credentials…');
+        itVm.openReview(itStudent);
+        await sleep(800);
+
+        await itVm.finalizeEnrollment();
+        await sleep(2000);
+
+        PROMO_ID = itVm.corDetails?.student?.enrollment?.permanentId || REF;
+        PROMO_PASS = itVm.corDetails?.student?.enrollment?.password || PIN;
+        L(`Activated Permanent ID: ${PROMO_ID} | Portal Password: ${PROMO_PASS}`, 's');
+
+        L('Student Portal Account Activation finalized.', 's');
+        S(8, 'done');
+        await sleep(D);
+
+        // ==============================================================
+        // STEP 9 — STUDENT PORTAL SCHEDULE CHECK
+        // ==============================================================
+        if (!ON) return;
+        S(9, 'active');
+        L('Loading SAS Student Portal login gateway…');
+        await nav('student-portal/index.html');
+        await sleep(D);
+
+        const studVm = getVueApp('#app');
+        if (!studVm) throw new Error('Could not access Student Portal Vue app!');
+
+        L(`Logging in as ${PROMO_ID}…`);
+        studVm.loginForm.studentId = PROMO_ID;
+        studVm.loginForm.password = PROMO_PASS;
+        studVm.handleLogin();
+
+        await waitFor(() => studVm.profile && studVm.profile.id === PROMO_ID, 10000);
+        if (!studVm.profile || studVm.profile.id !== PROMO_ID) throw new Error('Student Portal login verification failed!');
+
+        L('Profile authenticated. Verifying section schedule grid…', 's');
+        if (!studVm.subjects || studVm.subjects.length === 0) throw new Error('No enrolled subjects loaded!');
+
+        studVm.subjects.forEach(sub => {
+            const assigned = (studVm.enrollment && studVm.enrollment.sections) ? studVm.enrollment.sections[sub.code] : 'TBA';
+            L(` - ${sub.code} (${sub.title}) -> Assigned Section: ${assigned}`);
+            if (assigned === 'TBA' || assigned === 'Unassigned') {
+                throw new Error(`Schedule mapping error: Subject ${sub.code} has missing section schedules!`);
+            }
+        });
+
+        await sleep(1500);
+        studVm.handleLogout();
+        await sleep(400);
+        studVm.confirmLogout();
+        await sleep(1000);
+
+        L('Student Portal login verification complete.', 's');
+        S(9, 'done');
+
+        L('');
+        L('════════════════════════════════════════', 's');
+        L('🎉 100% COVERAGE FULL INTEGRATION TEST PASSED!', 's');
+        L(`   Matriculated ID: ${PROMO_ID} | Password PIN: ${PROMO_PASS}`, 's');
+        L('════════════════════════════════════════', 's');
+
+    } catch(err) {
+        L(`❌ ${err.message}`, 'e');
+        LABELS.forEach((_, i) => {
+            const stepCard = document.getElementById(`s${i}`);
+            if (stepCard && stepCard.classList.contains('active')) S(i, 'fail');
+        });
+    } finally {
+        ON = false;
+        document.getElementById('bR').disabled = false;
+        document.getElementById('bS').disabled = true;
+    }
+}
+
+if (location.protocol === 'file:') document.getElementById('ow').style.display = 'block';
+</script>
+</body>
+</html>

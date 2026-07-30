@@ -1,0 +1,325 @@
+<?php
+/**
+ * GNCP Portal — Super Admin API Gateway
+ *
+ * Handles:
+ *   - Super Admin authentication (role: SUPER_ADMIN)
+ *   - Station operator account management (CRUD)
+ *   - All academic data management (Programs, Subjects, Curriculum,
+ *     Academic Periods, Subject Sections, Fee Schedule)
+ */
+
+require_once __DIR__ . '/../../shared/backend/config/database.php';
+require_once __DIR__ . '/../../shared/backend/utils/response.php';
+
+$action = $_GET['action'] ?? '';
+
+try {
+    $pdo = Database::getInstance();
+
+    if ($action === 'fetch_users') {
+        $stmt  = $pdo->query("SELECT `id`, `username`, `role`, `name`, `status`, `created_at` FROM `station_users` WHERE `role` NOT IN ('ADMIN','SUPER_ADMIN') ORDER BY `id` DESC");
+        $users = $stmt->fetchAll();
+        sendResponse(true, $users);
+
+    } elseif ($action === 'update_user_status') {
+        $payload  = json_decode(file_get_contents('php://input'), true);
+        $userId   = $payload['userId'] ?? null;
+        $status   = $payload['status'] ?? null;
+        if (!$userId || !$status) sendResponse(false, null, 'User ID and status are required.', 400);
+
+        $stmt = $pdo->prepare("UPDATE `station_users` SET `status` = :status WHERE `id` = :id AND `role` NOT IN ('ADMIN','SUPER_ADMIN')");
+        $stmt->execute(['status' => $status, 'id' => (int)$userId]);
+        sendResponse(true, null, 'Status updated.');
+
+    } elseif ($action === 'delete_user') {
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $userId  = $payload['userId'] ?? null;
+        if (!$userId) sendResponse(false, null, 'User ID is required.', 400);
+
+        $stmt = $pdo->prepare("DELETE FROM `station_users` WHERE `id` = :id AND `role` NOT IN ('ADMIN','SUPER_ADMIN')");
+        $stmt->execute(['id' => (int)$userId]);
+        sendResponse(true, null, 'User deleted.');
+
+    } elseif ($action === 'create_user') {
+        $payload  = json_decode(file_get_contents('php://input'), true);
+        $username = trim($payload['username'] ?? '');
+        $password = trim($payload['password'] ?? '');
+        $name     = trim($payload['name']     ?? '');
+        $role     = trim($payload['role']     ?? '');
+
+        if (!$username || !$password || !$name || !$role) {
+            sendResponse(false, null, 'All fields are required.', 400);
+        }
+
+        // Block creating another super admin through this form
+        if (in_array(strtoupper($role), ['ADMIN', 'SUPER_ADMIN'])) {
+            sendResponse(false, null, 'Cannot create an admin account through this form.', 403);
+        }
+
+        $check = $pdo->prepare("SELECT COUNT(*) FROM `station_users` WHERE `username` = :user");
+        $check->execute(['user' => $username]);
+        if ($check->fetchColumn() > 0) {
+            sendResponse(false, null, 'Username is already taken.', 400);
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`) VALUES (:user, :pass, :role, :name, 'ACTIVE')");
+        $stmt->execute([
+            'user' => $username,
+            'pass' => password_hash($password, PASSWORD_DEFAULT),
+            'role' => $role,
+            'name' => $name
+        ]);
+        sendResponse(true, null, 'Operator account created successfully.');
+
+    // ──────────────────────────────────────────────────────────────────
+    // ACADEMIC DATA — READ ALL
+    // ──────────────────────────────────────────────────────────────────
+    } elseif ($action === 'fetch_academic_data') {
+        // Departments
+        $departments = $pdo->query("SELECT * FROM `departments` ORDER BY `id` DESC")->fetchAll();
+
+        // Programs
+        $programs = $pdo->query("SELECT * FROM `programs` ORDER BY `id` DESC")->fetchAll();
+
+        // Subjects
+        $subsRaw  = $pdo->query("SELECT * FROM `subjects` ORDER BY `id` DESC")->fetchAll();
+        $subjects = [];
+        foreach ($subsRaw as $r) {
+            $subjects[] = [
+                'id'           => (int)$r['id'],
+                'code'         => $r['code'],
+                'title'        => $r['title'],
+                'description'  => $r['description'],
+                'lectureUnits' => (int)$r['lecture_units'],
+                'labUnits'     => (int)$r['lab_units'],
+                'labFee'       => (float)$r['lab_fee'],
+                'department'   => $r['department'],
+                'prerequisites'=> $r['prerequisites']
+            ];
+        }
+
+        // Curriculum
+        $currRaw  = $pdo->query(
+            "SELECT c.*, s.code as subject_code, s.lecture_units, s.lab_units, s.lab_fee, s.prerequisites
+             FROM `curriculum` c LEFT JOIN `subjects` s ON c.subject = s.title ORDER BY c.id DESC"
+        )->fetchAll();
+        $curriculum = [];
+        foreach ($currRaw as $r) {
+            $curriculum[] = [
+                'id'           => (int)$r['id'],
+                'program'      => $r['program'],
+                'subject'      => $r['subject'],
+                'subjectCode'  => $r['subject_code'] ?? '',
+                'lectureUnits' => (int)($r['lecture_units'] ?? 0),
+                'labUnits'     => (int)($r['lab_units'] ?? 0),
+                'labFee'       => (float)($r['lab_fee'] ?? 0),
+                'prerequisites'=> $r['prerequisites'] ?? 'None',
+                'yearLevel'    => $r['year_level'],
+                'semester'     => $r['semester'],
+                'elective'     => (bool)$r['elective'],
+                'curriculumVersion' => $r['curriculum_version'] ?? '2022 Curriculum'
+            ];
+        }
+
+        // Academic Periods
+        $apRaw  = $pdo->query("SELECT * FROM `academic_periods` ORDER BY `id` DESC")->fetchAll();
+        $periods = [];
+        foreach ($apRaw as $r) {
+            $periods[] = [
+                'id'              => (int)$r['id'],
+                'name'            => $r['name'],
+                'academicYear'    => $r['academic_year'],
+                'semester'        => $r['semester'],
+                'enrollmentStart' => $r['enrollment_start'],
+                'enrollmentEnd'   => $r['enrollment_end'],
+                'status'          => $r['status']
+            ];
+        }
+
+        // Section Cohort Blocks
+        $secCohortRaw = $pdo->query("SELECT * FROM `sections` ORDER BY `id` DESC")->fetchAll();
+        $sections = [];
+        foreach ($secCohortRaw as $r) {
+            $sections[] = [
+                'id'               => (int)$r['id'],
+                'code'             => $r['code'],
+                'program'          => $r['program'],
+                'yearLevel'        => $r['year_level'],
+                'academicPeriodId' => (int)$r['academic_period_id'],
+                'curriculumVersion'=> $r['curriculum_version'] ?? '2022 Curriculum',
+                'capacity'         => (int)$r['capacity'],
+                'adviser'          => $r['adviser'] ?? ''
+            ];
+        }
+
+        // Class Offerings (under subject_sections)
+        $secRaw   = $pdo->query("SELECT * FROM `subject_sections` ORDER BY `id` DESC")->fetchAll();
+        $classOfferings = [];
+        foreach ($secRaw as $r) {
+            $classOfferings[] = [
+                'id'         => (int)$r['id'],
+                'program'    => $r['program'] ?? '',
+                'yearLevel'  => $r['year_level'] ?? '',
+                'semester'   => $r['semester'] ?? '',
+                'subject'    => $r['subject'],
+                'code'       => $r['code'],
+                'instructor' => $r['instructor'],
+                'days'       => $r['days'],
+                'time'       => $r['time'],
+                'room'       => $r['room'],
+                'capacity'   => (int)$r['capacity'],
+                'sectionId'  => $r['section_id'] !== null ? (int)$r['section_id'] : null
+            ];
+        }
+
+        // Fee Schedule
+        $feeRaw = $pdo->query("SELECT * FROM `fee_schedule` ORDER BY `id` DESC")->fetchAll();
+        $fees   = [];
+        foreach ($feeRaw as $r) {
+            $fees[] = [
+                'id'      => (int)$r['id'],
+                'type'    => $r['type'],
+                'label'   => $r['label'],
+                'amount'  => (float)$r['amount'],
+                'perUnit' => (bool)$r['per_unit']
+            ];
+        }
+
+        // Enrolled Students list (with institutional email for Student Accounts view)
+        $studentsRaw = $pdo->query("SELECT `id`, `name`, `program`, `year_level`, `email`, `status`, `created_at` FROM `students` ORDER BY `name` ASC")->fetchAll();
+        $students = [];
+        foreach ($studentsRaw as $r) {
+            $students[] = [
+                'id'        => $r['id'],
+                'name'      => $r['name'],
+                'program'   => $r['program'],
+                'yearLevel' => $r['year_level'],
+                'email'     => $r['email'] ?? '',
+                'status'    => $r['status'],
+                'createdAt' => $r['created_at']
+            ];
+        }
+
+        sendResponse(true, compact('departments', 'programs', 'subjects', 'curriculum', 'periods', 'sections', 'classOfferings', 'fees', 'students'));
+
+    } elseif ($action === 'fetch_dashboard_stats') {
+        // 1. Overall counts (pre_enrollments + students)
+        $preEnrollmentsCount = (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments`")->fetchColumn();
+        $studentsCount = (int)$pdo->query("SELECT COUNT(*) FROM `students`")->fetchColumn();
+        $total = $preEnrollmentsCount + $studentsCount;
+
+        $pending = (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` IN ('PRE_REGISTERED', 'Pending')")->fetchColumn();
+        // 'Approved' is the status set by the Registrar; 'VERIFIED' is the legacy uppercase variant
+        $verified = (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` IN ('VERIFIED', 'Approved')")->fetchColumn();
+        $enrolled = $studentsCount;
+
+        // 2. Program distributions (pre_enrollments + students)
+        $programsDist = $pdo->query("
+            SELECT program, SUM(count) as count FROM (
+                SELECT `course_code` as program, COUNT(*) as count FROM `pre_enrollments` GROUP BY `course_code`
+                UNION ALL
+                SELECT `program` as program, COUNT(*) as count FROM `students` GROUP BY `program`
+            ) t GROUP BY program
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        // 3. Recent activity logs (recent 5 pre_enrollments & students combined)
+        $recentRaw = $pdo->query("
+            SELECT `temp_student_id` as ref, CONCAT(`first_name`, ' ', `last_name`) as name, `course_code` as course, `status`, `created_at` 
+            FROM `pre_enrollments`
+            UNION ALL
+            SELECT `temp_reference_no` as ref, `name`, `program` as course, 'ENROLLED' as status, `created_at`
+            FROM `students`
+            ORDER BY `created_at` DESC LIMIT 5
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        $recent = [];
+        foreach ($recentRaw as $r) {
+            $recent[] = [
+                'ref' => $r['ref'],
+                'name' => $r['name'],
+                'course' => $r['course'],
+                'status' => $r['status'],
+                'date' => date('M d, Y h:i A', strtotime($r['created_at']))
+            ];
+        }
+
+        // 4. Station Queues Calculation (live parsing)
+        $rows = $pdo->query("SELECT `status`, `roadmap`, `helpdesk_data` FROM `pre_enrollments`")->fetchAll();
+        $stationQueues = [
+            'registrar' => 0,
+            'advising' => 0,
+            'medical' => 0,
+            'scholarship' => 0,
+            'cashier' => 0,
+            'it_center' => 0
+        ];
+
+        foreach ($rows as $row) {
+            $status = $row['status'];
+            if ($status === 'PRE_REGISTERED') {
+                $stationQueues['registrar']++;
+                continue;
+            }
+            if ($status === 'REJECTED' || $status === 'ENROLLED') {
+                continue;
+            }
+
+            $rm = json_decode((string)($row['roadmap'] ?? ''), true) ?: [];
+            $stepMap = [];
+            foreach ($rm as $step) {
+                if (isset($step['stepId'])) {
+                    $stepMap[$step['stepId']] = $step['status'] ?? 'PENDING';
+                }
+            }
+
+            // Advising
+            if (($stepMap['advising_assessment'] ?? '') === 'PENDING') {
+                $stationQueues['advising']++;
+            }
+            // Medical
+            if (($stepMap['clinic_checkup'] ?? '') === 'PENDING') {
+                $stationQueues['medical']++;
+            }
+            // Cashier
+            if (($stepMap['cashier_payment'] ?? '') === 'PENDING') {
+                $stationQueues['cashier']++;
+            }
+            // IT Center
+            if (($stepMap['id_email_final'] ?? '') === 'PENDING') {
+                $stationQueues['it_center']++;
+            }
+        }
+
+        sendResponse(true, compact('total', 'pending', 'verified', 'enrolled', 'programsDist', 'recent', 'stationQueues'));
+
+    // ──────────────────────────────────────────────────────────────────
+    // ACADEMIC CRUD (MIGRATED TO MODULAR SUBFILES: catalog.php, term.php, scheduling.php)
+    // ──────────────────────────────────────────────────────────────────
+
+
+
+    } else {
+        // Delegate to modular sub-files
+        require_once __DIR__ . '/catalog/catalog.php';
+        require_once __DIR__ . '/term/term.php';
+        require_once __DIR__ . '/scheduling/scheduling.php';
+
+        // If still not handled, return error
+        sendResponse(false, null, 'Invalid action specified.', 400);
+    }
+
+} catch (Throwable $e) {
+    error_log('Admin API error: ' . $e->getMessage());
+    $logData = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'action' => $_GET['action'] ?? 'unknown',
+        'input' => json_decode(file_get_contents('php://input'), true),
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ];
+    @file_put_contents(__DIR__ . '/../../scratch/api_errors.log', json_encode($logData, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+    sendResponse(false, null, 'Database or script error occurred: ' . $e->getMessage(), 500);
+}
+
+
