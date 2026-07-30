@@ -670,11 +670,11 @@
                                 <div class="row g-3">
                                     <div class="col-sm-4">
                                         <span class="text-muted small d-block">Overall Fitness</span>
-                                        <span class="badge text-uppercase" :class="{
-                                            'bg-success-subtle text-success border border-success-subtle': medical.status === 'fit',
-                                            'bg-warning-subtle text-warning-emphasis border border-warning-subtle': medical.status === 'conditional',
+                                        <span class="badge text-uppercase px-2 py-1" :class="{
+                                            'bg-success-subtle text-success border border-success-subtle': medical.status === 'fit' || medical.status === 'cleared',
+                                            'bg-warning-subtle text-warning-emphasis border border-warning-subtle': medical.status === 'conditional' || medical.status === 'pending' || !medical.status,
                                             'bg-danger-subtle text-danger border border-danger-subtle': medical.status === 'unfit'
-                                        }">{{ medical.status || 'pending' }}</span>
+                                        }">{{ (medical.status === 'fit' || medical.status === 'cleared') ? 'CLEARED / FIT' : (medical.status === 'conditional' ? 'CONDITIONAL' : (medical.status === 'unfit' ? 'UNFIT' : 'PENDING CLINIC EXAM')) }}</span>
                                     </div>
                                     <div class="col-sm-4">
                                         <span class="text-muted small d-block">PE &amp; NSTP Status</span>
