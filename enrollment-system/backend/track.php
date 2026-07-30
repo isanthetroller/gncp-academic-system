@@ -87,6 +87,17 @@ try {
     // Decode roadmap and parse record into response format
     $roadmap = json_decode($record['roadmap'], true) ?: [];
 
+    // Auto-heal medical_data & roadmap sync
+    $medicalData = json_decode($record['medical_data'] ?? '{}', true) ?: [];
+    if ($medicalData && (!empty($medicalData['status']) && in_array(strtolower($medicalData['status']), ['fit', 'cleared', 'conditional']) || !empty($medicalData['verifiedBy']))) {
+        foreach ($roadmap as &$step) {
+            if (($step['stepId'] ?? '') === 'clinic_checkup') {
+                $step['status'] = 'COMPLETED';
+            }
+        }
+        unset($step);
+    }
+
     $cleanLast = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', $record['last_name'] ?? '')));
     if (empty($cleanLast)) {
         $cleanLast = 'password123';

@@ -84,6 +84,19 @@ if ($action === 'login_student') {
     $enrollment   = json_decode($student['enrollment_data'], true) ?: null;
     $personalInfo = json_decode($student['personal_info'], true) ?: null;
 
+    // Auto-heal / synchronize roadmap step status with medical clearance record
+    if ($medical && (!empty($medical['status']) && in_array(strtolower($medical['status']), ['fit', 'cleared', 'conditional']) || !empty($medical['verifiedBy']))) {
+        foreach ($roadmap as &$step) {
+            if (($step['stepId'] ?? '') === 'clinic_checkup') {
+                $step['status'] = 'COMPLETED';
+                if (!empty($medical['dateVerified'])) {
+                    $step['updatedAt'] = $medical['dateVerified'];
+                }
+            }
+        }
+        unset($step);
+    }
+
     // Resolve the active semester from academic_periods instead of hardcoding
     $semStmt = $pdo->query("SELECT `semester` FROM `academic_periods` WHERE `status` = 'Active' LIMIT 1");
     $activePeriod = $semStmt->fetch();

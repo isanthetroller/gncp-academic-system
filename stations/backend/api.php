@@ -277,6 +277,41 @@ try {
             $sql = "UPDATE `pre_enrollments` SET " . implode(', ', $sets) . " WHERE `temp_student_id` = :ref";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
+
+            // Synchronize updates to permanent students directory if student record exists
+            try {
+                $studentSets = [];
+                $studentParams = ['ref' => $refNo];
+
+                if (isset($updateData['roadmap'])) {
+                    $studentSets[] = "`roadmap` = :roadmap";
+                    $studentParams['roadmap'] = $roadmapJson;
+                }
+                if (isset($updateData['medical'])) {
+                    $studentSets[] = "`medical_data` = :medical_data";
+                    $studentParams['medical_data'] = json_encode($updateData['medical']);
+                }
+                if (isset($updateData['requirements'])) {
+                    $studentSets[] = "`requirements_data` = :requirements_data";
+                    $studentParams['requirements_data'] = json_encode($updateData['requirements']);
+                }
+                if (isset($updateData['payment'])) {
+                    $studentSets[] = "`payment_data` = :payment_data";
+                    $studentParams['payment_data'] = json_encode($updateData['payment']);
+                }
+                if (isset($updateData['helpdesk'])) {
+                    $studentSets[] = "`helpdesk_data` = :helpdesk_data";
+                    $studentParams['helpdesk_data'] = json_encode($updateData['helpdesk']);
+                }
+
+                if (!empty($studentSets)) {
+                    $sqlStud = "UPDATE `students` SET " . implode(', ', $studentSets) . " WHERE `temp_reference_no` = :ref OR `id` = :ref";
+                    $stmtStud = $pdo->prepare($sqlStud);
+                    $stmtStud->execute($studentParams);
+                }
+            } catch (Exception $e) {
+                // Ignore if student has not been promoted yet
+            }
         }
 
         // Automatically create or update a permanent student directory record upon IT Center activation
