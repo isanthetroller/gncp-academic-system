@@ -32,6 +32,12 @@ createApp({
             return sortDesc.value ? 'fa-solid fa-sort-down text-success ms-1' : 'fa-solid fa-sort-up text-success ms-1';
         };
 
+        const getMedicalStepStatus = (student) => {
+            if (!student || !student.roadmap) return 'PENDING';
+            const step = student.roadmap.find(r => r.stepId === 'clinic_checkup');
+            return step ? step.status : 'PENDING';
+        };
+
         const completedStudents = computed(() => {
             const list = [];
             for (let i = 0; i < students.value.length; i++) {
@@ -168,12 +174,6 @@ createApp({
             sessionStorage.removeItem('gncp_station_user');
             sessionStorage.removeItem('gncp_admin_user');
             window.location.href = '../../index.html';
-        };
-
-        const getMedicalStepStatus = (student) => {
-            if (!student || !student.roadmap) return 'PENDING';
-            const step = student.roadmap.find(r => r.stepId === 'clinic_checkup');
-            return step ? step.status : 'PENDING';
         };
 
         const isMedicalStepCompleted = (student) => {

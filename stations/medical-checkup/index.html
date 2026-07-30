@@ -474,6 +474,13 @@
             </div>
         </div>
         </template>
+        <template v-else>
+            <div class="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark text-white p-4" style="background: linear-gradient(135deg, #0b1511 0%, #15271f 100%); font-family: 'Plus Jakarta Sans', sans-serif;">
+                <div class="spinner-border text-success mb-3" role="status" style="width: 2.5rem; height: 2.5rem; border-width: 0.2em;"></div>
+                <h5 class="fw-bold" style="color: #10b981; font-family: 'Outfit', sans-serif;">Verifying School Clinic Session...</h5>
+                <p class="text-secondary small mb-0">Establishing medical officer credentials and loading patient queue...</p>
+            </div>
+        </template>
 
         <!-- Logout Confirm Dialog -->
         <div v-if="showLogoutConfirm" class="confirm-overlay" @click.self="showLogoutConfirm = false">
