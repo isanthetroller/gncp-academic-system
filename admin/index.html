@@ -1975,8 +1975,14 @@ createApp({
 
         const filteredFees       = computed(() => fees.value.filter(f       => !q() || (f.type+f.label).toLowerCase().includes(q())));
         const filteredUsers      = computed(() => {
+            if (!Array.isArray(users.value)) return [];
             return users.value.filter(u => {
-                const matchesSearch = !q() || (u.name+u.username+u.role).toLowerCase().includes(q());
+                if (!u) return false;
+                const nameStr = (u.name || '').toLowerCase();
+                const userStr = (u.username || '').toLowerCase();
+                const roleStr = (u.role || '').toLowerCase();
+                const query   = q();
+                const matchesSearch = !query || nameStr.includes(query) || userStr.includes(query) || roleStr.includes(query);
                 const matchesStatus = filterUserStatus.value === 'ALL' || u.status === filterUserStatus.value;
                 return matchesSearch && matchesStatus;
             });
@@ -2063,6 +2069,10 @@ createApp({
             search.value = ''; 
             closeModal(); 
             if (v === 'dashboard') loadDashboard();
+            if (v === 'operators') {
+                filterUserStatus.value = 'ALL';
+                get('fetch_users').then(r => { if (r && r.success) users.value = r.data || []; });
+            }
         };
 
         // ── Auth ──
