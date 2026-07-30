@@ -465,9 +465,13 @@ a { text-decoration: none; }
     background: #F9FAFB;
     border-bottom: 1.5px solid var(--gray-border);
     white-space: nowrap;
+.data-table tbody tr {
+    transition: background-color 0.15s ease;
+    cursor: pointer;
 }
-
-.data-table tbody tr:hover td { background: #F0FBF7; }
+.data-table tbody tr:hover td { 
+    background: #E6F4EA !important; 
+}
 .data-table tbody tr:last-child td { border-bottom: none; }
 
 .action-buttons { display: flex; gap: 5px; }

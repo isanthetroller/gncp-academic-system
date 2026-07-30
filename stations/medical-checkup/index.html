@@ -231,7 +231,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="student in filteredStudents" :key="student.referenceNumber">
+                                <tr v-for="student in filteredStudents" :key="student.referenceNumber" @click="openReview(student)" style="cursor: pointer;">
                                      <td><code>{{ student.referenceNumber }}</code></td>
                                      <td>
                                          <strong>{{ student.name }}</strong>
@@ -290,7 +290,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="student in completedStudents" :key="student.referenceNumber">
+                                <tr v-for="student in completedStudents" :key="student.referenceNumber" @click="openReview(student)" style="cursor: pointer;">
                                     <td><code>{{ student.referenceNumber }}</code></td>
                                     <td><strong>{{ student.name }}</strong></td>
                                     <td><span class="badge bg-secondary-subtle text-secondary">{{ student.program }}</span></td>
