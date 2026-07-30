@@ -582,6 +582,13 @@
         </div>
 
     </template>
+    <template v-else>
+        <div class="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark text-white p-4" style="background: linear-gradient(135deg, #0b1511 0%, #15271f 100%); font-family: 'Plus Jakarta Sans', sans-serif;">
+            <div class="spinner-border text-warning mb-3" role="status" style="width: 2.5rem; height: 2.5rem; border-width: 0.2em;"></div>
+            <h5 class="fw-bold" style="color: #D4AF37; font-family: 'Outfit', sans-serif;">Verifying Treasury Session...</h5>
+            <p class="text-secondary small mb-0">Establishing operator credentials and loading collection ledger...</p>
+        </div>
+    </template>
     </div> <!-- close app -->
 
     <script src="../../shared/libs/bootstrap.bundle.min.js"></script>

@@ -124,10 +124,10 @@ createApp({
 
                 let matchesQuery = true;
                 if (query) {
-                    const matchesRef = student.referenceNumber.toLowerCase().indexOf(query) !== -1;
-                    const matchesName = student.studentName.toLowerCase().indexOf(query) !== -1;
-                    const matchesProg = student.program.toLowerCase().indexOf(query) !== -1;
-                    const matchesType = student.payment.paymentType.toLowerCase().indexOf(query) !== -1;
+                    const matchesRef = (student.referenceNumber || '').toLowerCase().indexOf(query) !== -1;
+                    const matchesName = (student.studentName || '').toLowerCase().indexOf(query) !== -1;
+                    const matchesProg = (student.program || '').toLowerCase().indexOf(query) !== -1;
+                    const matchesType = (student.payment?.paymentType || '').toLowerCase().indexOf(query) !== -1;
                     matchesQuery = matchesRef || matchesName || matchesProg || matchesType;
                 }
 
@@ -245,8 +245,9 @@ createApp({
         });
 
         const newBalance = computed(() => {
-            if (!selectedStudent.value) return 0;
-            return Math.max(0, selectedStudent.value.payment.balance - payAmountInput.value);
+            if (!selectedStudent.value || !selectedStudent.value.payment) return 0;
+            const currentBal = selectedStudent.value.payment.balance || 0;
+            return Math.max(0, currentBal - (payAmountInput.value || 0));
         });
 
         const openProcess = (student) => {
