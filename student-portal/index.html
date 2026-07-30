@@ -602,24 +602,64 @@
 
                             <!-- Financial Ledger Section -->
                             <div class="info-panel" v-if="payment">
-                                <h3 class="panel-title"><i class="fa-solid fa-receipt"></i> Tuition billing ledger</h3>
-                                <div class="row g-3">
-                                    <div class="col-sm-4">
-                                        <span class="text-muted small d-block">Scheme selected</span>
-                                        <strong>{{ payment.paymentType || 'CASH' }}</strong>
+                                <h3 class="panel-title d-flex justify-content-between align-items-center">
+                                    <span><i class="fa-solid fa-receipt"></i> Tuition Billing &amp; Payment Ledger</span>
+                                    <span class="badge text-uppercase font-monospace px-3 py-1" style="font-size: 0.75rem;" :class="{
+                                        'bg-success-subtle text-success border border-success-subtle': String(payment.status || '').toUpperCase() === 'PAID',
+                                        'bg-warning-subtle text-warning-emphasis border border-warning-subtle': String(payment.status || '').toUpperCase() === 'PARTIAL',
+                                        'bg-secondary-subtle text-secondary border border-secondary-subtle': String(payment.status || '').toUpperCase() === 'PENDING'
+                                    }">{{ payment.status || 'PENDING' }}</span>
+                                </h3>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-sm-3">
+                                        <span class="text-muted small d-block">Payment Mode</span>
+                                        <strong>{{ payment.paymentType || 'Cash' }}</strong>
                                     </div>
-                                    <div class="col-sm-4">
-                                        <span class="text-muted small d-block">Total tuition assessed</span>
+                                    <div class="col-sm-3">
+                                        <span class="text-muted small d-block">Total Assessment</span>
                                         <strong>₱{{ formatCurrency(payment.totalFee) }}</strong>
                                     </div>
-                                    <div class="col-sm-4">
-                                        <span class="text-muted small d-block">Remaining balance</span>
-                                        <strong class="text-danger">₱{{ formatCurrency(payment.balance) }}</strong>
+                                    <div class="col-sm-3">
+                                        <span class="text-muted small d-block">Total Amount Paid</span>
+                                        <strong class="text-success">₱{{ formatCurrency(payment.amountPaid) }}</strong>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <span class="text-muted small d-block">Remaining Balance</span>
+                                        <strong :class="(payment.balance && payment.balance > 0) ? 'text-danger' : 'text-success'">
+                                            ₱{{ formatCurrency(payment.balance) }}
+                                        </strong>
                                     </div>
                                     <div class="col-12" v-if="scholarship && scholarship.status === 'COMPLETED'">
                                         <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success small mb-0 py-2">
-                                            <i class="fa-solid fa-award me-1"></i> Scholarship discount applied successfully: <strong>{{ scholarship.scholarshipName || 'Scholarship' }}</strong> (<strong>{{ scholarship.discountPercent || 100 }}% Discount</strong>).
+                                            <i class="fa-solid fa-award me-1"></i> Scholarship discount applied: <strong>{{ scholarship.scholarshipName || 'Scholarship' }}</strong> (<strong>{{ scholarship.discountPercent || 100 }}% Discount</strong>).
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Transaction History Table for Installments -->
+                                <div v-if="payment.history && payment.history.length > 0" class="mt-3 border-top pt-3">
+                                    <div class="fw-bold text-dark small mb-2"><i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Payment Receipt History</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped align-middle mb-0" style="font-size: 0.78rem;">
+                                            <thead class="table-light text-uppercase text-muted" style="font-size: 0.68rem;">
+                                                <tr>
+                                                    <th>Date &amp; Time</th>
+                                                    <th>OR / Ref No.</th>
+                                                    <th>Mode</th>
+                                                    <th>Amount Paid</th>
+                                                    <th>Cashier Desk</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="h in payment.history" :key="h.date">
+                                                    <td><code class="text-muted">{{ new Date(h.date).toLocaleString() }}</code></td>
+                                                    <td><code class="fw-bold text-dark">{{ h.reference }}</code></td>
+                                                    <td><span class="badge bg-light text-dark border">{{ h.paymentType }}</span></td>
+                                                    <td><strong class="text-success">₱{{ formatCurrency(h.amount) }}</strong></td>
+                                                    <td class="text-secondary">{{ h.cashier || 'Treasury Desk' }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
