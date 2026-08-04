@@ -12,7 +12,10 @@
     <link href="../../shared/libs/bootstrap.min.css" rel="stylesheet">
     <!-- Shared Station Styling -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../../shared/css/admin_workstation_theme.css">
     <link rel="stylesheet" href="../../shared/libs/login.css">
+    <script src="../../shared/libs/sweetalert2.all.min.js"></script>
+    <script src="../../shared/js/PasswordChangeGuard.js"></script>
     <style>
          [v-cloak] { display: none !important; }
          
@@ -74,38 +77,46 @@
         <template v-if="currentUser">
             <!-- Sidebar Panel -->
             <aside class="sidebar">
-                <div class="brand-block">
-                    <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 10px;">
+                <div class="brand">
+                    <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
                     <div>
                         <h1>Go-on National College</h1>
-                        <p>PORTAL ACCOUNT ACTIVATION</p>
+                        <p>IT CENTER STATION</p>
                     </div>
                 </div>
+
                 <nav class="sidebar-nav">
                     <div class="sidebar-category-group">
                         <div class="sidebar-category-title">OVERVIEW</div>
                         <a href="#" @click.prevent="setView('dashboard')" :class="{ active: currentView === 'dashboard' }">
-                            <i class="fas fa-gauge"></i> Dashboard
+                            <span class="nav-link-content"><i class="fas fa-gauge"></i> Dashboard</span>
                         </a>
                         <a href="#" @click.prevent="setView('queue')" :class="{ active: currentView === 'queue' }">
-                            <i class="fas fa-users-line"></i> Activation Queue
+                            <span class="nav-link-content"><i class="fas fa-users-line"></i> Activation Queue</span>
+                            <span class="nav-badge" v-if="totalInQueue > 0">{{ totalInQueue }}</span>
                         </a>
                         <a href="#" @click.prevent="setView('accounts')" :class="{ active: currentView === 'accounts' }">
-                            <i class="fas fa-id-card"></i> Student Accounts
+                            <span class="nav-link-content"><i class="fas fa-id-card"></i> Student Accounts</span>
                         </a>
                     </div>
                     <div class="sidebar-category-group">
                         <div class="sidebar-category-title">SYSTEM</div>
-                        <a href="#" @click.prevent="handleLogout">
-                            <i class="fas fa-right-from-bracket"></i> Logout
+                        <a href="../../shared/profile.html">
+                            <span class="nav-link-content"><i class="fas fa-user-circle"></i> My Profile</span>
+                        </a>
+                        <a href="#" @click.prevent="handleLogout" style="color: rgba(248,113,113,0.9);">
+                            <span class="nav-link-content"><i class="fas fa-right-from-bracket"></i> Logout</span>
                         </a>
                     </div>
                 </nav>
                 <div class="sidebar-footer">
-                    <div class="sidebar-footer-dot"></div>
+                    <div class="sidebar-avatar">
+                        <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar">
+                        <span v-else>{{ (currentUser.name || currentUser.username || 'IT').substring(0,2).toUpperCase() }}</span>
+                    </div>
                     <div class="sidebar-footer-text">
-                        <strong>{{ currentUser.name }}</strong>
-                        Role: {{ currentUser.role }}
+                        <strong>{{ currentUser.name || currentUser.username }}</strong>
+                        <span>{{ currentUser.role || 'IT CENTER STAFF' }}</span>
                     </div>
                 </div>
             </aside>
@@ -126,6 +137,12 @@
                 </div>
 
                 <div v-if="currentView === 'dashboard'" class="view-section">
+                    <div class="greeting-banner mb-3 p-3 rounded text-white" style="background: linear-gradient(135deg, #00553e 0%, #003d2b 100%); border-left: 4px solid var(--gold, #d4af37);">
+                        <h3 class="m-0 font-weight-bold" style="color: #ffffff; font-size: 1.15rem;">
+                            Hello {{ currentUser ? (currentUser.name || currentUser.username) : 'IT Center Staff' }}! {{ timeGreeting }}
+                        </h3>
+                        <p class="m-0 small text-white-50" style="font-size: 0.82rem; margin-top: 2px;">Welcome to IT Center Account Activation Workstation.</p>
+                    </div>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-label">Total in Queue</div>

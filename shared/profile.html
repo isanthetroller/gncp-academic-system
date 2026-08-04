@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile — Go-on National College of the Philippines</title>
+    <meta name="description" content="Manage personal information, profile picture avatar, and account security.">
+    <link rel="stylesheet" href="libs/fonts/fonts.css">
+    <link href="libs/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="libs/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="css/admin_workstation_theme.css">
+    <script src="libs/bootstrap.bundle.min.js"></script>
+    <script src="libs/vue.global.js"></script>
+    <script src="libs/sweetalert2.all.min.js"></script>
+    <script src="js/PasswordChangeGuard.js"></script>
+    <style>
+        .profile-header-card {
+            background: linear-gradient(135deg, #003D2B 0%, #006A4E 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 10px 30px rgba(0, 106, 78, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-header-card::after {
+            content: '';
+            position: absolute;
+            right: -40px;
+            bottom: -40px;
+            width: 180px;
+            height: 180px;
+            background: rgba(212,175,55,0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .avatar-box {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 20px rgba(212,175,55,0.35);
+            background: #fff;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .avatar-box:hover .avatar-overlay {
+            opacity: 1;
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 992px) {
+            .profile-grid { grid-template-columns: 1fr; }
+        }
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .form-control-custom {
+            width: 100%;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-control-custom:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.1);
+        }
+        .btn-save {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            padding: 10px 22px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-save:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div id="profile-app" v-cloak class="shell">
+        
+        <!-- SIDEBAR SHELL -->
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
+                <div>
+                    <h1>Go-on National College</h1>
+                    <p>{{ roleTitle }}</p>
+                </div>
+            </div>
+
+
+            <div class="nav-body">
+                <div class="nav-cat">Navigation</div>
+                <button class="nav-item" @click="goBackToPortal">
+                    <i class="fas fa-arrow-left"></i> Return to Dashboard
+                </button>
+                <button class="nav-item active">
+                    <i class="fas fa-user-circle"></i> My Profile
+                </button>
+
+                <div class="nav-cat">Account Security</div>
+                <button class="nav-item nav-logout" @click="logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="footer-avatar">
+                    <img v-if="formattedAvatar" :src="formattedAvatar" alt="Avatar">
+                    <span v-else>{{ initials }}</span>
+                </div>
+                <div class="footer-info">
+                    <strong>{{ user.name || 'Active User' }}</strong>
+                    <span>{{ user.role || 'USER' }}</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <span class="eyebrow">Account Settings</span>
+                    <h2 class="topbar-title">{{ greeting }}, {{ user.name || 'User' }}!</h2>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn-save" @click="goBackToPortal">
+                        <i class="fas fa-tachometer-alt"></i> Back to Station
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENT BODY -->
+            <div class="content">
+                
+                <!-- PROFILE HEADER BANNER -->
+                <div class="profile-header-card">
+                    <div class="avatar-box" @click="triggerFileInput">
+                        <img v-if="formattedAvatar" :src="formattedAvatar" class="avatar-img" alt="Profile Picture">
+                        <div v-else style="font-size: 2rem; font-weight: 800; color: #003d2b;">{{ initials }}</div>
+
+                        <div class="avatar-overlay">
+                            <i class="fas fa-camera mb-1"></i>
+                            <span>Change</span>
+                        </div>
+                    </div>
+                    <input type="file" ref="fileInput" @change="onFileSelected" accept="image/*" style="display:none">
+
+                    <div>
+                        <h3 style="font-family: var(--font-head); font-weight: 800; margin: 0 0 4px; font-size: 1.5rem;">
+                            {{ user.name }}
+                        </h3>
+                        <p style="opacity: 0.85; margin: 0 0 10px; font-size: 0.88rem;">
+                            <i class="fas fa-envelope me-2"></i>{{ user.email || 'No email set' }}
+                        </p>
+                        <span class="badge-pill badge-enrolled">{{ user.role }} ACCOUNT</span>
+                    </div>
+                </div>
+
+                <!-- PROFILE CARDS GRID -->
+                <div class="profile-grid">
+                    
+                    <!-- CARD 1: PERSONAL INFORMATION EDITOR -->
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-user-edit"></i> Personal Details
+                        </div>
+                        <form @submit.prevent="saveProfile">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control-custom" v-model="user.name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control-custom" v-model="user.email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Username / Identity Code</label>
+                                <input type="text" class="form-control-custom" :value="user.username" disabled style="background:#f4f5f7; cursor:not-allowed;">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">System Role</label>
+                                <input type="text" class="form-control-custom" :value="user.role" disabled style="background:#f4f5f7; cursor:not-allowed;">
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn-save" :disabled="saving">
+                                    <i class="fas fa-save"></i> {{ saving ? 'Saving Changes...' : 'Save Personal Details' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- CARD 2: PASSWORD SECURITY UPDATE -->
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-shield-alt"></i> Account Security & Password
+                        </div>
+                        <form @submit.prevent="updatePassword">
+                            <div class="mb-3">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" class="form-control-custom" v-model="pass.current" placeholder="••••••••" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">New Password</label>
+                                <input type="password" class="form-control-custom" v-model="pass.newPass" placeholder="••••••••" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control-custom" v-model="pass.confirm" placeholder="••••••••" required>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn-save" style="background:#003D2B;" :disabled="updatingPass">
+                                    <i class="fas fa-key"></i> {{ updatingPass ? 'Updating...' : 'Update Password' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    user: {
+                        name: '',
+                        email: '',
+                        username: '',
+                        role: '',
+                        avatar: null
+                    },
+                    pass: {
+                        current: '',
+                        newPass: '',
+                        confirm: ''
+                    },
+                    saving: false,
+                    updatingPass: false
+                };
+            },
+            computed: {
+                initials() {
+                    if (!this.user.name) return 'U';
+                    const parts = this.user.name.split(' ');
+                    return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
+                },
+                roleTitle() {
+                    const role = (this.user.role || '').toUpperCase();
+                    if (role === 'SUPER_ADMIN' || role === 'ADMIN') return 'SUPER ADMIN PORTAL';
+                    if (role === 'REGISTRAR') return 'REGISTRAR PORTAL';
+                    if (role === 'HELPDESK') return 'TLC HELPDESK STATION';
+                    if (role === 'MEDICAL') return 'MEDICAL CLINIC STATION';
+                    if (role === 'CASHIER') return 'CASHIER STATION';
+                    if (role === 'IT_CENTER') return 'IT CENTER STATION';
+                    if (role === 'STUDENT') return 'STUDENT PORTAL';
+                    return (role || 'USER') + ' PORTAL';
+                },
+                formattedAvatar() {
+                    if (!this.user.avatar) return null;
+                    let url = this.user.avatar;
+                    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+                    if (!url.startsWith('../') && !url.startsWith('/')) {
+                        return '../' + url;
+                    }
+                    return url;
+                },
+                greeting() {
+                    const hour = new Date().getHours();
+                    if (hour < 12) return 'Great Morning';
+                    if (hour < 18) return 'Great Afternoon';
+                    return 'Great Evening';
+                }
+            },
+
+            mounted() {
+                this.loadProfile();
+            },
+            methods: {
+                async loadProfile() {
+                    let activeUser = null;
+                    const sAdmin = sessionStorage.getItem('gncp_admin_user');
+                    const sStation = sessionStorage.getItem('gncp_station_user');
+                    const sStudent = sessionStorage.getItem('gncp_student') || sessionStorage.getItem('gncp_student_session');
+                    if (sAdmin) activeUser = JSON.parse(sAdmin);
+                    else if (sStation) activeUser = JSON.parse(sStation);
+                    else if (sStudent) activeUser = JSON.parse(sStudent);
+
+                    const username = activeUser ? (activeUser.username || activeUser.id || activeUser.email) : '';
+                    try {
+                        const res = await fetch(`../api/index.php?action=auth/profile&username=${encodeURIComponent(username)}`);
+                        const data = await res.json();
+                        if (data.success && data.data) {
+                            this.user = data.data;
+                        } else if (activeUser) {
+                            this.user = {
+                                name: activeUser.name || (activeUser.firstName ? activeUser.firstName + ' ' + activeUser.lastName : 'User'),
+                                email: activeUser.email || '',
+                                username: username,
+                                role: activeUser.role || 'USER',
+                                avatar: activeUser.avatar || null
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Profile fetch failed:', e);
+                    }
+                },
+                triggerFileInput() {
+                    this.$refs.fileInput.click();
+                },
+                onFileSelected(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        Swal.fire('File Too Large', 'Please select an image smaller than 5MB.', 'warning');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        const base64Data = event.target.result;
+                        try {
+                            const res = await fetch('../api/index.php?action=auth/upload_avatar', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    username: this.user.username,
+                                    photoData: base64Data
+                                })
+                            });
+                            const data = await res.json();
+                            if (data.success && data.data) {
+                                this.user.avatar = '../stations/it-center/assets/uploads/' + data.data.avatar;
+                                const sessionKey = (this.user.role === 'SUPER_ADMIN' || this.user.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                                const s = sessionStorage.getItem(sessionKey);
+                                if (s) {
+                                    try {
+                                        const parsed = JSON.parse(s);
+                                        parsed.avatar = this.user.avatar;
+                                        sessionStorage.setItem(sessionKey, JSON.stringify(parsed));
+                                    } catch(e) {}
+                                }
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Profile Picture Updated',
+                                    text: 'Your new profile picture has been saved.',
+                                    timer: 1800,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire('Upload Failed', data.message || 'Unable to update profile picture.', 'error');
+                            }
+                        } catch (err) {
+                            Swal.fire('Error', 'Unable to process image upload.', 'error');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                },
+                async saveProfile() {
+                    this.saving = true;
+                    try {
+                        const res = await fetch('../api/index.php?action=auth/update_profile', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: this.user.username,
+                                name: this.user.name,
+                                email: this.user.email,
+                                avatar: this.user.avatar
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            const sessionKey = (this.user.role === 'SUPER_ADMIN' || this.user.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                            const s = sessionStorage.getItem(sessionKey);
+                            if (s) {
+                                try {
+                                    const parsed = JSON.parse(s);
+                                    parsed.name = this.user.name;
+                                    parsed.email = this.user.email;
+                                    parsed.avatar = this.user.avatar;
+                                    sessionStorage.setItem(sessionKey, JSON.stringify(parsed));
+                                } catch(e) {}
+                            }
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Profile Updated',
+                                text: data.message || 'Your personal information has been updated.',
+                                timer: 1800,
+                                showConfirmButton: false
+                            });
+                        } else {
+
+                            Swal.fire('Update Failed', data.message || 'Unable to update profile.', 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Server error while saving profile.', 'error');
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+                async updatePassword() {
+                    if (this.pass.newPass !== this.pass.confirm) {
+                        Swal.fire('Password Mismatch', 'New password and confirm password do not match.', 'warning');
+                        return;
+                    }
+                    if (this.pass.newPass.length < 6) {
+                        Swal.fire('Weak Password', 'New password must be at least 6 characters.', 'warning');
+                        return;
+                    }
+
+                    this.updatingPass = true;
+                    try {
+                        const res = await fetch('../api/index.php?action=auth/change_password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: this.user.username,
+                                currentPassword: this.pass.current,
+                                newPassword: this.pass.newPass
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Password Updated',
+                                text: 'Your password has been changed successfully.',
+                                timer: 2000
+                            });
+                            this.pass.current = '';
+                            this.pass.newPass = '';
+                            this.pass.confirm = '';
+                        } else {
+                            Swal.fire('Password Error', data.message || 'Unable to update password.', 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Server connection error.', 'error');
+                    } finally {
+                        this.updatingPass = false;
+                    }
+                },
+                goBackToPortal() {
+                    const role = this.user.role;
+                    if (role === 'SUPER_ADMIN' || role === 'ADMIN') window.location.href = '../admin/index.html';
+                    else if (role === 'REGISTRAR') window.location.href = '../registrar/index.html';
+                    else if (role === 'HELPDESK') window.location.href = '../stations/tlc-helpdesk/index.html';
+                    else if (role === 'MEDICAL') window.location.href = '../stations/medical-checkup/index.html';
+                    else if (role === 'CASHIER') window.location.href = '../stations/payment-processing/index.html';
+                    else if (role === 'IT_CENTER') window.location.href = '../stations/it-center/index.html';
+                    else window.location.href = '../student-portal/index.html';
+                },
+                logout() {
+                    Swal.fire({
+                        title: 'Confirm Logout',
+                        text: 'Are you sure you want to log out of your account?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626',
+                        cancelButtonColor: '#64748B',
+                        confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
+                        cancelButtonText: 'Cancel'
+                    }).then((res) => {
+                        if (res.isConfirmed) {
+                            sessionStorage.clear();
+                            localStorage.removeItem('gncp_admin_user');
+                            localStorage.removeItem('gncp_station_user');
+                            fetch('../api/index.php?action=auth/logout', { method: 'POST' })
+                                .catch(() => {})
+                                .finally(() => {
+                                    window.location.href = '../index.html?clear=true';
+                                });
+                        }
+                    });
+                }
+
+            }
+        }).mount('#profile-app');
+    </script>
+</body>
+</html>

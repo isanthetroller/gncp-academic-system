@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../../shared/libs/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="../../shared/libs/fonts/fonts.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../../shared/css/admin_workstation_theme.css">
     <link rel="stylesheet" href="../../shared/libs/login.css">
     <style>
          [v-cloak] { display: none !important; }
@@ -50,34 +51,42 @@
          
         <template v-if="currentUser">
             <aside class="sidebar">
-            <div class="brand-block">
-                <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 10px;">
+            <div class="brand">
+                <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
                 <div>
                     <h1>Go-on National College</h1>
-                    <p>ADVISING & NSTP CONFIRMATION</p>
+                    <p>TLC HELPDESK STATION</p>
                 </div>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="sidebar-category-group">
                     <div class="sidebar-category-title">OVERVIEW</div>
                     <a href="#" @click.prevent="setView('dashboard')" :class="{ active: currentView === 'dashboard' }">
-                        <i class="fa-solid fa-gauge"></i> Dashboard
+                        <span class="nav-link-content"><i class="fa-solid fa-gauge"></i> Dashboard</span>
                     </a>
                     <a href="#" @click.prevent="setView('queue')" :class="{ active: currentView === 'queue' }">
-                        <i class="fa-solid fa-users-line"></i> Student Queue
+                        <span class="nav-link-content"><i class="fa-solid fa-users-line"></i> Student Queue</span>
+                        <span class="nav-badge" v-if="totalInQueue > 0">{{ totalInQueue }}</span>
                     </a>
                 </div>
                 <div class="sidebar-category-group">
-                    <a href="#" @click.prevent="handleLogout">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    <a href="../../shared/profile.html">
+                        <span class="nav-link-content"><i class="fa-solid fa-user-circle"></i> My Profile</span>
+                    </a>
+                    <a href="#" @click.prevent="handleLogout" style="color: rgba(248,113,113,0.9);">
+                        <span class="nav-link-content"><i class="fa-solid fa-right-from-bracket"></i> Logout</span>
                     </a>
                 </div>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-footer-dot"></div>
+                <div class="sidebar-avatar">
+                    <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar">
+                    <span v-else>{{ (currentUser.name || currentUser.username || 'H').substring(0,2).toUpperCase() }}</span>
+                </div>
                 <div class="sidebar-footer-text">
-                    <strong>{{ currentUser.name }}</strong>
-                    Role: {{ currentUser.role }}
+                    <strong>{{ currentUser.name || currentUser.username }}</strong>
+                    <span>{{ currentUser.role || 'HELPDESK STAFF' }}</span>
                 </div>
             </div>
         </aside>
@@ -101,6 +110,12 @@
             </div>
 
             <div v-if="currentView === 'dashboard'" class="view-section">
+                <div class="greeting-banner mb-3 p-3 rounded text-white" style="background: linear-gradient(135deg, #00553e 0%, #003d2b 100%); border-left: 4px solid var(--gold, #d4af37);">
+                    <h3 class="m-0 font-weight-bold" style="color: #ffffff; font-size: 1.15rem;">
+                        Hello {{ currentUser ? (currentUser.name || currentUser.username) : 'Staff' }}! {{ timeGreeting }}
+                    </h3>
+                    <p class="m-0 small text-white-50" style="font-size: 0.82rem; margin-top: 2px;">Welcome to TLC Helpdesk Advising &amp; Sectioning Workstation.</p>
+                </div>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Total in Queue</div>

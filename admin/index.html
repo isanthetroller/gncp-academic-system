@@ -12,6 +12,7 @@
     <script src="../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../shared/libs/vue.global.js"></script>
     <script src="../shared/libs/sweetalert2.all.min.js"></script>
+    <script src="../shared/js/PasswordChangeGuard.js"></script>
     <script src="../shared/academic_constants.js"></script>
     <style>
         :root {
@@ -43,27 +44,39 @@
         .shell { display:grid; grid-template-columns:256px 1fr; height:100vh; overflow:hidden; }
 
         /* ── SIDEBAR ──────────────────────────────────────────────────── */
-        .sidebar { background:var(--sidebar-bg); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100vh; overflow-y:auto; }
-        .brand { display:flex; align-items:center; gap:10px; padding:18px 16px 14px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; }
-        .brand-mark { width:34px; height:34px; border-radius:50%; background:#fff; display:grid; place-items:center; font-family:var(--font-head); font-size:1rem; font-weight:900; color:#003d2b; border:2px solid var(--gold); flex-shrink:0; }
-        .brand h1 { font-size:.88rem; font-weight:800; color:#fff; line-height:1.2; }
-        .brand p  { font-size:.62rem; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--gold); margin-top:2px; }
-        .nav-body { flex:1; padding:10px 8px; overflow-y:auto; }
-        .nav-cat  { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; color:rgba(255,255,255,.35); padding:14px 10px 5px; }
-        .nav-cat-header { display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 10px 8px; background:none; border:none; color:rgba(255,255,255,.8); font-size:.85rem; font-weight:700; cursor:pointer; text-align:left; border-radius:8px; transition: all var(--t); margin-top: 10px; }
-        .nav-cat-header:hover { background: rgba(255,255,255,.05); color:#fff; }
-        .nav-cat-items { padding-left: 12px; display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
-        .nav-item { display:flex; align-items:center; gap:9px; padding:8px 11px 8px 8px; border-radius:8px; color:rgba(255,255,255,.65); font-size:.83rem; font-weight:500; cursor:pointer; transition:all var(--t); border:none; border-left:3px solid transparent; background:none; width:100%; text-align:left; }
-        .nav-item.sub-item { font-size: .8rem; padding: 6px 10px; opacity: 0.9; }
-        .nav-item i { width:15px; text-align:center; font-size:.8rem; flex-shrink:0; }
-        .nav-item:hover { color:#fff; background:rgba(255,255,255,.07); padding-left:11px; }
-        .nav-item.active { color:#fff; background:rgba(255,255,255,.11); font-weight:700; border-left-color:var(--gold); border-radius:0 8px 8px 0; }
-        .nav-logout { color:rgba(255,160,150,.8)!important; }
+        .sidebar { background: linear-gradient(185deg, #003D2B 0%, #002217 100%); border-right: 1px solid rgba(212,175,55,0.25); display:flex; flex-direction:column; height:100vh; overflow-y:auto; box-shadow: 4px 0 20px rgba(0,0,0,0.12); }
+        .brand { display:flex; align-items:center; gap:14px; padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); }
+        .brand-logo { width:42px; height:42px; object-fit:contain; flex-shrink:0; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.35)); }
+        .brand h1 { font-size:.92rem; font-weight:800; color:#fff; line-height:1.25; letter-spacing:0.2px; margin:0 0 4px 0; }
+        .brand p  { font-size:.62rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--gold); margin:0; display:inline-block; padding:2px 8px; background:rgba(212,175,55,0.12); border-radius:4px; border:1px solid rgba(212,175,55,0.25); line-height:1.3; }
+
+        .nav-body { flex:1; padding:12px 10px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
+        .nav-cat  { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:1.3px; color:rgba(255,255,255,.4); padding:14px 10px 5px; }
+        .nav-cat-header { display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 12px 8px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); color:rgba(255,255,255,.85); font-size:.84rem; font-weight:700; cursor:pointer; text-align:left; border-radius:10px; transition: all var(--t); margin-top: 8px; }
+        .nav-cat-header:hover { background: rgba(255,255,255,.08); color:#fff; transform: translateX(2px); }
+        .nav-cat-items { padding-left: 10px; display: flex; flex-direction: column; gap: 3px; margin-top: 3px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; color:rgba(255,255,255,.7); font-size:.84rem; font-weight:500; cursor:pointer; transition:all var(--t); border:none; border-left:3px solid transparent; background:none; width:100%; text-align:left; position:relative; }
+        .nav-item.sub-item { font-size: .81rem; padding: 7px 11px; opacity: 0.92; }
+        .nav-item i { width:16px; text-align:center; font-size:.85rem; flex-shrink:0; transition: transform var(--t); }
+        .nav-item:hover { color:#fff; background:rgba(255,255,255,.08); padding-left:15px; transform: translateX(4px); }
+        .nav-item:hover i { transform: scale(1.15); color: var(--gold); }
+        .nav-item.active { color:#fff; background: linear-gradient(90deg, rgba(212, 175, 55, 0.22) 0%, rgba(255, 255, 255, 0.06) 100%); font-weight:700; border-left-color:var(--gold); border-radius:0 10px 10px 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+        .nav-item.active i { color: var(--gold); }
+        .nav-logout { color:rgba(248,113,113,.9)!important; border-radius: 9px; margin-top: 6px; background: transparent !important; border: none !important; }
+        .nav-logout:hover { background: rgba(255,255,255,0.06)!important; color:#fff!important; }
+        .nav-logout i { color: rgba(248,113,113,0.9); transition: color 0.2s ease, transform 0.2s ease; }
+        .nav-logout:hover i { color: var(--gold) !important; transform: scale(1.2); }
         .row-highlight td { background: var(--gold-light)!important; }
-        .sidebar-footer { padding:12px 16px; border-top:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:8px; flex-shrink:0; }
-        .footer-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; box-shadow:0 0 0 2px rgba(74,222,128,.2); flex-shrink:0; }
-        .footer-info strong { display:block; color:rgba(255,255,255,.85); font-size:.74rem; font-weight:700; }
-        .footer-info span   { color:rgba(255,255,255,.4); font-size:.66rem; }
+        .sidebar-footer { padding:14px 16px; border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:12px; flex-shrink:0; background: rgba(0,0,0,0.15); }
+        .footer-avatar { width:38px; height:38px; border-radius:50%; border:2px solid var(--gold); background: linear-gradient(135deg, var(--gold) 0%, #b89320 100%); color:#003d2b; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; font-family:var(--font-head); flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.3); overflow:hidden; box-sizing:border-box; padding:0; margin:0; }
+        .footer-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:none; margin:0; padding:0; }
+
+
+        .footer-dot { width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,.25); flex-shrink:0; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.2); opacity:0.85; } }
+        .footer-info { flex:1; min-width:0; }
+        .footer-info strong { display:block; color:rgba(255,255,255,.95); font-size:.78rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .footer-info span   { color:var(--gold); font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
 
         /* ── MAIN ─────────────────────────────────────────────────────── */
         .main { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
@@ -262,12 +275,13 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-mark">G</div>
+                <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
                 <div>
-                    <h1>Super Admin</h1>
-                    <p>Control Panel</p>
+                    <h1>Go-on National College</h1>
+                    <p>SUPER ADMIN PORTAL</p>
                 </div>
             </div>
+
 
             <nav class="nav-body">
                 <button class="nav-item" :class="{active:view==='dashboard'}" @click="setView('dashboard')">
@@ -340,6 +354,12 @@
                     </button>
                 </div>
 
+                <div class="nav-category-wrapper" style="margin-top: 4px;">
+                    <a href="../shared/profile.html" class="nav-item" style="text-decoration:none;">
+                        <i class="fa-solid fa-user-circle"></i> My Profile
+                    </a>
+                </div>
+
                 <div class="nav-category-wrapper" style="margin-top: 10px;">
                     <button class="nav-item nav-logout" @click="handleLogout">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -347,11 +367,14 @@
                 </div>
             </nav>
 
-            <div class="sidebar-footer">
-                <div class="footer-dot"></div>
+            <div class="sidebar-footer" v-if="currentAdmin">
+                <div class="footer-avatar">
+                    <img v-if="currentAdmin.avatar" :src="currentAdmin.avatar" alt="Avatar">
+                    <span v-else>{{ (currentAdmin.name || currentAdmin.username || 'A').substring(0,2).toUpperCase() }}</span>
+                </div>
                 <div class="footer-info">
-                    <strong>{{ currentAdmin.name }}</strong>
-                    <span>{{ currentAdmin.role }}</span>
+                    <strong>{{ currentAdmin.name || currentAdmin.username }}</strong>
+                    <span>{{ currentAdmin.role || 'SUPER ADMIN' }}</span>
                 </div>
             </div>
         </aside>
@@ -366,14 +389,9 @@
                     <span class="topbar-title">{{ viewTitle }}</span>
                 </div>
                 <div class="topbar-right">
-                    <template v-if="view !== 'dashboard'">
-                        <input class="search-box" v-model="search" :placeholder="searchPlaceholder">
-                    </template>
-                    <template v-else>
-                        <button class="btn-add" @click="loadDashboard" :disabled="isLoadingStats">
-                            <i class="fa-solid fa-rotate" :class="{'fa-spin': isLoadingStats}" style="margin-right:6px"></i>Refresh Dashboard
-                        </button>
-                    </template>
+                    <button type="button" class="btn-add" @click="loadDashboard" :disabled="isLoadingStats">
+                        <i class="fa-solid fa-rotate" :class="{'fa-spin': isLoadingStats}" style="margin-right:6px"></i>Refresh
+                    </button>
                 </div>
             </div>
 
@@ -392,6 +410,12 @@
 
                 <!-- ── DASHBOARD VIEW ────────────────── -->
                 <div v-if="view==='dashboard'">
+                    <div class="greeting-banner mb-3 p-3 rounded text-white" style="background: linear-gradient(135deg, #00553e 0%, #003d2b 100%); border-left: 4px solid var(--gold, #d4af37);">
+                        <h3 class="m-0 font-weight-bold" style="color: #ffffff; font-size: 1.15rem;">
+                            Hello {{ currentAdmin ? (currentAdmin.name || currentAdmin.username) : 'Super Admin' }}! {{ timeGreeting }}
+                        </h3>
+                        <p class="m-0 small text-white-50" style="font-size: 0.82rem; margin-top: 2px;">Welcome to GNCP Super Admin Control Panel &amp; Academic Management System.</p>
+                    </div>
                     <div v-if="dashboardStats && !isLoadingStats" class="db-grid">
                         <div class="db-card">
                             <div class="db-card-info">
@@ -565,7 +589,7 @@
                                     <th>Code</th>
                                     <th>Program Name</th>
                                     <th>Department</th>
-                                    <th>Dependencies</th>
+                                    <th title="Number of curriculum subjects, sections, and class offerings linked to this degree program">Linked Records</th>
                                     <th>Status</th>
                                     <th class="text-end">Actions</th>
                                 </tr></thead>
@@ -1077,19 +1101,19 @@
                 <div v-if="view==='operators'" class="card">
                     <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
                         <span><i class="fa-solid fa-users-cog"></i> Staff Logins (Operators)</span>
-                        <button class="btn-add" @click="openAddModal"><i class="fa-solid fa-user-plus" style="margin-right:6px"></i>Add Operator</button>
+                        <button type="button" class="btn-add" @click="openCreateOperatorModal"><i class="fa-solid fa-user-plus" style="margin-right:6px"></i>Add Operator</button>
                     </div>
                     <div class="warn-banner">
                         <i class="fa-solid fa-lightbulb"></i>
                         <div>
-                            <strong>Guide:</strong> Manage login accounts for physical workstations (e.g. TLC Helpdesk, Medical Clinic, Treasury/Cashier). Click <strong>Approve</strong> or <strong>Deactivate</strong> to control their access.
+                            <strong>Guide:</strong> Manage workstation logins (Registrar, Helpdesk, Clinic, Cashier, IT Center). Staff accounts reside in <code>station_users</code>. Click <strong>Approve</strong>, <strong>Deactivate</strong>, or <strong>Reset Password</strong> to manage operator credentials.
                         </div>
                     </div>
                     <div class="status-filters">
-                        <button class="btn-status-filter" :class="{active:filterUserStatus==='ALL'}" @click="filterUserStatus='ALL'">All Accounts</button>
-                        <button class="btn-status-filter" :class="{active:filterUserStatus==='PENDING'}" @click="filterUserStatus='PENDING'">Pending Approval</button>
-                        <button class="btn-status-filter" :class="{active:filterUserStatus==='ACTIVE'}" @click="filterUserStatus='ACTIVE'">Active</button>
-                        <button class="btn-status-filter" :class="{active:filterUserStatus==='DEACTIVATED'}" @click="filterUserStatus='DEACTIVATED'">Deactivated</button>
+                        <button type="button" class="btn-status-filter" :class="{active:filterUserStatus==='ALL'}" @click="filterUserStatus='ALL'">All Accounts</button>
+                        <button type="button" class="btn-status-filter" :class="{active:filterUserStatus==='PENDING'}" @click="filterUserStatus='PENDING'">Pending Approval</button>
+                        <button type="button" class="btn-status-filter" :class="{active:filterUserStatus==='ACTIVE'}" @click="filterUserStatus='ACTIVE'">Active</button>
+                        <button type="button" class="btn-status-filter" :class="{active:filterUserStatus==='DEACTIVATED'}" @click="filterUserStatus='DEACTIVATED'">Deactivated</button>
                     </div>
                     <div class="table-responsive">
                         <table class="tbl">
@@ -1099,12 +1123,14 @@
                                     <td style="font-weight:600">{{ u.name }}</td>
                                     <td><code style="color:var(--sky)">{{ u.username }}</code></td>
                                     <td><span class="badge badge-role">{{ u.role }}</span></td>
-                                    <td><span class="badge" :class="u.status==='ACTIVE'?'badge-active':u.status==='PENDING'?'badge-pending':'badge-deact'">{{ u.status }}</span></td>
+                                    <td><span class="badge" :class="u.status==='ACTIVE'?'badge-active':u.status==='PENDING'?'badge-pending':'badge-deact'">{{ u.status || 'ACTIVE' }}</span></td>
                                     <td style="text-align:right"><span style="display:flex;gap:6px;justify-content:flex-end">
-                                        <button v-if="u.status==='PENDING'"     class="btn-sm-green"  @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-check"></i> Approve</button>
-                                        <button v-if="u.status==='ACTIVE'"      class="btn-sm-warn"   @click="updateStatus(u.id,'DEACTIVATED')"><i class="fa-solid fa-ban"></i> Deactivate</button>
-                                        <button v-if="u.status==='DEACTIVATED'" class="btn-sm-green"  @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-rotate-left"></i> Activate</button>
-                                        <button class="btn-sm-danger" @click="deleteUser(u.id)"><i class="fa-solid fa-trash"></i></button>
+                                        <button type="button" v-if="u.status==='PENDING'"     class="btn-sm-green" @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-check"></i> Approve</button>
+                                        <button type="button" v-if="u.status==='ACTIVE'"      class="btn-sm-warn"  @click="updateStatus(u.id,'DEACTIVATED')"><i class="fa-solid fa-ban"></i> Deactivate</button>
+                                        <button type="button" v-if="u.status==='DEACTIVATED'" class="btn-sm-green" @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-rotate-left"></i> Activate</button>
+                                        <button type="button" class="btn-sm-sky" @click="resetOperatorPassword(u)"><i class="fa-solid fa-key"></i> Reset Pass</button>
+                                        <button type="button" class="btn-sm-sky" @click="openEditOperatorModal(u)"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                        <button type="button" class="btn-sm-danger" @click="deleteUser(u.id)"><i class="fa-solid fa-trash"></i></button>
                                     </span></td>
                                 </tr>
                                 <tr v-if="filteredUsers.length===0" class="empty-row"><td colspan="5">No operator accounts found.</td></tr>
@@ -1477,37 +1503,126 @@
         </div>
     </div>
 
-    <!-- Operator Modal -->
-    <div v-if="modal==='operator'" class="overlay" @click.self="closeModal">
-        <div class="modal-card">
-            <div class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--gold)"></i>Create Operator Account</div>
-            <div class="form-row"><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" v-model="form.name" placeholder="Dr. Juan Dela Cruz"></div></div>
-            <div class="form-row col2">
-                <div class="form-group"><label class="form-label">Username</label><input class="form-input" v-model="form.username" placeholder="username" autocomplete="off"></div>
+    <!-- Operator Modal (Create) -->
+    <div v-if="isOperatorModalOpen" class="overlay" @click.self="closeCreateOperatorModal">
+        <div class="modal-card" @click.stop style="max-width: 580px; padding: 32px 36px;">
+            <div class="modal-title" style="margin-bottom: 18px;">
+                <i class="fa-solid fa-user-plus" style="color:var(--gold); font-size: 1.3rem;"></i>
+                <span>Create Operator Account</span>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 16px;">
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <div style="position: relative;">
-                        <input class="form-input" :type="showOperatorPassword ? 'text' : 'password'" v-model="form.password" placeholder="••••••••" style="padding-right: 36px;">
-                        <button type="button" @click="showOperatorPassword = !showOperatorPassword" tabindex="-1" :title="showOperatorPassword ? 'Hide password' : 'Show password'" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 2px;">
-                            <i :class="showOperatorPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                    <label class="form-label" style="margin-bottom: 6px;">Full Name</label>
+                    <input class="form-input" v-model="operatorForm.name" placeholder="Dr. Juan Dela Cruz" style="padding: 10px 14px;">
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Official Email Address (For Gmail Notification)</label>
+                    <input class="form-input" type="email" v-model="operatorForm.email" placeholder="user@gmail.com" style="padding: 10px 14px;">
+                </div>
+            </div>
+
+            <div class="form-row col2" style="margin-bottom: 16px; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Username</label>
+                    <input class="form-input" v-model="operatorForm.username" placeholder="username" autocomplete="off" style="padding: 10px 14px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Password</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input class="form-input" :type="showOperatorPassword ? 'text' : 'password'" v-model="operatorForm.password" placeholder="Auto-generated if blank" style="padding: 10px 42px 10px 14px;">
+                        <button type="button" @click="showOperatorPassword = !showOperatorPassword" tabindex="-1" :title="showOperatorPassword ? 'Hide password' : 'Show password'" style="position: absolute; right: 12px; background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                            <i :class="showOperatorPassword ? 'fas fa-eye-slash' : 'fas fa-eye'" style="font-size: 0.9rem;"></i>
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label class="form-label">Assigned Station Role</label>
-                    <select class="form-select" v-model="form.role">
-                        <option value="" disabled>Select station…</option>
-                        <option value="REGISTRAR">Registrar (Application Review)</option>
-                        <option value="HELPDESK">TLC Helpdesk (Academic Advising)</option>
-                        <option value="MEDICAL">Medical Clinic (Doctor)</option>
-                        <option value="CASHIER">Cashier / Treasury</option>
-                        <option value="IT_CENTER">Student Portal Account Activation</option>
-                    </select></div>
+
+            <div class="form-row" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Assigned Station Role</label>
+                    <select class="form-select" v-model="operatorForm.role" style="padding: 10px 14px;">
+                        <option value="" disabled>Select station role…</option>
+                        <option value="REGISTRAR">Registrar (Application Review & Requirements)</option>
+                        <option value="HELPDESK">TLC Helpdesk (Academic Advising & Sectioning)</option>
+                        <option value="MEDICAL">Medical Clinic (Doctor & Health Clearance)</option>
+                        <option value="CASHIER">Cashier / Treasury (Payment Processing)</option>
+                        <option value="IT_CENTER">IT Center (Student Portal Account Promotion)</option>
+                    </select>
+                </div>
             </div>
-            <div class="modal-actions"><button class="btn-modal-cancel" @click="closeModal">Cancel</button><button class="btn-modal-save" @click="createOperator">Create Account</button></div>
+
+            <div class="modal-actions" style="margin-top: 10px; gap: 12px;">
+                <button type="button" class="btn-modal-cancel" @click="closeCreateOperatorModal" :disabled="isSubmittingOperator" style="padding: 11px 24px;">Cancel</button>
+                <button type="button" class="btn-modal-save" @click="submitCreateOperator" :disabled="isSubmittingOperator" style="padding: 11px 24px; min-width: 220px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <template v-if="isSubmittingOperator">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Processing & Dispatching Email...</span>
+                    </template>
+                    <template v-else>
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Create Operator Account</span>
+                    </template>
+                </button>
+            </div>
         </div>
     </div>
+
+    <!-- Operator Modal (Edit) -->
+    <div v-if="isEditOperatorModalOpen" class="overlay" @click.self="closeEditOperatorModal">
+        <div class="modal-card" @click.stop style="max-width: 580px; padding: 32px 36px;">
+            <div class="modal-title" style="margin-bottom: 18px;">
+                <i class="fa-solid fa-user-pen" style="color:var(--gold); font-size: 1.3rem;"></i>
+                <span>Edit Operator Account</span>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Full Name</label>
+                    <input class="form-input" v-model="operatorForm.name" placeholder="Full Name" style="padding: 10px 14px;">
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Official Email Address</label>
+                    <input class="form-input" type="email" v-model="operatorForm.email" placeholder="user@gmail.com" style="padding: 10px 14px;">
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Station Role</label>
+                    <select class="form-select" v-model="operatorForm.role" style="padding: 10px 14px;" :disabled="['ADMIN','SUPER_ADMIN'].includes((operatorForm.role||'').toUpperCase())">
+                        <option value="REGISTRAR">Registrar (Application Review & Requirements)</option>
+                        <option value="HELPDESK">TLC Helpdesk (Academic Advising & Sectioning)</option>
+                        <option value="MEDICAL">Medical Clinic (Doctor & Health Clearance)</option>
+                        <option value="CASHIER">Cashier / Treasury (Payment Processing)</option>
+                        <option value="IT_CENTER">IT Center (Student Portal Account Promotion)</option>
+                        <option v-if="['ADMIN','SUPER_ADMIN'].includes((operatorForm.role||'').toUpperCase())" :value="operatorForm.role">{{ operatorForm.role }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 10px; gap: 12px;">
+                <button type="button" class="btn-modal-cancel" @click="closeEditOperatorModal" :disabled="isSubmittingOperator" style="padding: 11px 24px;">Cancel</button>
+                <button type="button" class="btn-modal-save" @click="submitEditOperator" :disabled="isSubmittingOperator" style="padding: 11px 24px; min-width: 200px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <template v-if="isSubmittingOperator">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Updating Account...</span>
+                    </template>
+                    <template v-else>
+                        <i class="fa-solid fa-user-check"></i>
+                        <span>Update Operator Account</span>
+                    </template>
+                </button>
+            </div>
+        </div>
+    </div>
+
 
 
 
@@ -1646,7 +1761,7 @@
 </div><!-- /app -->
 
 <script>
-const { createApp, ref, reactive, computed, onMounted } = Vue;
+const { createApp, ref, reactive, computed, onMounted, onUnmounted } = Vue;
 
 const API = 'backend/api.php';
 
@@ -1670,6 +1785,31 @@ createApp({
         const isLoggingIn  = ref(false);
         const loginError   = ref('');
         const showOperatorPassword = ref(false);
+
+        const timeGreeting = computed(() => {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Great Morning';
+            if (hour < 18) return 'Great Afternoon';
+            return 'Great Evening';
+        });
+
+        let pollTimer = null;
+
+        const startLiveSync = () => {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(() => {
+                if (currentAdmin.value) {
+                    loadAll();
+                }
+            }, 4000);
+        };
+
+        const stopLiveSync = () => {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+        };
         const loginForm    = reactive({ username:'', password:'' });
 
         // View state
@@ -1677,6 +1817,12 @@ createApp({
         const search  = ref('');
         const modal   = ref('');
         const form    = reactive({});
+
+        // Operator Management State (Decoupled & Isolated)
+        const operatorForm = reactive({ id: null, name: '', email: '', username: '', password: '', role: '' });
+        const isOperatorModalOpen = ref(false);
+        const isEditOperatorModalOpen = ref(false);
+        const isSubmittingOperator = ref(false);
 
         // Students & Collapsible navigation
         const students = ref([]);
@@ -1978,13 +2124,12 @@ createApp({
             if (!Array.isArray(users.value)) return [];
             return users.value.filter(u => {
                 if (!u) return false;
-                const nameStr = (u.name || '').toLowerCase();
-                const userStr = (u.username || '').toLowerCase();
-                const roleStr = (u.role || '').toLowerCase();
-                const query   = q();
-                const matchesSearch = !query || nameStr.includes(query) || userStr.includes(query) || roleStr.includes(query);
-                const matchesStatus = filterUserStatus.value === 'ALL' || u.status === filterUserStatus.value;
-                return matchesSearch && matchesStatus;
+                const roleUpper = (u.role || '').toUpperCase();
+                if (['ADMIN', 'SUPER_ADMIN'].includes(roleUpper)) return false;
+                
+                const userStatusUpper   = (u.status || 'ACTIVE').toUpperCase();
+                const filterStatusUpper = (filterUserStatus.value || 'ALL').toUpperCase();
+                return filterStatusUpper === 'ALL' || userStatusUpper === filterStatusUpper;
             });
         });
         const filteredAccounts   = computed(() => {
@@ -2076,6 +2221,23 @@ createApp({
         };
 
         // ── Auth ──
+        const fetchCurrentProfile = () => {
+            fetch('../api/index.php?action=auth/profile')
+                .then(res => res.json())
+                .then(res => {
+                    if (res && res.success && res.data) {
+                        const prof = res.data;
+                        const avatarUrl = prof.avatar || prof.photo || prof.image || null;
+                        if (avatarUrl && currentAdmin.value) {
+                            currentAdmin.value.avatar = avatarUrl;
+                            if (prof.name) currentAdmin.value.name = prof.name;
+                            const key = (currentAdmin.value.role === 'SUPER_ADMIN' || currentAdmin.value.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                            sessionStorage.setItem(key, JSON.stringify(currentAdmin.value));
+                        }
+                    }
+                }).catch(() => {});
+        };
+
         onMounted(() => {
             const s = sessionStorage.getItem('gncp_admin_user') || sessionStorage.getItem('gncp_station_user');
             if (s) {
@@ -2083,7 +2245,16 @@ createApp({
                     const u = JSON.parse(s);
                     if (u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN')) {
                         currentAdmin.value = u;
-                        loadAll();
+                        fetchCurrentProfile();
+                        if (u.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                            window.PasswordChangeGuard.checkAndPrompt(u, function() {
+                                loadAll();
+                                startLiveSync();
+                            });
+                        } else {
+                            loadAll();
+                            startLiveSync();
+                        }
                         return;
                     }
                 } catch(e) {}
@@ -2092,6 +2263,12 @@ createApp({
             sessionStorage.removeItem('gncp_station_user');
             window.location.href = '../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         });
+
+
+        onUnmounted(() => {
+            stopLiveSync();
+        });
+
         const handleLogout = async () => {
             const result = await Swal.fire({
                 title: 'Logout',
@@ -2103,9 +2280,18 @@ createApp({
                 confirmButtonText: 'Yes, logout'
             });
             if (!result.isConfirmed) return;
-            sessionStorage.removeItem('gncp_admin_user');
+            stopLiveSync();
             currentAdmin.value = null;
-            window.location.href = '../index.html';
+            sessionStorage.removeItem('gncp_admin_user');
+            sessionStorage.removeItem('gncp_station_user');
+            localStorage.removeItem('gncp_admin_user');
+            localStorage.removeItem('gncp_station_user');
+
+            fetch('../api/index.php?action=auth/logout', { method: 'POST' })
+                .catch(() => {})
+                .finally(() => {
+                    window.location.href = '../index.html?clear=true';
+                });
         };
 
         // ── Load all data ──
@@ -2129,6 +2315,7 @@ createApp({
 
         // ── Open modals ──
         const openAddModal = () => {
+            search.value = '';
             if (view.value === 'departments_programs') { Object.assign(form, {id:null,code:'',name:'',department:selectedDeptName.value || '',status:'Active'}); modal.value='program'; }
             if (view.value === 'subjects')   { Object.assign(form, {id:null,code:'',title:'',description:'',lectureUnits:3,labUnits:0,labFee:0,department:'',prerequisites:'None'}); modal.value='subject'; }
             if (view.value === 'curriculum') { Object.assign(form, {id:null,program:'',curriculumVersion:'2022 Curriculum',subject:'',yearLevel:'1st Year',semester:'1st Semester',elective:false}); modal.value='curriculum'; }
@@ -2303,7 +2490,7 @@ createApp({
             let warningHtml = `<p style="margin-bottom:8px">Delete academic period <strong>${period.name}</strong>?</p>`;
             if (linkedSections.length > 0 || linkedOfferings.length > 0) {
                 warningHtml += `<div style="text-align:left;background:#f8d7da;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
-                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This period has active dependencies:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
+                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This period has active linked records:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
                 if (linkedSections.length > 0) warningHtml += `<li>${linkedSections.length} section cohort(s)</li>`;
                 if (linkedOfferings.length > 0) warningHtml += `<li>${linkedOfferings.length} class offering(s)</li>`;
                 warningHtml += `</ul><p style="margin-top:6px;color:#721c24;font-weight:600">You must remove these first before deleting the period.</p></div>`;
@@ -2331,7 +2518,7 @@ createApp({
             let warningHtml = `<p style="margin-bottom:8px">Delete section <strong>${sec.code}</strong> (${sec.program} — ${sec.yearLevel})?</p>`;
             if (linkedOfferings.length > 0) {
                 warningHtml += `<div style="text-align:left;background:#f8d7da;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
-                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This section has active dependencies:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
+                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This section has active linked records:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
                 warningHtml += `<li>${linkedOfferings.length} class offering(s) scheduled</li>`;
                 warningHtml += `</ul><p style="margin-top:6px;color:#721c24;font-weight:600">You must remove these first before deleting the section.</p></div>`;
             }
@@ -2384,20 +2571,205 @@ createApp({
         const saveFee        = () => crudSave('save_fee',       'fee',        fees,       {});
         const deleteFee      = id => crudDel('delete_fee',      id,           fees,       'fee');
 
-        // Operator management
-        const createOperator = () => {
-            if (!form.name || !form.username || !form.password || !form.role) { notify(false,'All fields are required.'); return; }
-            post('create_user', {...form}).then(r => {
-                if (r.success) { get('fetch_users').then(r2 => { if(r2.success) users.value=r2.data; }); closeModal(); notify(true,'Operator account created!'); }
-                else notify(false, r.error || 'Failed to create account.');
+        // ── Operator Management (Isolated Methods & Tracing) ──
+        const fetchOperators = () => {
+            console.log('[Trace: Operators] Fetching operators list...');
+            return get('fetch_users').then(r => {
+                if (r && r.success) {
+                    users.value = r.data || [];
+                    console.log(`[Trace: Operators] Loaded ${users.value.length} operators:`, users.value);
+                } else {
+                    console.error('[Trace: Operators] Failed to fetch operators:', r);
+                }
             });
         };
-        const updateStatus = (userId, status) =>
-            post('update_user_status', {userId, status}).then(r => {
-                if (r.success) get('fetch_users').then(r2 => { if(r2.success) users.value=r2.data; });
+
+        const openCreateOperatorModal = () => {
+            console.log('[Trace: Operators] Triggered Create Operator Modal');
+            search.value = '';
+            Object.assign(operatorForm, { id: null, name: '', email: '', username: '', password: '', role: '' });
+            isOperatorModalOpen.value = true;
+            console.log('[Trace: Operators] isOperatorModalOpen set to true');
+        };
+
+        const closeCreateOperatorModal = () => {
+            if (isSubmittingOperator.value) return;
+            console.log('[Trace: Operators] Closing Create Operator Modal');
+            isOperatorModalOpen.value = false;
+        };
+
+        const submitCreateOperator = () => {
+            console.log('[Trace: Operators] Submitting new operator:', operatorForm);
+            if (!operatorForm.name || !operatorForm.username || !operatorForm.role) {
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Full name, username, and assigned station role are required.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006A4E'
+                });
+                return;
+            }
+
+            const payloadName = operatorForm.name;
+            const payloadUsername = operatorForm.username;
+            const payloadRole = operatorForm.role;
+
+            isSubmittingOperator.value = true;
+
+            post('save_user', { user: { ...operatorForm } }).then(r => {
+                isSubmittingOperator.value = false;
+                if (r.success) {
+                    console.log('[Trace: Operators] Operator account created successfully:', r);
+                    closeCreateOperatorModal();
+                    fetchOperators();
+
+                    const pass = (r.data && r.data.tempPassword) ? r.data.tempPassword : (operatorForm.password || '(As specified)');
+                    const emailSent = r.data && r.data.emailSent;
+                    const emailMsg = r.data && r.data.emailMessage ? r.data.emailMessage : '';
+
+                    Swal.fire({
+                        title: 'Operator Created Successfully!',
+                        html: `
+                            <div style="text-align: left; padding: 14px 18px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px;">
+                                <div style="margin-bottom: 8px;"><strong>Operator Name:</strong> ${payloadName}</div>
+                                <div style="margin-bottom: 8px;"><strong>Username:</strong> <code style="color: #006A4E; font-weight: 700; font-size: 1rem;">${payloadUsername}</code></div>
+                                <div style="margin-bottom: 8px;"><strong>Station Role:</strong> <span class="badge badge-role">${payloadRole}</span></div>
+                                <div style="margin-bottom: 12px;"><strong>Temporary Password:</strong><br><code style="font-size: 1.2rem; color: #006A4E; background: #e6f4ed; padding: 6px 14px; border-radius: 6px; display: inline-block; margin-top: 4px; font-weight: bold;">${pass}</code></div>
+                                <div style="font-size: 0.85rem; padding: 10px 14px; border-radius: 6px; background: ${emailSent ? '#d1fae5' : '#fef3c7'}; color: ${emailSent ? '#065f46' : '#92400e'}; border: 1px solid ${emailSent ? '#a7f3d0' : '#fde68a'};">
+                                    <i class="fa-solid ${emailSent ? 'fa-envelope-circle-check' : 'fa-info-circle'}" style="margin-right: 6px;"></i>
+                                    ${emailSent ? 'Account credentials have been emailed to the operator.' : (emailMsg || 'No email specified or running in local mode.')}
+                                </div>
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonColor: '#006A4E',
+                        confirmButtonText: 'Done & Return'
+                    });
+                } else {
+                    console.error('[Trace: Operators] Create operator failed:', r);
+                    Swal.fire({
+                        title: 'Account Creation Failed',
+                        html: `<div style="color:#dc2626;font-weight:600">${r.message || r.error || 'Failed to create operator account.'}</div>`,
+                        icon: 'error',
+                        confirmButtonColor: '#006A4E'
+                    });
+                }
+            }).catch(err => {
+                isSubmittingOperator.value = false;
+                console.error('[Trace: Operators] Network error creating operator:', err);
+                Swal.fire({
+                    title: 'Server Error',
+                    text: 'An error occurred while connecting to the server.',
+                    icon: 'error',
+                    confirmButtonColor: '#006A4E'
+                });
+            });
+        };
+
+        const openEditOperatorModal = (u) => {
+            console.log('[Trace: Operators] Triggered Edit Operator Modal for user:', u);
+            Object.assign(operatorForm, { id: u.id, name: u.name, username: u.username, email: u.email || '', role: u.role, password: '' });
+            isEditOperatorModalOpen.value = true;
+        };
+
+        const closeEditOperatorModal = () => {
+            if (isSubmittingOperator.value) return;
+            console.log('[Trace: Operators] Closing Edit Operator Modal');
+            isEditOperatorModalOpen.value = false;
+        };
+
+        const submitEditOperator = () => {
+            console.log('[Trace: Operators] Submitting operator update:', operatorForm);
+            if (!operatorForm.name || !operatorForm.role) {
+                Swal.fire({
+                    title: 'Missing Required Fields',
+                    text: 'Full Name and Station Role are required.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006A4E'
+                });
+                return;
+            }
+
+            const targetName = operatorForm.name;
+            isSubmittingOperator.value = true;
+
+            post('update_operator', {
+                userId: operatorForm.id,
+                name: operatorForm.name,
+                email: operatorForm.email,
+                role: operatorForm.role
+            }).then(r => {
+                isSubmittingOperator.value = false;
+                if (r.success) {
+                    console.log('[Trace: Operators] Operator updated successfully:', r);
+                    closeEditOperatorModal();
+                    fetchOperators();
+                    Swal.fire({
+                        title: 'Operator Updated!',
+                        text: `Account details for ${targetName} have been updated successfully.`,
+                        icon: 'success',
+                        confirmButtonColor: '#006A4E'
+                    });
+                } else {
+                    console.error('[Trace: Operators] Update operator failed:', r);
+                    Swal.fire({
+                        title: 'Update Failed',
+                        text: r.message || r.error || 'Failed to update operator account.',
+                        icon: 'error',
+                        confirmButtonColor: '#006A4E'
+                    });
+                }
+            }).catch(err => {
+                isSubmittingOperator.value = false;
+                Swal.fire({
+                    title: 'Server Error',
+                    text: 'An error occurred while connecting to the server.',
+                    icon: 'error',
+                    confirmButtonColor: '#006A4E'
+                });
+            });
+        };
+
+        const resetOperatorPassword = async (u) => {
+            console.log('[Trace: Operators] Initiating password reset for user:', u);
+            const { value: newPass } = await Swal.fire({
+                title: 'Reset Operator Password',
+                text: `Set a new temporary password for ${u.name} (${u.username}):`,
+                input: 'text',
+                inputPlaceholder: 'Leave blank to auto-generate',
+                showCancelButton: true,
+                confirmButtonColor: '#006A4E',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Reset Password'
+            });
+            if (newPass === undefined) return;
+            post('reset_operator_password', { userId: u.id, newPassword: newPass }).then(r => {
+                if (r.success) {
+                    console.log('[Trace: Operators] Password reset successful:', r);
+                    fetchOperators();
+                    Swal.fire({
+                        title: 'Password Reset Successful!',
+                        html: `Temporary password for <strong>${u.username}</strong>:<br><br><code style="font-size:1.25rem;color:#006A4E;background:#e6f4ed;padding:6px 14px;border-radius:6px;display:inline-block">${r.data.tempPassword}</code><br><br>${r.data.emailSent ? 'Credentials have been emailed to the operator.' : (r.data.emailMessage || 'No email sent.')}`,
+                        icon: 'success',
+                        confirmButtonColor: '#006A4E'
+                    });
+                } else {
+                    console.error('[Trace: Operators] Password reset failed:', r);
+                    notify(false, r.message || r.error || 'Failed to reset password.');
+                }
+            });
+        };
+
+        const updateStatus = (userId, status) => {
+            console.log(`[Trace: Operators] Updating status for user ID ${userId} -> ${status}`);
+            return post('update_user_status', { userId, status }).then(r => {
+                if (r.success) fetchOperators();
                 else notify(false, r.error || 'Failed to update status.');
             });
+        };
+
         const deleteUser = async userId => {
+            console.log(`[Trace: Operators] Requesting deletion for user ID ${userId}`);
             const result = await Swal.fire({
                 title: 'Are you sure?',
                 text: 'Delete this operator account?',
@@ -2408,15 +2780,20 @@ createApp({
                 confirmButtonText: 'Yes, delete it!'
             });
             if (!result.isConfirmed) return;
-            post('delete_user', {userId}).then(r => {
-                if (r.success) get('fetch_users').then(r2 => { if(r2.success) users.value=r2.data; });
-                else notify(false, r.error || 'Failed to delete.');
+            post('delete_user', { userId }).then(r => {
+                if (r.success) {
+                    console.log(`[Trace: Operators] User ID ${userId} deleted`);
+                    fetchOperators();
+                } else {
+                    console.error('[Trace: Operators] Delete user failed:', r);
+                    notify(false, r.error || 'Failed to delete.');
+                }
             });
         };
 
         return {
             currentAdmin, isLoggingIn, loginError, loginForm, showOperatorPassword,
-            view, search, modal, form,
+            view, search, modal, form, operatorForm, isOperatorModalOpen, isEditOperatorModalOpen, isSubmittingOperator,
             successMsg, errorMsg,
             departments, programs, subjects, curriculum, periods, sections, classOfferings, fees, users, students,
             eyebrow, viewTitle, addLabel, searchPlaceholder,
@@ -2429,7 +2806,9 @@ createApp({
             saveCurriculum, deleteCurriculum, savePeriod, deletePeriod,
             saveSection, deleteSection, saveClassOffering, deleteClassOffering, saveFee, deleteFee,
             openBlockSectionModal, saveBlockSection,
-            createOperator, updateStatus, deleteUser,
+            openCreateOperatorModal, closeCreateOperatorModal, submitCreateOperator,
+            openEditOperatorModal, closeEditOperatorModal, submitEditOperator,
+            resetOperatorPassword, updateStatus, deleteUser,
             dashboardStats, isLoadingStats, loadDashboard, loadAll,
             // Sort & Filter
             sortKey, sortDir, sortBy,
@@ -2451,7 +2830,8 @@ createApp({
             filterAccountProgram, filterAccountYear, filterAccountStatus,
             cloneForm, bulkForm,
             openAddDepartmentModal, openAddProgramModal, openCloneTermModal, openBulkSectionsModal,
-            submitCloneTerm, submitBulkSections, onBulkProgramSelect
+            submitCloneTerm, submitBulkSections, onBulkProgramSelect,
+            timeGreeting
         };
     }
 }).mount('#admin-app');

@@ -18,7 +18,7 @@ try {
     $pdo = Database::getInstance();
 
     if ($action === 'fetch_users') {
-        $stmt  = $pdo->query("SELECT `id`, `username`, `role`, `name`, `status`, `created_at` FROM `station_users` WHERE `role` NOT IN ('ADMIN','SUPER_ADMIN') ORDER BY `id` DESC");
+        $stmt  = $pdo->query("SELECT `id`, `username`, `role`, `name`, `email`, `status`, `must_change_password`, `created_at` FROM `station_users` WHERE `role` NOT IN ('ADMIN','SUPER_ADMIN') ORDER BY `id` DESC");
         $users = $stmt->fetchAll();
         sendResponse(true, $users);
 
@@ -28,28 +28,125 @@ try {
         $status   = $payload['status'] ?? null;
         if (!$userId || !$status) sendResponse(false, null, 'User ID and status are required.', 400);
 
-        $stmt = $pdo->prepare("UPDATE `station_users` SET `status` = :status WHERE `id` = :id AND `role` NOT IN ('ADMIN','SUPER_ADMIN')");
+        // Safeguard Super Admin status
+        $check = $pdo->prepare("SELECT `role` FROM `station_users` WHERE `id` = :id");
+        $check->execute(['id' => (int)$userId]);
+        $targetRole = strtoupper((string)$check->fetchColumn());
+        if ($targetRole === 'SUPER_ADMIN') {
+            sendResponse(false, null, 'Cannot modify status of Super Admin account.', 403);
+        }
+
+        $stmt = $pdo->prepare("UPDATE `station_users` SET `status` = :status WHERE `id` = :id");
         $stmt->execute(['status' => $status, 'id' => (int)$userId]);
-        sendResponse(true, null, 'Status updated.');
+        sendResponse(true, null, 'Status updated successfully.');
 
     } elseif ($action === 'delete_user') {
         $payload = json_decode(file_get_contents('php://input'), true);
         $userId  = $payload['userId'] ?? null;
         if (!$userId) sendResponse(false, null, 'User ID is required.', 400);
 
-        $stmt = $pdo->prepare("DELETE FROM `station_users` WHERE `id` = :id AND `role` NOT IN ('ADMIN','SUPER_ADMIN')");
-        $stmt->execute(['id' => (int)$userId]);
-        sendResponse(true, null, 'User deleted.');
+        // Safeguard Admin accounts
+        $check = $pdo->prepare("SELECT `role` FROM `station_users` WHERE `id` = :id");
+        $check->execute(['id' => (int)$userId]);
+        $targetRole = strtoupper((string)$check->fetchColumn());
+        if (in_array($targetRole, ['ADMIN', 'SUPER_ADMIN'])) {
+            sendResponse(false, null, 'Cannot delete an Admin or Super Admin account.', 403);
+        }
 
-    } elseif ($action === 'create_user') {
-        $payload  = json_decode(file_get_contents('php://input'), true);
+        $stmt = $pdo->prepare("DELETE FROM `station_users` WHERE `id` = :id");
+        $stmt->execute(['id' => (int)$userId]);
+        sendResponse(true, null, 'User deleted successfully.');
+
+    } elseif ($action === 'reset_operator_password') {
+        $payload     = json_decode(file_get_contents('php://input'), true);
+        $userId      = $payload['userId'] ?? null;
+        $newPassword = trim($payload['newPassword'] ?? '');
+        if (!$userId) sendResponse(false, null, 'User ID is required.', 400);
+
+        $check = $pdo->prepare("SELECT `username`, `name`, `email`, `role` FROM `station_users` WHERE `id` = :id");
+        $check->execute(['id' => (int)$userId]);
+        $targetUser = $check->fetch();
+        if (!$targetUser) sendResponse(false, null, 'User account not found.', 444);
+
+        if (empty($newPassword)) {
+            $newPassword = 'Gncp#' . rand(1000, 9999) . '!';
+        }
+
+        $stmt = $pdo->prepare("UPDATE `station_users` SET `password` = :pass, `must_change_password` = 1 WHERE `id` = :id");
+        $stmt->execute([
+            'pass' => password_hash($newPassword, PASSWORD_DEFAULT),
+            'id'   => (int)$userId
+        ]);
+
+        // Dispatch updated credentials via EmailService if email exists
+        require_once __DIR__ . '/../../shared/backend/services/EmailService.php';
+        $mailResult = ['success' => false, 'message' => 'No email specified.'];
+        if (!empty($targetUser['email'])) {
+            $mailResult = EmailService::sendUserCredentials(
+                $targetUser['email'],
+                $targetUser['name'],
+                $targetUser['username'],
+                $newPassword,
+                $targetUser['role']
+            );
+        }
+
+        sendResponse(true, [
+            'userId'       => (int)$userId,
+            'username'     => $targetUser['username'],
+            'tempPassword' => $newPassword,
+            'emailSent'    => $mailResult['success'],
+            'emailMessage' => $mailResult['message'] ?? ''
+        ], 'Operator password reset successfully.');
+
+    } elseif ($action === 'update_operator') {
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $userId  = $payload['userId'] ?? null;
+        $name    = trim($payload['name']  ?? '');
+        $email   = trim($payload['email'] ?? '');
+        $role    = trim($payload['role']  ?? '');
+
+        if (!$userId || !$name || !$role) {
+            sendResponse(false, null, 'User ID, name, and role are required.', 400);
+        }
+
+        $check = $pdo->prepare("SELECT `role` FROM `station_users` WHERE `id` = :id");
+        $check->execute(['id' => (int)$userId]);
+        $targetRole = strtoupper((string)$check->fetchColumn());
+        if ($targetRole === 'SUPER_ADMIN' && strtoupper($role) !== 'SUPER_ADMIN') {
+            sendResponse(false, null, 'Cannot modify Super Admin role.', 403);
+        }
+        if (in_array(strtoupper($role), ['ADMIN', 'SUPER_ADMIN']) && !in_array($targetRole, ['ADMIN', 'SUPER_ADMIN'])) {
+            sendResponse(false, null, 'Cannot elevate account to Admin via operator editor.', 403);
+        }
+
+        $stmt = $pdo->prepare("UPDATE `station_users` SET `name` = :name, `email` = :email, `role` = :role WHERE `id` = :id");
+        $stmt->execute([
+            'name'  => $name,
+            'email' => $email ?: null,
+            'role'  => $role,
+            'id'    => (int)$userId
+        ]);
+
+        sendResponse(true, null, 'Operator account updated successfully.');
+
+    } elseif ($action === 'create_user' || $action === 'save_user') {
+        $rawInput = json_decode(file_get_contents('php://input'), true);
+        $payload  = $rawInput['user'] ?? $rawInput;
+
         $username = trim($payload['username'] ?? '');
         $password = trim($payload['password'] ?? '');
         $name     = trim($payload['name']     ?? '');
+        $email    = trim($payload['email']    ?? '');
         $role     = trim($payload['role']     ?? '');
 
-        if (!$username || !$password || !$name || !$role) {
-            sendResponse(false, null, 'All fields are required.', 400);
+        if (!$username || !$name || !$role) {
+            sendResponse(false, null, 'Name, username, and role are required.', 400);
+        }
+
+        // Auto-generate temp password if blank
+        if (empty($password)) {
+            $password = 'Gncp#' . rand(1000, 9999) . '!';
         }
 
         // Block creating another super admin through this form
@@ -63,14 +160,30 @@ try {
             sendResponse(false, null, 'Username is already taken.', 400);
         }
 
-        $stmt = $pdo->prepare("INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`) VALUES (:user, :pass, :role, :name, 'ACTIVE')");
+        $stmt = $pdo->prepare("INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `email`, `status`, `must_change_password`) VALUES (:user, :pass, :role, :name, :email, 'ACTIVE', 1)");
         $stmt->execute([
-            'user' => $username,
-            'pass' => password_hash($password, PASSWORD_DEFAULT),
-            'role' => $role,
-            'name' => $name
+            'user'  => $username,
+            'pass'  => password_hash($password, PASSWORD_DEFAULT),
+            'role'  => $role,
+            'name'  => $name,
+            'email' => $email ?: null
         ]);
-        sendResponse(true, null, 'Operator account created successfully.');
+
+        // Dispatch credentials via EmailService
+        require_once __DIR__ . '/../../shared/backend/services/EmailService.php';
+        $mailResult = ['success' => false, 'message' => 'No email specified.'];
+        if (!empty($email)) {
+            $mailResult = EmailService::sendUserCredentials($email, $name, $username, $password, $role);
+        }
+
+        sendResponse(true, [
+            'username'             => $username,
+            'email'                => $email,
+            'tempPassword'         => $password,
+            'emailSent'            => $mailResult['success'],
+            'emailMessage'         => $mailResult['message'] ?? '',
+            'must_change_password' => true
+        ], 'Operator account created and credentials dispatched.');
 
     // ──────────────────────────────────────────────────────────────────
     // ACADEMIC DATA — READ ALL
@@ -187,16 +300,19 @@ try {
         }
 
         // Enrolled Students list (with institutional email for Student Accounts view)
+        // Normalize status: ENROLLED/ACTIVE/Active → 'Active'; anything else → 'Inactive'
         $studentsRaw = $pdo->query("SELECT `id`, `name`, `program`, `year_level`, `email`, `status`, `created_at` FROM `students` ORDER BY `name` ASC")->fetchAll();
         $students = [];
         foreach ($studentsRaw as $r) {
+            $rawStatus     = strtoupper(trim($r['status'] ?? ''));
+            $normalStatus  = in_array($rawStatus, ['ACTIVE', 'ENROLLED']) ? 'Active' : 'Inactive';
             $students[] = [
                 'id'        => $r['id'],
                 'name'      => $r['name'],
                 'program'   => $r['program'],
                 'yearLevel' => $r['year_level'],
                 'email'     => $r['email'] ?? '',
-                'status'    => $r['status'],
+                'status'    => $normalStatus,
                 'createdAt' => $r['created_at']
             ];
         }

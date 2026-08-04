@@ -3,761 +3,771 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GNCP Student Portal — My Account</title>
-    <!-- Google Fonts -->
+    <title>GNCP Student Portal — Official Academic Station</title>
+    <!-- Google Fonts & System Dependencies -->
     <link rel="stylesheet" href="../shared/libs/fonts/fonts.css">
-    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="../shared/libs/bootstrap.min.css">
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
-    <!-- Bootstrap CSS Grid/Utilities only -->
-    <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
-    <!-- Inline styles to keep it ultra-clean and avoid extra stylesheet download issues -->
+    <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css">
+    <link rel="stylesheet" href="../shared/libs/login.css">
+    <link rel="stylesheet" href="assets/css/student_login.css">
+    <!-- Vue 3 & Core Libraries -->
+
+    <script src="../shared/libs/vue.global.js"></script>
+    <script src="../shared/libs/sweetalert2.all.min.js"></script>
+    <script src="../shared/js/PasswordChangeGuard.js"></script>
     <style>
-        :root {
-            --primary-green: #006A4E;
-            --primary-green-hover: #00533C;
-            --primary-green-light: rgba(0, 106, 78, 0.08);
-            --primary-gold: #D4AF37;
-            --dark-green: #003D2B;
-            --white: #FFFFFF;
-            --light-bg: #F0F2F5;
-            --gray-border: #E5E8EC;
-            --text-dark: #1A1D23;
-            --text-muted: #6B7280;
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
-            --font-heading: 'Outfit', sans-serif;
-            --font-body: 'Plus Jakarta Sans', sans-serif;
-        }
-
         [v-cloak] { display: none !important; }
-        body {
-            margin: 0;
-            font-family: var(--font-body);
-            background: var(--light-bg);
-            color: var(--text-dark);
-            font-size: 14px;
+        
+        /* ── Student Portal Custom Overrides ── */
+        .student-hero-card {
+            background: linear-gradient(135deg, #003D2B 0%, #002217 100%);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
-
-        /* Login Interface style */
-        .login-overlay {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--dark-green) 0%, #001A12 100%);
-            padding: 20px;
-        }
-
-        .login-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            width: 100%;
-            max-width: 440px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-
-        .login-header img {
-            width: 80px;
-            margin-bottom: 20px;
-        }
-
-        .login-title {
-            font-family: var(--font-heading);
-            font-weight: 800;
-            color: var(--dark-green);
-            margin-bottom: 5px;
-        }
-
-        .login-sub {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            margin-bottom: 30px;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1.5px solid var(--gray-border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            margin-bottom: 18px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .login-input:focus {
-            border-color: var(--primary-green);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary-green);
-            border: none;
-            color: var(--white);
-            font-weight: 700;
-            border-radius: var(--radius-sm);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .login-btn:hover {
-            background: var(--primary-green-hover);
-        }
-
-        .login-error {
-            background: #FEE2E2;
-            border: 1px solid #FCA5A5;
-            color: #B91C1C;
-            padding: 10px;
-            border-radius: var(--radius-sm);
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        /* Dashboard Styles */
-        .portal-header {
-            background: var(--dark-green);
-            color: var(--white);
-            padding: 15px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .brand-block {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand-block img {
-            width: 40px;
-            height: 40px;
-        }
-
-        .brand-block h1 {
-            font-family: var(--font-heading);
-            font-size: 1.25rem;
-            font-weight: 800;
-            margin: 0;
-        }
-
-        .brand-block p {
-            font-size: 0.75rem;
-            color: var(--primary-gold);
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .logout-btn {
-            background: transparent;
-            border: 1.5px solid rgba(255,255,255,0.2);
-            color: var(--white);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .main-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-
-        .profile-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 30px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-            border: 1px solid var(--gray-border);
-            display: flex;
-            gap: 30px;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .student-photo {
-            width: 110px;
-            height: 110px;
+        .student-hero-card::after {
+            content: '';
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
-            background: #E5E7EB;
+            background: radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .avatar-box-interactive {
+            position: relative;
+            cursor: pointer;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            background: #003d2b;
+            overflow: hidden;
+            display: inline-block;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .avatar-box-interactive:hover {
+            transform: scale(1.02);
+        }
+        .avatar-box-interactive:hover .avatar-camera-overlay {
+            opacity: 1;
+        }
+        .avatar-camera-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 34, 23, 0.78);
+            backdrop-filter: blur(2px);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .student-photo-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
-            border: 3px solid var(--primary-green-light);
-            font-size: 3rem;
+            color: var(--gold);
+            border: none;
+            font-size: 2.4rem;
             object-fit: cover;
         }
 
-        .student-meta h2 {
-            font-family: var(--font-heading);
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--dark-green);
-            margin: 0 0 5px 0;
-        }
-
-        .student-meta p {
-            margin: 0 0 4px 0;
-            color: var(--text-muted);
-        }
-
-        .status-pill {
-            display: inline-block;
-            background: var(--primary-green-light);
-            color: var(--primary-green);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .grid-layout {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-        }
-
-        @media (max-width: 992px) {
-            .grid-layout { grid-template-columns: 1fr; }
-            .profile-card { flex-direction: column; text-align: center; }
-        }
-
-        .info-panel {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            border: 1px solid var(--gray-border);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-            margin-bottom: 30px;
-        }
-
-        .panel-title {
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--dark-green);
-            margin-bottom: 20px;
-            border-bottom: 1.5px solid var(--gray-border);
-            padding-bottom: 10px;
+        /* Interactive Timeline Stepper */
+        .portal-stepper {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-direction: column;
+            gap: 14px;
+            padding: 6px 0;
         }
-
-        /* Timeline styles */
-        .station-timeline {
+        .portal-step-node {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
             position: relative;
-            padding-left: 24px;
-            border-left: 2px solid var(--gray-border);
-            margin-left: 10px;
         }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 24px;
-        }
-
-        .timeline-item::before {
+        .portal-step-node:not(:last-child)::after {
             content: '';
             position: absolute;
-            left: -31px;
-            top: 2px;
-            width: 12px;
-            height: 12px;
+            left: 17px;
+            top: 36px;
+            bottom: -16px;
+            width: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+        .portal-step-node.is-completed:not(:last-child)::after {
+            background: var(--primary);
+        }
+        .portal-step-marker {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: var(--gray-border);
-            border: 2.5px solid var(--white);
-            box-shadow: 0 0 0 2px var(--gray-border);
-        }
-
-        .timeline-item.completed::before {
-            background: var(--primary-green);
-            box-shadow: 0 0 0 2px var(--primary-green);
-        }
-
-        .timeline-item.skipped::before {
-            background: var(--text-muted);
-            box-shadow: 0 0 0 2px var(--text-muted);
-        }
-
-        .timeline-item.active::before {
-            background: var(--primary-gold);
-            box-shadow: 0 0 0 2px var(--primary-gold);
-        }
-
-        .timeline-title {
-            font-weight: 700;
-            font-size: 0.92rem;
-            margin: 0;
-        }
-
-        .timeline-desc {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            margin: 2px 0 0 0;
-        }
-
-        .timeline-date {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* Confirm Overlay */
-        .confirm-overlay {
-            position: fixed;
-            top:0; left:0; right:0; bottom:0;
-            background: rgba(0, 106, 78, 0.4);
-            backdrop-filter: blur(4px);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            z-index: 2000;
-        }
-        .confirm-card {
-            background: var(--white);
-            padding: 30px;
-            border-radius: var(--radius-lg);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            border: 1px solid var(--gray-border);
-        }
-        .confirm-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        .confirm-title {
-            font-family: var(--font-heading);
-            font-weight: 800;
-            color: var(--dark-green);
-            margin-bottom: 10px;
-        }
-        .confirm-msg {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-        }
-        .confirm-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-        .confirm-btn-cancel, .confirm-btn-danger {
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-        }
-        .confirm-btn-cancel {
-            background: #F3F4F6;
-            color: var(--text-dark);
-        }
-        .confirm-btn-danger {
-            background: #DC2626;
-            color: var(--white);
-        }
-
-        /* Navigation Tabs */
-        .portal-tabs {
-            background: var(--white);
-            border-bottom: 2px solid var(--gray-border);
-            display: flex;
-            gap: 0;
-            padding: 0 40px;
-        }
-
-        .portal-tabs button {
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            padding: 14px 22px;
-            font-family: var(--font-body);
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: color 0.2s, border-color 0.2s;
             display: flex;
             align-items: center;
-            gap: 7px;
-            margin-bottom: -2px;
-        }
-
-        .portal-tabs button:hover {
-            color: var(--primary-green);
-        }
-
-        .portal-tabs button.active {
-            color: var(--primary-green);
-            border-bottom-color: var(--primary-green);
-        }
-
-        /* Personal Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .info-item .info-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            justify-content: center;
+            font-size: 0.8rem;
+            background: #fff;
+            border: 2px solid var(--border);
             color: var(--text-muted);
-            margin-bottom: 2px;
+            z-index: 1;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .is-completed .portal-step-marker {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .is-active .portal-step-marker {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(0, 106, 78, 0.15);
         }
 
-        .info-item .info-value {
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 0.9rem;
+        /* Confirmation Dialog Overlay */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.15s ease;
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .confirm-card {
+            background: #002217;
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 18px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+            padding: 36px 36px 28px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+        .confirm-icon { font-size: 2.2rem; margin-bottom: 14px; }
+        .confirm-title { font-family: var(--font-head); font-weight: 800; color: #fff; font-size: 1.2rem; margin: 0 0 8px; }
+        .confirm-msg { color: rgba(255,255,255,0.7); font-size: 0.85rem; margin: 0 0 26px; line-height: 1.5; }
+        .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+        .confirm-btn-cancel { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-weight: 600; padding: 11px; font-size: 0.88rem; cursor: pointer; }
+        .confirm-btn-danger { flex: 1; background: linear-gradient(135deg,#ef4444,#dc2626); border: none; border-radius: 10px; color: #fff; font-weight: 700; padding: 11px; font-size: 0.88rem; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="app" v-cloak>
-        <!-- Student Login View -->
-        <div v-if="!currentStudent" class="login-overlay">
-            <div class="login-card">
-                <div class="login-header">
-                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal">
-                    <h3 class="login-title">Student Portal</h3>
-                    <p class="login-sub">Access your official student profile &amp; clearance roadmap</p>
-                </div>
 
-                <div v-if="loginError" class="login-error">
-                    <i class="fas fa-triangle-exclamation" style="margin-right:6px;"></i>{{ loginError }}
-                </div>
-
-                <form @submit.prevent="handleLogin">
-                    <div style="position: relative; margin-bottom: 12px;">
-                        <input type="text" class="login-input" v-model="loginForm.studentId" required placeholder="Permanent Student ID (e.g. GNCP-2026-xxxx)" style="margin-bottom: 0;">
+        <!-- ── 1. UNAUTHENTICATED STUDENT LOGIN VIEW (CUSTOM SPLIT-PANE DESIGN) ── -->
+        <div v-if="!currentStudent" class="student-login-viewport">
+            <div class="student-login-wrapper">
+                
+                <!-- Left Hero Showcase Pane -->
+                <div class="student-hero-pane">
+                    <div class="student-brand-header">
+                        <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="student-brand-logo">
+                        <div class="student-brand-text">
+                            <h2>Go-on National College</h2>
+                            <p>Student Portal System</p>
+                        </div>
                     </div>
-                    <div style="position: relative; margin-bottom: 14px;">
-                        <input :type="showPassword ? 'text' : 'password'" class="login-input" v-model="loginForm.password" required placeholder="Account Password" style="margin-bottom: 0; padding-right: 42px;">
-                        <button type="button" @click="showPassword = !showPassword" tabindex="-1" :title="showPassword ? 'Hide password' : 'Show password'" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
-                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+
+                    <div class="student-hero-content">
+                        <div class="student-hero-tag">
+                            <i class="fas fa-graduation-cap"></i> Official Academic Station
+                        </div>
+                        <h1 class="student-hero-title">
+                            Empowering <span>Next-Gen</span> Scholars
+                        </h1>
+                        <p class="student-hero-desc">
+                            Access your real-time clearance roadmap, enrolled class schedules, financial ledger, and digital credentials in one seamless portal.
+                        </p>
+
+                        <div class="student-feature-list">
+                            <div class="student-feature-item">
+                                <div class="student-feature-icon">
+                                    <i class="fas fa-route"></i>
+                                </div>
+                                <div class="student-feature-text">
+                                    <h4>Station Clearance Roadmap</h4>
+                                    <p>Live progress tracking across Registrar, Clinic, Cashier, &amp; IT Center</p>
+                                </div>
+                            </div>
+
+                            <div class="student-feature-item">
+                                <div class="student-feature-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <div class="student-feature-text">
+                                    <h4>Digital COR &amp; Enrolled Classes</h4>
+                                    <p>View official section assignments, units, and subject schedules</p>
+                                </div>
+                            </div>
+
+                            <div class="student-feature-item">
+                                <div class="student-feature-icon">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <div class="student-feature-text">
+                                    <h4>Financial Ledger &amp; Receipts</h4>
+                                    <p>Verify downpayments, tuition balances, and Official Receipts</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="student-hero-footer">
+                        <span><i class="fas fa-shield-halved me-1"></i> Encrypted Institutional Gateway</span>
+                        <span>v2.4 Production</span>
+                    </div>
+                </div>
+
+                <!-- Right Form Login Pane -->
+                <div class="student-form-pane">
+                    <div class="student-form-header">
+                        <span class="student-form-badge">
+                            <i class="fas fa-user-lock me-1"></i> Student Authentication
+                        </span>
+                        <h3 class="student-form-title">Welcome Back, Scholar!</h3>
+                        <p class="student-form-sub">Sign in with your permanent Student ID or application reference code.</p>
+                    </div>
+
+                    <div v-if="loginError" class="unified-login-err mb-4">
+                        <i class="fas fa-triangle-exclamation me-2"></i>{{ loginError }}
+                    </div>
+
+                    <form @submit.prevent="handleLogin">
+                        <div class="student-input-group">
+                            <label class="student-input-label" for="studentIdInput">
+                                Student ID / Reference
+                                <span class="text-muted text-lowercase font-monospace fw-normal" style="font-size:0.7rem;">e.g. GNCP-2026-XXXX</span>
+                            </label>
+                            <div class="student-field-wrapper">
+                                <input type="text" id="studentIdInput" class="student-input-field" v-model="loginForm.studentId" required placeholder="Enter Permanent ID or Reference">
+                                <i class="fas fa-user-graduate student-field-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="student-input-group">
+                            <label class="student-input-label" for="studentPasswordInput">Account Password</label>
+                            <div class="student-field-wrapper">
+                                <input :type="showPassword ? 'text' : 'password'" id="studentPasswordInput" class="student-input-field" v-model="loginForm.password" required placeholder="••••••••" style="padding-right: 44px;">
+                                <i class="fas fa-key student-field-icon"></i>
+                                <button type="button" class="student-toggle-eye" @click="showPassword = !showPassword" tabindex="-1">
+                                    <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mb-4 fs-7 text-muted">
+                            <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                                <input type="checkbox" v-model="rememberMe" class="form-check-input mt-0">
+                                <span style="font-size:0.83rem; font-weight:600; color:var(--student-text-main);">Remember my login</span>
+                            </label>
+                            <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-danger cursor-pointer fw-semibold" style="font-size:0.83rem;"><i class="fas fa-trash-can me-1"></i>Clear</span>
+                        </div>
+
+                        <button type="submit" class="student-submit-btn" :disabled="isLoggingIn">
+                            <span v-if="isLoggingIn"><i class="fas fa-spinner fa-spin me-2"></i> Authenticating...</span>
+                            <span v-else>Sign In to Student Portal <i class="fas fa-arrow-right ms-2"></i></span>
+                        </button>
+                    </form>
+
+                    <div class="student-form-footer">
+                        <p class="small text-muted mb-0">
+                            Staff or Administrative Access? <a href="../index.html" class="fw-bold text-success text-decoration-none">Access Staff Gateway →</a>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+
+        <!-- ── 2. AUTHENTICATED STUDENT PORTAL SHELL VIEW ── -->
+        <div v-else class="shell">
+
+            <!-- Glassmorphic Sidebar Navigation -->
+            <aside class="sidebar">
+                <div class="brand">
+                    <div class="brand-mark">GNCP</div>
+                    <div>
+                        <h1>Go-on National College</h1>
+                        <p>Student Portal</p>
+                    </div>
+                </div>
+
+                <div class="nav-body">
+                    <div class="nav-cat">Student Workstation</div>
+                    <button class="nav-item" :class="{ active: activeTab === 'home' }" @click="activeTab = 'home'">
+                        <i class="fa-solid fa-address-card"></i> Home &amp; Personal Info
+                    </button>
+                    <button class="nav-item" :class="{ active: activeTab === 'dashboard' }" @click="activeTab = 'dashboard'">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard Overview
+                    </button>
+                    <button class="nav-item" :class="{ active: activeTab === 'courses' }" @click="activeTab = 'courses'">
+                        <i class="fa-solid fa-file-invoice"></i> My Enrolled Classes (COR)
+                    </button>
+                    <button class="nav-item" :class="{ active: activeTab === 'finance' }" @click="activeTab = 'finance'">
+                        <i class="fa-solid fa-cash-register"></i> Financial Ledger
+                    </button>
+                    <button class="nav-item" :class="{ active: activeTab === 'roadmap' }" @click="activeTab = 'roadmap'">
+                        <i class="fa-solid fa-route"></i> Enrollment Roadmap
+                    </button>
+
+                    <div class="nav-cat mt-3">Account Security</div>
+                    <button class="nav-item" @click="openEditModal">
+                        <i class="fa-solid fa-user-pen"></i> Edit Profile Info
+                    </button>
+                    <button class="nav-item nav-logout" @click="handleLogout">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                    </button>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="footer-avatar">
+                        <img v-if="profile.photo" :src="'../stations/it-center/assets/uploads/' + profile.photo" @error="profile.photo = null" class="w-100 h-100 rounded-circle object-fit-cover">
+                        <span v-else>{{ (profile.name || 'S').charAt(0) }}</span>
+                    </div>
+                    <div class="footer-info">
+                        <strong>{{ profile.name || 'Student Account' }}</strong>
+                        <span>{{ profile.id || 'GNCP-STUDENT' }}</span>
+                    </div>
+                    <div class="footer-dot" title="Account Active &amp; Enrolled"></div>
+                </div>
+            </aside>
+
+            <!-- Main Workstation Area -->
+            <main class="main">
+
+                <!-- Topbar Header -->
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <span class="eyebrow">Student Portal</span>
+                        <h2 class="topbar-title">{{ currentTabTitle }}</h2>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="greeting-badge">
+                            <i class="fa-solid fa-sun me-1.5" v-if="timeGreeting.includes('Morning')"></i>
+                            <i class="fa-solid fa-cloud-sun me-1.5" v-else-if="timeGreeting.includes('Afternoon')"></i>
+                            <i class="fa-solid fa-moon me-1.5" v-else></i>
+                            <span>{{ timeGreeting }}</span>
+                        </div>
+                        <div class="user-info-pill d-flex align-items-center gap-2 px-3 py-1 bg-white border rounded-pill shadow-sm" style="border-color: var(--border)!important;">
+                            <div class="user-mini-avatar rounded-circle bg-success text-white font-monospace fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width: 26px; height: 26px; font-size: 0.75rem; background: var(--primary)!important;">
+                                <img v-if="profile.photo" :src="'../stations/it-center/assets/uploads/' + profile.photo" @error="profile.photo = null" class="w-100 h-100 rounded-circle object-fit-cover">
+                                <span v-else>{{ (profile.name || 'S').charAt(0) }}</span>
+                            </div>
+                            <div class="text-start leading-tight">
+                                <strong class="d-block text-dark font-monospace" style="font-size: 0.78rem; line-height: 1.1;">{{ profile.name || 'Student Account' }}</strong>
+                                <small class="text-success font-monospace fw-bold" style="font-size: 0.65rem;">{{ profile.id || 'GNCP-STUDENT' }}</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-add" @click="openEditModal">
+                            <i class="fa-solid fa-user-pen me-1"></i> Edit Profile
                         </button>
                     </div>
+                </header>
 
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 0.8rem; color: #4b5563; padding: 0 2px;">
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; margin: 0;">
-                            <input type="checkbox" v-model="rememberMe" style="width: 15px; height: 15px; accent-color: #006A4E; cursor: pointer;">
-                            <span>Remember login credentials</span>
-                        </label>
-                        <span v-if="hasSavedCredentials" @click="clearSavedCredentials" style="color: #dc2626; cursor: pointer; font-weight: 600;" title="Clear remembered login info"><i class="fas fa-trash-can me-1"></i>Clear</span>
+                <!-- Scrollable Content Body -->
+                <div class="content">
+
+                    <!-- Zero-Refresh Success Alert Toast -->
+                    <div v-if="updateSuccessMsg" class="alert alert-success alert-dismissible fade show border-0 bg-success bg-opacity-10 text-success fw-bold py-2 mb-0 rounded-3" role="alert">
+                        <i class="fa-solid fa-circle-check me-2"></i>{{ updateSuccessMsg }}
+                        <button type="button" class="btn-close" @click="updateSuccessMsg = ''" aria-label="Close"></button>
                     </div>
 
-                    <button type="submit" class="login-btn" :disabled="isLoggingIn">
-                        <span v-if="isLoggingIn"><i class="fas fa-spinner fa-spin me-1"></i> Signing in...</span>
-                        <span v-else>Sign In</span>
-                    </button>
+                    <!-- ══ TAB 1: HOME & PERSONAL INFO ════════════════════════════ -->
+                    <template v-if="activeTab === 'home'">
+                        <!-- Student Hero Card -->
+                        <div class="student-hero-card d-flex align-items-center gap-4">
+                            <div class="avatar-box-interactive" @click="triggerPhotoUpload" title="Click to change profile portrait">
+                                <img v-if="profile.photo" :src="'../stations/it-center/assets/uploads/' + profile.photo" @error="profile.photo = null" class="student-photo-avatar" alt="Student Photo">
+                                <div v-else class="student-photo-avatar">
+                                    <i class="fa-solid fa-user-graduate"></i>
+                                </div>
+                                <div class="avatar-camera-overlay">
+                                    <i class="fa-solid fa-camera mb-1" style="font-size: 1.1rem;"></i>
+                                    <span>Upload Photo</span>
+                                </div>
+                            </div>
+                            <input type="file" ref="photoInput" @change="handlePhotoSelect" accept="image/*" style="display:none;">
+
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h2 class="fw-bold mb-0 text-white font-monospace" style="font-size: 1.4rem;">{{ profile.name || 'Student' }}</h2>
+                                    <span class="badge bg-warning text-dark font-monospace fw-bold px-2.5 py-1 rounded-pill" style="font-size:0.7rem;">{{ profile.status || 'ENROLLED' }}</span>
+                                </div>
+                                <p class="mb-1 text-white-50 small">
+                                    Student ID: <strong class="text-white font-monospace">{{ profile.id }}</strong> · Program: <strong class="text-warning">{{ profile.program }}</strong> (<strong>{{ profile.yearLevel || '1st Year' }}</strong>)
+                                </p>
+                                <p class="mb-0 text-white-50 small">
+                                    Institutional Email: <strong class="text-white font-monospace">{{ profile.email }}</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Personal Details Card -->
+                        <div class="card">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <h3 class="card-title mb-0"><i class="fa-solid fa-address-card"></i> Personal Information Ledger</h3>
+                                <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" @click="openEditModal">
+                                    <i class="fa-solid fa-user-pen me-1"></i> Update Details
+                                </button>
+                            </div>
+
+                            <div v-if="profile.personalInfo" class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">First Name</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.firstName || '—' }}</span>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Middle Name</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.middleName || '—' }}</span>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Last Name</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.lastName || '—' }}</span>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Mobile Phone</small>
+                                    <span class="fw-semibold text-success font-monospace">{{ profile.personalInfo.phone || '—' }}</span>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <small class="stat-label d-block mb-1">Personal Gmail</small>
+                                    <span class="fw-semibold text-primary font-monospace" style="word-break:break-all;">{{ profile.personalInfo.email || '—' }}</span>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <small class="stat-label d-block mb-1">Date of Birth</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.birthDate || '—' }}</span>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <small class="stat-label d-block mb-1">Gender</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.gender || '—' }}</span>
+                                </div>
+                                <div class="col-12">
+                                    <small class="stat-label d-block mb-1">Home Address</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.address || '—' }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="stat-label d-block mb-1">Emergency Contact Name</small>
+                                    <span class="fw-semibold text-dark">{{ profile.personalInfo.emergencyContactName || '—' }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="stat-label d-block mb-1">Emergency Contact Phone</small>
+                                    <span class="fw-semibold text-dark font-monospace">{{ profile.personalInfo.emergencyContactPhone || '—' }}</span>
+                                </div>
+                            </div>
+                            <div v-else class="text-muted small py-3">
+                                <i class="fa-solid fa-circle-info me-1"></i> Personal information is not available yet.
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ══ TAB 2: DASHBOARD OVERVIEW ══════════════════════════════ -->
+                    <template v-if="activeTab === 'dashboard'">
+                        <!-- Summary Stats Row -->
+                        <div class="stats-row">
+                            <div class="stat">
+                                <div class="stat-label">Total Enrolled Units</div>
+                                <div class="stat-value text-success">{{ totalUnits }}</div>
+                                <div class="stat-meta">Active academic load</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Class Sections</div>
+                                <div class="stat-value text-primary">{{ totalAssignedSections }}</div>
+                                <div class="stat-meta">Assigned class blocks</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Account Status</div>
+                                <div class="stat-value text-warning" style="font-size: 1.4rem;">{{ profile.status || 'ACTIVE' }}</div>
+                                <div class="stat-meta">Official Directory</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Outstanding Balance</div>
+                                <div class="stat-value" :class="(payment && payment.balance > 0) ? 'text-danger' : 'text-success'">
+                                    ₱{{ formatCurrency(payment ? payment.balance : 0) }}
+                                </div>
+                                <div class="stat-meta">Financial Account</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Academic Details -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <h3 class="card-title"><i class="fa-solid fa-graduation-cap"></i> Academic Registration Summary</h3>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <small class="stat-label d-block mb-1">Degree Program</small>
+                                            <strong class="text-dark">{{ profile.program }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="stat-label d-block mb-1">Year Level</small>
+                                            <strong class="text-dark">{{ profile.yearLevel }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="stat-label d-block mb-1">NSTP Selection</small>
+                                            <strong class="text-dark">{{ helpdesk ? helpdesk.nstp : 'N/A' }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="stat-label d-block mb-1">Class Block Code</small>
+                                            <strong class="text-success font-monospace">{{ profile.sectionCode || 'Assigned' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clinic Medical Status -->
+                            <div class="col-md-6">
+                                <div class="card h-100" v-if="medical">
+                                    <h3 class="card-title"><i class="fa-solid fa-heart-pulse"></i> Medical Clearance Status</h3>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <small class="stat-label d-block mb-1">Health Clearance</small>
+                                            <span class="badge text-uppercase px-2.5 py-1 rounded-pill" :class="{
+                                                'bg-success-subtle text-success border border-success-subtle': medical.status === 'fit' || medical.status === 'cleared',
+                                                'bg-warning-subtle text-warning border border-warning-subtle': medical.status === 'conditional' || medical.status === 'pending' || !medical.status,
+                                                'bg-danger-subtle text-danger border border-danger-subtle': medical.status === 'unfit'
+                                            }">{{ (medical.status === 'fit' || medical.status === 'cleared') ? 'CLEARED / FIT' : (medical.status === 'unfit' ? 'UNFIT' : 'PENDING EXAM') }}</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="stat-label d-block mb-1">Examined By</small>
+                                            <strong class="text-dark">{{ medical.verifiedBy || 'School Physician' }}</strong>
+                                        </div>
+                                        <div class="col-12" v-if="medical.notes">
+                                            <div class="p-2.5 bg-light rounded-3 border">
+                                                <small class="text-muted d-block mb-1"><i class="fa-solid fa-comment-medical me-1"></i> Doctor Notes:</small>
+                                                <span class="text-dark font-monospace small">{{ medical.notes }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ══ TAB 3: MY COURSES & COR ════════════════════════════════ -->
+                    <template v-if="activeTab === 'courses'">
+                        <div class="card">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <div>
+                                    <h3 class="card-title mb-0"><i class="fa-solid fa-file-invoice"></i> Certificate of Registration (COR)</h3>
+                                    <small class="text-muted">Official Class Schedule &amp; Section Allocation</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" @click="window.print()">
+                                    <i class="fa-solid fa-print me-1"></i> Print COR
+                                </button>
+                            </div>
+
+                            <div v-if="(helpdesk && helpdesk.advisedSubjects && helpdesk.advisedSubjects.length > 0) || (subjects && subjects.length > 0)" class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                                    <thead class="table-light text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                        <tr>
+                                            <th>Subject Code</th>
+                                            <th>Subject Title</th>
+                                            <th class="text-center">Lec Units</th>
+                                            <th class="text-center">Lab Units</th>
+                                            <th class="text-center">Total Units</th>
+                                            <th class="text-center">Section Code</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="sub in (helpdesk && helpdesk.advisedSubjects && helpdesk.advisedSubjects.length > 0 ? helpdesk.advisedSubjects : subjects)" :key="sub.code">
+                                            <td class="font-monospace fw-bold text-success">{{ sub.code }}</td>
+                                            <td class="fw-bold text-dark">{{ sub.title }}</td>
+                                            <td class="text-center font-monospace">{{ sub.lecture_units || sub.lectureUnits || 0 }}</td>
+                                            <td class="text-center font-monospace">{{ sub.lab_units || sub.labUnits || 0 }}</td>
+                                            <td class="text-center font-monospace fw-bold">{{ parseInt(sub.lecture_units || sub.lectureUnits || 0) + parseInt(sub.lab_units || sub.labUnits || 0) }}</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success bg-opacity-10 text-success font-monospace px-2.5 py-1 border border-success-subtle">
+                                                    {{ (enrollment && enrollment.sections) ? (enrollment.sections[sub.code] || profile.sectionCode || 'SEC-A') : (profile.sectionCode || 'SEC-A') }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="4" class="text-end text-uppercase small">Total Enrolled Load:</td>
+                                            <td class="text-center font-monospace text-success fs-6">{{ totalUnits }} Units</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div v-else class="text-muted small text-center py-4">
+                                <i class="fa-solid fa-circle-info me-1"></i> No subjects assigned yet. Complete academic advising to populate your schedule.
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ══ TAB 4: FINANCIAL LEDGER ════════════════════════════════ -->
+                    <template v-if="activeTab === 'finance'">
+                        <div class="card" v-if="payment">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <h3 class="card-title mb-0"><i class="fa-solid fa-cash-register"></i> Tuition &amp; Fee Account Ledger</h3>
+                                <span class="badge text-uppercase font-monospace px-3 py-1.5" :class="{
+                                    'bg-success-subtle text-success border border-success-subtle': String(payment.status || '').toUpperCase() === 'PAID',
+                                    'bg-warning-subtle text-warning border border-warning-subtle': String(payment.status || '').toUpperCase() === 'PARTIAL',
+                                    'bg-secondary-subtle text-secondary border border-secondary-subtle': String(payment.status || '').toUpperCase() === 'PENDING'
+                                }">{{ payment.status || 'PAID' }}</span>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Payment Mode</small>
+                                    <strong class="text-dark">{{ payment.paymentType || 'Cash' }}</strong>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Total Assessment</small>
+                                    <strong class="text-dark fs-6">₱{{ formatCurrency(payment.totalFee) }}</strong>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Total Amount Paid</small>
+                                    <strong class="text-success fs-6">₱{{ formatCurrency(payment.amountPaid) }}</strong>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <small class="stat-label d-block mb-1">Remaining Balance</small>
+                                    <strong class="fs-6" :class="(payment.balance && payment.balance > 0) ? 'text-danger' : 'text-success'">
+                                        ₱{{ formatCurrency(payment.balance) }}
+                                    </strong>
+                                </div>
+                                <div class="col-12" v-if="scholarship && scholarship.status === 'COMPLETED'">
+                                    <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success small mb-0 py-2 rounded-3">
+                                        <i class="fa-solid fa-award me-1"></i> Scholarship discount applied: <strong>{{ scholarship.scholarshipName || 'Scholarship Grant' }}</strong> (<strong>{{ scholarship.discountPercent || 100 }}% Discount</strong>).
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Receipts History -->
+                            <div v-if="payment.history && payment.history.length > 0" class="border-top pt-3">
+                                <h4 class="fw-bold text-dark small mb-2"><i class="fa-solid fa-clock-rotate-left text-success me-1"></i> Issued Official Receipts</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0" style="font-size: 0.8rem;">
+                                        <thead class="table-light text-uppercase text-muted" style="font-size: 0.68rem;">
+                                            <tr>
+                                                <th>Date &amp; Time</th>
+                                                <th>Official Receipt (OR)</th>
+                                                <th>Payment Mode</th>
+                                                <th>Amount Paid</th>
+                                                <th>Processed By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="h in payment.history" :key="h.date">
+                                                <td><code class="text-muted">{{ new Date(h.date).toLocaleString() }}</code></td>
+                                                <td><code class="fw-bold text-success">{{ h.reference }}</code></td>
+                                                <td><span class="badge bg-light text-dark border">{{ h.paymentType }}</span></td>
+                                                <td><strong class="text-success">₱{{ formatCurrency(h.amount) }}</strong></td>
+                                                <td class="text-secondary">{{ h.cashier || 'Treasury Office' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ══ TAB 5: ENROLLMENT ROADMAP ══════════════════════════════ -->
+                    <template v-if="activeTab === 'roadmap'">
+                        <div class="card">
+                            <h3 class="card-title mb-3 pb-2 border-bottom"><i class="fa-solid fa-route"></i> Enrollment Station Clearance Roadmap</h3>
+                            <div class="portal-stepper px-2">
+                                <div v-for="(step, idx) in roadmap" :key="step.stepId || idx" class="portal-step-node" :class="{ 'is-completed': step.status === 'COMPLETED', 'is-active': step.status === 'IN_PROGRESS' || step.status === 'PENDING' }">
+                                    <div class="portal-step-marker">
+                                        <i v-if="step.status === 'COMPLETED'" class="fa-solid fa-check"></i>
+                                        <span v-else>{{ idx + 1 }}</span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <h4 class="fw-bold text-dark fs-6 mb-0">{{ step.title }}</h4>
+                                            <span class="badge rounded-pill font-monospace text-uppercase px-2.5 py-1 border" :class="{
+                                                'bg-success-subtle text-success border-success-subtle': step.status === 'COMPLETED',
+                                                'bg-warning-subtle text-warning border-warning-subtle': step.status === 'IN_PROGRESS' || step.status === 'PENDING',
+                                                'bg-secondary-subtle text-secondary border-secondary-subtle': step.status === 'LOCKED'
+                                            }">{{ step.status }}</span>
+                                        </div>
+                                        <p class="small text-muted mb-1">{{ step.station }} · {{ step.location }}</p>
+                                        <small class="text-muted d-block" v-if="step.updatedAt"><i class="fa-solid fa-clock me-1"></i> Updated: {{ new Date(step.updatedAt).toLocaleString() }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div><!-- /.content -->
+            </main>
+        </div><!-- /.shell -->
+
+        <!-- ── 3. EDIT PROFILE MODAL ── -->
+        <div v-if="showEditModal" class="confirm-overlay" @click.self="showEditModal = false">
+            <div class="edit-modal-card p-4 bg-white rounded-4 shadow-lg border" style="max-width:560px; width:100%;">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h4 class="fw-bold text-success mb-0" style="font-family:var(--font-head);"><i class="fa-solid fa-user-pen me-2"></i>Edit Profile Information</h4>
+                    <button type="button" class="btn-close" @click="showEditModal = false"></button>
+                </div>
+                <form @submit.prevent="saveProfileDetails">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Mobile Phone</label>
+                            <input type="text" class="form-control form-control-sm" v-model="editForm.phone" placeholder="09171234567">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Personal Email</label>
+                            <input type="email" class="form-control form-control-sm" v-model="editForm.email" placeholder="student@gmail.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Home Address</label>
+                            <input type="text" class="form-control form-control-sm" v-model="editForm.address" placeholder="Complete Street Address">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Emergency Contact Name</label>
+                            <input type="text" class="form-control form-control-sm" v-model="editForm.emergencyContactName" placeholder="Guardian / Contact Person">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Emergency Contact Phone</label>
+                            <input type="text" class="form-control form-control-sm" v-model="editForm.emergencyContactPhone" placeholder="09171234567">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+                        <button type="button" class="btn btn-sm btn-light border px-3" @click="showEditModal = false">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-emerald text-white fw-bold px-4" style="background:var(--primary);">Save Profile Updates</button>
+                    </div>
                 </form>
             </div>
         </div>
 
-        <!-- Student Dashboard View -->
-        <template v-else>
-            <header class="portal-header">
-                <div class="brand-block">
-                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal">
-                    <div>
-                        <h1>Go-on National College</h1>
-                        <p>Official Student Portal</p>
-                    </div>
-                </div>
-                <button class="logout-btn" @click="handleLogout"><i class="fa-solid fa-right-from-bracket me-1"></i> Sign Out</button>
-            </header>
-
-            <!-- Navigation Tabs -->
-            <nav class="portal-tabs">
-                <button :class="{ active: activeTab === 'home' }" @click="activeTab = 'home'">
-                    <i class="fa-solid fa-house"></i> Home
-                </button>
-                <button :class="{ active: activeTab === 'dashboard' }" @click="activeTab = 'dashboard'">
-                    <i class="fa-solid fa-chart-line"></i> Dashboard
-                </button>
-                <button :class="{ active: activeTab === 'courses' }" @click="activeTab = 'courses'">
-                    <i class="fa-solid fa-book"></i> My Courses
-                </button>
-            </nav>
-
-            <div class="main-container">
-
-                <!-- ══ HOME TAB: Profile + Personal Info ════════════════════════════ -->
-                <template v-if="activeTab === 'home'">
-                    <!-- Welcome & Profile Summary -->
-                    <div class="profile-card">
-                        <div v-if="profile.photo">
-                            <img :src="'../stations/it-center/assets/uploads/' + profile.photo" @error="profile.photo = null" class="student-photo" alt="Student Photo">
-                        </div>
-                        <div v-else class="student-photo">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div class="student-meta">
-                            <h2>{{ profile.name }}</h2>
-                            <p>Student ID: <strong>{{ profile.id }}</strong> · Program: <strong>{{ profile.program }}</strong></p>
-                            <p>Institutional Email: <strong>{{ profile.email }}</strong></p>
-                            <div class="mt-2">
-                                <span class="status-pill"><i class="fa-solid fa-circle-check me-1"></i> {{ profile.status }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Personal Information Panel -->
-                    <div class="info-panel">
-                        <h3 class="panel-title"><i class="fa-solid fa-address-card"></i> Personal Information</h3>
-                        <div v-if="profile.personalInfo" class="info-grid">
-                            <div class="info-item">
-                                <div class="info-label">First Name</div>
-                                <div class="info-value">{{ profile.personalInfo.firstName || '—' }}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Middle Name</div>
-                                <div class="info-value">{{ profile.personalInfo.middleName || '—' }}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Last Name</div>
-                                <div class="info-value">{{ profile.personalInfo.lastName || '—' }}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Mobile Number</div>
-                                <div class="info-value">{{ profile.personalInfo.phone || '—' }}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Personal Email</div>
-                                <div class="info-value" style="word-break:break-all;">{{ profile.personalInfo.email || '—' }}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Birth Date</div>
-                                <div class="info-value">{{ profile.personalInfo.birthDate || '—' }}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Gender</div>
-                                <div class="info-value">{{ profile.personalInfo.gender || '—' }}</div>
-                            </div>
-                            <div class="info-item" style="grid-column: 1/-1;">
-                                <div class="info-label">Home Address</div>
-                                <div class="info-value">{{ profile.personalInfo.address || '—' }}</div>
-                            </div>
-                        </div>
-                        <div v-else class="text-muted small">
-                            <i class="fa-solid fa-circle-info me-1"></i> Personal information is not available yet.
-                        </div>
-                    </div>
-                </template>
-
-                <!-- ══ DASHBOARD TAB: Academic, Financial, Medical ═══════════════════ -->
-                <template v-if="activeTab === 'dashboard'">
-                    <div class="grid-layout">
-                        <!-- Academic & Financial Status Logs -->
-                        <div>
-                            <!-- Academic Section -->
-                            <div class="info-panel">
-                                <h3 class="panel-title"><i class="fa-solid fa-graduation-cap"></i> Academic Enrollment Details</h3>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <span class="text-muted small d-block">Degree Course</span>
-                                        <strong>{{ profile.program }}</strong>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <span class="text-muted small d-block">Year Classification</span>
-                                        <strong>{{ profile.yearLevel }}</strong>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <span class="text-muted small d-block">Advising NSTP Selection</span>
-                                        <strong>{{ helpdesk ? helpdesk.nstp : 'Not evaluated' }}</strong>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <span class="text-muted small d-block">Sections Assigned</span>
-                                        <div v-if="enrollment && enrollment.sections && Object.keys(enrollment.sections).length > 0" class="d-flex flex-wrap gap-1 mt-1">
-                                            <span v-for="(secCode, subCode) in enrollment.sections" :key="subCode" class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.72rem; padding: 4px 8px; border: 1px solid rgba(25, 135, 84, 0.2);">
-                                                {{ subCode }}: {{ secCode }}
-                                            </span>
-                                        </div>
-                                        <strong v-else class="text-muted" style="font-size:0.85rem;">No sections assigned</strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Financial Ledger Section -->
-                            <div class="info-panel" v-if="payment">
-                                <h3 class="panel-title d-flex justify-content-between align-items-center">
-                                    <span><i class="fa-solid fa-receipt"></i> Tuition Billing &amp; Payment Ledger</span>
-                                    <span class="badge text-uppercase font-monospace px-3 py-1" style="font-size: 0.75rem;" :class="{
-                                        'bg-success-subtle text-success border border-success-subtle': String(payment.status || '').toUpperCase() === 'PAID',
-                                        'bg-warning-subtle text-warning-emphasis border border-warning-subtle': String(payment.status || '').toUpperCase() === 'PARTIAL',
-                                        'bg-secondary-subtle text-secondary border border-secondary-subtle': String(payment.status || '').toUpperCase() === 'PENDING'
-                                    }">{{ payment.status || 'PENDING' }}</span>
-                                </h3>
-                                <div class="row g-3 mb-3">
-                                    <div class="col-sm-3">
-                                        <span class="text-muted small d-block">Payment Mode</span>
-                                        <strong>{{ payment.paymentType || 'Cash' }}</strong>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <span class="text-muted small d-block">Total Assessment</span>
-                                        <strong>₱{{ formatCurrency(payment.totalFee) }}</strong>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <span class="text-muted small d-block">Total Amount Paid</span>
-                                        <strong class="text-success">₱{{ formatCurrency(payment.amountPaid) }}</strong>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <span class="text-muted small d-block">Remaining Balance</span>
-                                        <strong :class="(payment.balance && payment.balance > 0) ? 'text-danger' : 'text-success'">
-                                            ₱{{ formatCurrency(payment.balance) }}
-                                        </strong>
-                                    </div>
-                                    <div class="col-12" v-if="scholarship && scholarship.status === 'COMPLETED'">
-                                        <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success small mb-0 py-2">
-                                            <i class="fa-solid fa-award me-1"></i> Scholarship discount applied: <strong>{{ scholarship.scholarshipName || 'Scholarship' }}</strong> (<strong>{{ scholarship.discountPercent || 100 }}% Discount</strong>).
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Transaction History Table for Installments -->
-                                <div v-if="payment.history && payment.history.length > 0" class="mt-3 border-top pt-3">
-                                    <div class="fw-bold text-dark small mb-2"><i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Payment Receipt History</div>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-striped align-middle mb-0" style="font-size: 0.78rem;">
-                                            <thead class="table-light text-uppercase text-muted" style="font-size: 0.68rem;">
-                                                <tr>
-                                                    <th>Date &amp; Time</th>
-                                                    <th>OR / Ref No.</th>
-                                                    <th>Mode</th>
-                                                    <th>Amount Paid</th>
-                                                    <th>Cashier Desk</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="h in payment.history" :key="h.date">
-                                                    <td><code class="text-muted">{{ new Date(h.date).toLocaleString() }}</code></td>
-                                                    <td><code class="fw-bold text-dark">{{ h.reference }}</code></td>
-                                                    <td><span class="badge bg-light text-dark border">{{ h.paymentType }}</span></td>
-                                                    <td><strong class="text-success">₱{{ formatCurrency(h.amount) }}</strong></td>
-                                                    <td class="text-secondary">{{ h.cashier || 'Treasury Desk' }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Medical Clearance Section -->
-                            <div class="info-panel" v-if="medical">
-                                <h3 class="panel-title"><i class="fa-solid fa-heart-pulse"></i> Medical Clearance Findings</h3>
-                                <div class="row g-3">
-                                    <div class="col-sm-4">
-                                        <span class="text-muted small d-block">Overall Fitness</span>
-                                        <span class="badge text-uppercase px-2 py-1" :class="{
-                                            'bg-success-subtle text-success border border-success-subtle': medical.status === 'fit' || medical.status === 'cleared',
-                                            'bg-warning-subtle text-warning-emphasis border border-warning-subtle': medical.status === 'conditional' || medical.status === 'pending' || !medical.status,
-                                            'bg-danger-subtle text-danger border border-danger-subtle': medical.status === 'unfit'
-                                        }">{{ (medical.status === 'fit' || medical.status === 'cleared') ? 'CLEARED / FIT' : (medical.status === 'conditional' ? 'CONDITIONAL' : (medical.status === 'unfit' ? 'UNFIT' : 'PENDING CLINIC EXAM')) }}</span>
-                                    </div>
-                                    <div class="col-sm-4">
-                                        <span class="text-muted small d-block">PE &amp; NSTP Status</span>
-                                        <strong>PE: {{ medical.peFitness || 'not-assessed' }} · NSTP: {{ medical.nstpFitness || 'not-assessed' }}</strong>
-                                    </div>
-                                    <div class="col-sm-4">
-                                        <span class="text-muted small d-block">Verified By</span>
-                                        <strong>{{ medical.verifiedBy || 'TBA' }}</strong>
-                                    </div>
-                                    <div class="col-12" v-if="medical.notes">
-                                        <div class="p-3 bg-light rounded-3 border">
-                                            <div class="text-muted small mb-1"><i class="fa-solid fa-comment-medical me-1"></i> Clinician Consultation Notes:</div>
-                                            <p class="mb-0 text-dark small font-monospace">{{ medical.notes }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Station Timeline roadmap -->
-                        <div>
-                            <div class="info-panel">
-                                <h3 class="panel-title"><i class="fa-solid fa-map-location-dot"></i> Enrollment Roadmap Clearance</h3>
-                                <div class="station-timeline">
-                                    <div v-for="step in roadmap" :key="step.stepId" class="timeline-item" :class="step.status.toLowerCase()">
-                                        <h4 class="timeline-title">{{ step.title }}</h4>
-                                        <p class="timeline-desc">{{ step.station }} · {{ step.location }}</p>
-                                        <p class="timeline-date" v-if="step.updatedAt">
-                                            <i class="fa-solid fa-clock me-1"></i> Completed: {{ new Date(step.updatedAt).toLocaleDateString() }}
-                                        </p>
-                                        <p class="timeline-date text-warning" v-else>
-                                            <i class="fa-solid fa-hourglass-start me-1"></i> Pending
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-
-                <!-- ══ MY COURSES TAB: Enrolled Subjects & Schedules ═════════════════ -->
-                <template v-if="activeTab === 'courses'">
-                    <div class="info-panel">
-                        <h3 class="panel-title"><i class="fa-solid fa-list-check"></i> Enrolled Subjects &amp; Schedules</h3>
-                        <div v-if="(helpdesk && helpdesk.advisedSubjects && helpdesk.advisedSubjects.length > 0) || (subjects && subjects.length > 0)" class="table-responsive">
-                            <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.8rem; border-color: rgba(0,0,0,0.05);">
-                                <thead class="table-light text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                                    <tr>
-                                        <th>Code</th>
-                                        <th>Subject Title</th>
-                                        <th class="text-center">Units</th>
-                                        <th class="text-center">Class Section</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="sub in (helpdesk && helpdesk.advisedSubjects && helpdesk.advisedSubjects.length > 0 ? helpdesk.advisedSubjects : subjects)" :key="sub.code">
-                                        <td class="font-monospace fw-semibold text-secondary">{{ sub.code }}</td>
-                                        <td class="fw-bold text-dark">{{ sub.title }}</td>
-                                        <td class="text-center">{{ parseInt(sub.lecture_units || sub.lectureUnits || 0) + parseInt(sub.lab_units || sub.labUnits || 0) }}</td>
-                                        <td class="text-center">
-                                            <span class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.75rem;">
-                                                {{ (enrollment && enrollment.sections) ? (enrollment.sections[sub.code] || 'TBA') : 'TBA' }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div v-else class="text-muted small text-center py-4">
-                            <i class="fa-solid fa-circle-info me-1"></i> No subjects have been assigned yet. Please complete the Academic Advising station.
-                        </div>
-                    </div>
-                </template>
-
-            </div><!-- /.main-container -->
-        </template>
-
-        <!-- Logout Confirm Modal -->
+        <!-- ── 4. LOGOUT CONFIRMATION DIALOG OVERLAY ── -->
         <div v-if="showLogoutConfirm" class="confirm-overlay" @click.self="showLogoutConfirm = false">
             <div class="confirm-card">
                 <div class="confirm-icon"><i class="fa-solid fa-right-from-bracket text-danger"></i></div>
                 <h4 class="confirm-title">Confirm Sign Out</h4>
-                <p class="confirm-msg">Are you sure you want to log out of the student portal?</p>
+                <p class="confirm-msg">Are you sure you want to log out of your GNCP Student Portal account?</p>
                 <div class="confirm-actions">
                     <button class="confirm-btn-cancel" @click="showLogoutConfirm = false">Cancel</button>
                     <button class="confirm-btn-danger" @click="confirmLogout">Sign Out</button>
@@ -765,21 +775,44 @@
             </div>
         </div>
 
-    </div>
+    </div><!-- /#app -->
 
-    <!-- Script imports -->
-    <script src="../shared/libs/vue.global.js"></script>
     <script>
-        const { createApp, ref, reactive, onMounted } = Vue;
+        const { createApp, ref, reactive, computed, onMounted, onUnmounted } = Vue;
 
         createApp({
             setup() {
                 const currentStudent = ref(null);
                 const isLoggingIn = ref(false);
                 const loginError = ref('');
+
+                const timeGreeting = computed(() => {
+                    const hour = new Date().getHours();
+                    if (hour < 12) return 'Great Morning';
+                    if (hour < 18) return 'Great Afternoon';
+                    return 'Great Evening';
+                });
                 const showPassword = ref(false);
                 const rememberMe = ref(true);
                 const hasSavedCredentials = ref(false);
+
+                let pollTimer = null;
+
+                const startLiveSync = () => {
+                    if (pollTimer) clearInterval(pollTimer);
+                    pollTimer = setInterval(() => {
+                        if (currentStudent.value) {
+                            fetchDashboardData();
+                        }
+                    }, 4000);
+                };
+
+                const stopLiveSync = () => {
+                    if (pollTimer) {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                    }
+                };
 
                 const loginForm = reactive({
                     studentId: '',
@@ -858,6 +891,7 @@
                             }
 
                             fetchDashboardData();
+                            startLiveSync();
                         } else {
                             loginError.value = result.error || 'Failed to authenticate.';
                         }
@@ -890,12 +924,118 @@
 
                 const showLogoutConfirm = ref(false);
 
+                // Edit Profile State
+                const photoInput = ref(null);
+                const showEditModal = ref(false);
+                const isSavingProfile = ref(false);
+                const updateSuccessMsg = ref('');
+
+                const editForm = reactive({
+                    phone: '',
+                    personalEmail: '',
+                    address: '',
+                    emergencyContactName: '',
+                    emergencyContactPhone: ''
+                });
+
+                const triggerPhotoUpload = () => {
+                    if (photoInput.value) {
+                        photoInput.value.click();
+                    }
+                };
+
+                const handlePhotoSelect = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Image file size must be less than 5MB.');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64Data = e.target.result;
+                        uploadPhotoAjax(base64Data);
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                const uploadPhotoAjax = (base64Data) => {
+                    if (!currentStudent.value) return;
+                    fetch('backend/api.php?action=update_student_profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentId: currentStudent.value.id,
+                            photoData: base64Data
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.success && res.data) {
+                            profile.value.photo = res.data.photo;
+                            updateSuccessMsg.value = 'Profile picture updated successfully.';
+                            setTimeout(() => { updateSuccessMsg.value = ''; }, 4000);
+                        } else {
+                            alert(res.message || 'Failed to update photo.');
+                        }
+                    })
+                    .catch(e => {
+                        console.error('Error uploading photo:', e);
+                    });
+                };
+
+                const openEditModal = () => {
+                    const pInfo = profile.value.personalInfo || {};
+                    editForm.phone = pInfo.phone || '';
+                    editForm.personalEmail = pInfo.email || '';
+                    editForm.address = pInfo.address || '';
+                    editForm.emergencyContactName = pInfo.emergencyContactName || pInfo.guardian || '';
+                    editForm.emergencyContactPhone = pInfo.emergencyContactPhone || '';
+                    showEditModal.value = true;
+                };
+
+                const saveProfileChanges = () => {
+                    if (!currentStudent.value) return;
+                    isSavingProfile.value = true;
+
+                    fetch('backend/api.php?action=update_student_profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentId: currentStudent.value.id,
+                            phone: editForm.phone,
+                            personalEmail: editForm.personalEmail,
+                            address: editForm.address,
+                            emergencyContactName: editForm.emergencyContactName,
+                            emergencyContactPhone: editForm.emergencyContactPhone
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(res => {
+                        isSavingProfile.value = false;
+                        if (res.success && res.data) {
+                            profile.value.personalInfo = res.data.personalInfo;
+                            showEditModal.value = false;
+                            updateSuccessMsg.value = 'Personal details updated successfully.';
+                            setTimeout(() => { updateSuccessMsg.value = ''; }, 4000);
+                        } else {
+                            alert(res.message || 'Failed to save changes.');
+                        }
+                    })
+                    .catch(e => {
+                        isSavingProfile.value = false;
+                        console.error('Error saving profile:', e);
+                        alert('Server error saving profile.');
+                    });
+                };
+
                 const handleLogout = () => {
                     showLogoutConfirm.value = true;
                 };
 
                 const confirmLogout = () => {
                     showLogoutConfirm.value = false;
+                    stopLiveSync();
                     currentStudent.value = null;
                     sessionStorage.removeItem('gncp_portal_student');
                     window.location.reload();
@@ -909,6 +1049,11 @@
                 onMounted(() => {
                     checkSession();
                     loadSavedCredentials();
+                    startLiveSync();
+                });
+
+                onUnmounted(() => {
+                    stopLiveSync();
                 });
 
                 return {
@@ -934,7 +1079,17 @@
                     showLogoutConfirm,
                     handleLogout,
                     confirmLogout,
-                    formatCurrency
+                    formatCurrency,
+                    timeGreeting,
+                    photoInput,
+                    showEditModal,
+                    isSavingProfile,
+                    updateSuccessMsg,
+                    editForm,
+                    triggerPhotoUpload,
+                    handlePhotoSelect,
+                    openEditModal,
+                    saveProfileChanges
                 };
             }
         }).mount('#app');

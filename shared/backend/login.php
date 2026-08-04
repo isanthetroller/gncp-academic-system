@@ -43,8 +43,8 @@ try {
         sendResponse(false, null, 'Invalid username or password.', 401);
     }
 
-    // Validate user password (supports hashed passwords & admin123 fallback)
-    $isValidPassword = password_verify($password, $user['password']) || $password === 'admin123';
+    // Strict password verification — no hardcoded backdoors
+    $isValidPassword = password_verify($password, $user['password']);
     if (!$isValidPassword) {
         sendResponse(false, null, 'Invalid username or password.', 401);
     }
@@ -86,11 +86,17 @@ try {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    $mustChangePassword = (bool)($user['must_change_password'] ?? false);
+    $userAvatar = $user['avatar'] ?? $user['photo'] ?? null;
     $sessionUser = json_encode([
-        'username' => $user['username'],
-        'name'     => $user['name'],
-        'role'     => $role
+        'username'             => $user['username'],
+        'name'                 => $user['name'],
+        'email'                => $user['email'] ?? '',
+        'role'                 => $role,
+        'avatar'               => $userAvatar,
+        'must_change_password' => $mustChangePassword
     ]);
+
     if ($role === 'SUPER_ADMIN' || $role === 'ADMIN') {
         $_SESSION['gncp_admin_user'] = $sessionUser;
     } else {
@@ -99,10 +105,12 @@ try {
 
     // Return success response with user profile and redirect details
     sendResponse(true, [
-        'username'    => $user['username'],
-        'name'        => $user['name'],
-        'role'        => $role,
-        'redirectUrl' => $redirectUrl
+        'username'             => $user['username'],
+        'name'                 => $user['name'],
+        'email'                => $user['email'] ?? '',
+        'role'                 => $role,
+        'must_change_password' => $mustChangePassword,
+        'redirectUrl'          => $redirectUrl
     ], null, 200);
 
 } catch (PDOException $e) {

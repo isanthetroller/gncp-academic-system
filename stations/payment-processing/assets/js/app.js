@@ -15,6 +15,13 @@ createApp({
         const students = ref([]);
         const receiptData = ref(null);
 
+        const timeGreeting = computed(() => {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Great Morning';
+            if (hour < 18) return 'Great Afternoon';
+            return 'Great Evening';
+        });
+
         const setFilter = (filter) => {
             activeFilter.value = filter;
         };
@@ -86,13 +93,37 @@ createApp({
             students.value = result;
         };
 
+        const fetchCurrentProfile = () => {
+            fetch('../../api/index.php?action=auth/profile')
+                .then(res => res.json())
+                .then(res => {
+                    if (res && res.success && res.data) {
+                        const prof = res.data;
+                        const avatarUrl = prof.avatar || prof.photo || prof.image || null;
+                        if (avatarUrl && currentUser.value) {
+                            currentUser.value.avatar = avatarUrl;
+                            if (prof.name) currentUser.value.name = prof.name;
+                            const key = (currentUser.value.role === 'SUPER_ADMIN' || currentUser.value.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                            sessionStorage.setItem(key, JSON.stringify(currentUser.value));
+                        }
+                    }
+                }).catch(() => {});
+        };
+
         const checkSession = () => {
             const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
             if (stored) {
                 const user = JSON.parse(stored);
                 if (user.role === 'CASHIER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR') {
                     currentUser.value = user;
-                    loadQueue();
+                    fetchCurrentProfile();
+                    if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                        window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                            loadQueue();
+                        });
+                    } else {
+                        loadQueue();
+                    }
                     return;
                 }
             }
@@ -100,6 +131,7 @@ createApp({
             sessionStorage.removeItem('gncp_admin_user');
             window.location.href = '../../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         };
+
 
 
         const showLogoutConfirm = ref(false);
@@ -113,7 +145,14 @@ createApp({
             currentUser.value = null;
             sessionStorage.removeItem('gncp_station_user');
             sessionStorage.removeItem('gncp_admin_user');
-            window.location.href = '../../index.html';
+            localStorage.removeItem('gncp_station_user');
+            localStorage.removeItem('gncp_admin_user');
+
+            fetch('../../api/index.php?action=auth/logout', { method: 'POST' })
+                .catch(() => {})
+                .finally(() => {
+                    window.location.href = '../../index.html?clear=true';
+                });
         };
 
         const filteredStudents = computed(() => {
@@ -312,7 +351,7 @@ createApp({
                         s.roadmap[currentStepIdx].status = 'FLAGGED';
                     }
                 }
-            });
+            }, ['payment', 'roadmap']); // Delta: only send payment + roadmap
             loadQueue();
         };
 
@@ -416,7 +455,7 @@ createApp({
                         nextStep.status = 'IN_PROGRESS';
                     }
                 }
-            });
+            }, ['status', 'payment', 'roadmap']); // Delta: send status + payment + roadmap
 
             // 3. Directly POST to backend PHP/MySQL to guarantee instant database persistence
             try {
@@ -503,7 +542,7 @@ createApp({
                                 nextStep.status = 'IN_PROGRESS';
                             }
                         }
-                    });
+                    }, ['orNumber', 'enrolledAt', 'cashierName', 'payment', 'roadmap']); // Delta: send cashier print attributes + payment + roadmap
 
                     window.open(`receipt_print.php?ref=${student.referenceNumber}&autoprint=true`, '_blank');
                     loadQueue();
@@ -682,7 +721,8 @@ createApp({
             newBalance,
             recordPayment,
             printCOR,
-            markEnrolledAndPrint
+            markEnrolledAndPrint,
+            timeGreeting
         };
     }
 }).mount('#app');

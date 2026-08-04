@@ -15,6 +15,13 @@
             const selectedStudent = ref(null);
             const studentsList = ref([]);
 
+            const timeGreeting = computed(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Great Morning';
+                if (hour < 18) return 'Great Afternoon';
+                return 'Great Evening';
+            });
+
             const setFilter = (filter) => {
                 activeFilter.value = filter;
             };
@@ -112,13 +119,37 @@
                 fetchDashboardStats();
             };
 
+            const fetchCurrentProfile = () => {
+                fetch('../../api/index.php?action=auth/profile')
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res && res.success && res.data) {
+                            const prof = res.data;
+                            const avatarUrl = prof.avatar || prof.photo || prof.image || null;
+                            if (avatarUrl && currentUser.value) {
+                                currentUser.value.avatar = avatarUrl;
+                                if (prof.name) currentUser.value.name = prof.name;
+                                const key = (currentUser.value.role === 'SUPER_ADMIN' || currentUser.value.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                                sessionStorage.setItem(key, JSON.stringify(currentUser.value));
+                            }
+                        }
+                    }).catch(() => {});
+            };
+
             const checkSession = () => {
                 const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
                 if (stored) {
                     const user = JSON.parse(stored);
                     if (user.role === 'IT_CENTER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR') {
                         currentUser.value = user;
-                        loadQueue();
+                        fetchCurrentProfile();
+                        if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                            window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                                loadQueue();
+                            });
+                        } else {
+                            loadQueue();
+                        }
                         return;
                     }
                 }
@@ -126,6 +157,7 @@
                 sessionStorage.removeItem('gncp_admin_user');
                 window.location.href = '../../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
             };
+
 
 
             // Fetch live stats from backend for dashboard counters
@@ -151,7 +183,14 @@
                 currentUser.value = null;
                 sessionStorage.removeItem('gncp_station_user');
                 sessionStorage.removeItem('gncp_admin_user');
-                window.location.href = '../../index.html';
+                localStorage.removeItem('gncp_station_user');
+                localStorage.removeItem('gncp_admin_user');
+
+                fetch('../../api/index.php?action=auth/logout', { method: 'POST' })
+                    .catch(() => {})
+                    .finally(() => {
+                        window.location.href = '../../index.html?clear=true';
+                    });
             };
 
             // Metrics
@@ -326,8 +365,8 @@
 
                     const nameParts = (student.name || '').trim().split(' ');
                     const rawLast = student.lastName || nameParts[nameParts.length - 1] || 'delacruz';
-                    const cleanLast = rawLast.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    generatedPassword.value = cleanLast || 'delacruz';
+                    const cleanPasswordLast = rawLast.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    generatedPassword.value = cleanPasswordLast || 'delacruz';
                 }
 
                 const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('itReviewModal'));
@@ -397,7 +436,7 @@
                             s.roadmap[itStepIdx].status = 'COMPLETED';
                             s.roadmap[itStepIdx].updatedAt = new Date().toISOString();
                         }
-                    });
+                    }, ['enrollment', 'status', 'roadmap']); // Delta: only send enrollment + status + roadmap
 
                     corDetails.value = {
                         student: { ...student, enrollment: enrollmentData }
@@ -529,7 +568,8 @@
                 filterAccountStatus,
                 filteredAccounts,
                 uniqueAccountPrograms,
-                loadAccounts
+                loadAccounts,
+                timeGreeting
             };
         }
     };

@@ -9,43 +9,53 @@
     /* ─────────────────────────────────────────────────────────────────
        SidebarNav
        ───────────────────────────────────────────────────────────────── */
+    /* ─────────────────────────────────────────────────────────────────
+       SidebarNav
+       ───────────────────────────────────────────────────────────────── */
     const SidebarNav = {
         props: ['navItems', 'currentView', 'currentUser'],
         emits: ['set-view'],
         template: `
             <aside class="sidebar">
-                <div class="brand-block">
-                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 10px;">
+                <div class="brand">
+                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
                     <div>
-                        <h1>Registrar Office</h1>
-                        <p>Student Records Hub</p>
+                        <h1>Go-on National College</h1>
+                        <p>REGISTRAR PORTAL</p>
                     </div>
                 </div>
 
-                <nav class="sidebar-nav">
-                    <div v-for="cat in navItems" :key="cat.category" class="sidebar-category-group">
-                        <div class="sidebar-category-title">{{ cat.category }}</div>
-                        <a v-for="item in cat.items" :key="item.key" href="#"
-                           :class="{ active: currentView === item.key }"
-                           @click.prevent="$emit('set-view', item.key)">
+
+                <div class="nav-body">
+                    <div v-for="cat in navItems" :key="cat.category">
+                        <div class="nav-cat">{{ cat.category }}</div>
+                        <button v-for="item in cat.items" :key="item.key"
+                                class="nav-item"
+                                :class="{ active: currentView === item.key }"
+                                @click.prevent="$emit('set-view', item.key)">
                             <i :class="item.icon"></i> {{ item.label }}
-                        </a>
+                        </button>
                     </div>
 
-                    <!-- Session Logout -->
-                    <div class="sidebar-category-group mt-auto">
-                        <div class="sidebar-category-title">Session</div>
-                        <a href="#" @click.prevent="$emit('set-view', 'logout')" style="color: rgba(255,180,170,0.8);">
+                    <div style="margin-top: 10px;">
+                        <div class="nav-cat">Account</div>
+                        <a href="../shared/profile.html" class="nav-item" style="text-decoration:none;">
+                            <i class="fa-solid fa-user-circle"></i> My Profile
+                        </a>
+                        <button class="nav-item nav-logout" @click.prevent="$emit('set-view', 'logout')">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </a>
+                        </button>
                     </div>
-                </nav>
+                </div>
 
-                <div class="sidebar-footer">
-                    <div class="sidebar-footer-dot"></div>
-                    <div class="sidebar-footer-text">
-                        <strong>{{ currentUser ? currentUser.name : 'Registrar Staff' }}</strong>
-                        {{ currentUser ? currentUser.role : 'REGISTRAR' }}
+                <div class="sidebar-footer" v-if="currentUser">
+                    <div class="footer-avatar">
+                        <img v-if="currentUser.avatar" :src="currentUser.avatar" alt="Avatar">
+                        <span v-else>{{ ((currentUser.name || currentUser.username) || 'R').substring(0,2).toUpperCase() }}</span>
+                    </div>
+                    <div class="footer-info">
+                        <strong>{{ currentUser.name || currentUser.username }}</strong>
+                        <span>{{ currentUser.role || 'REGISTRAR' }}</span>
                     </div>
                 </div>
             </aside>
@@ -72,26 +82,26 @@
             }
         },
         template: `
-            <header class="top-bar">
-                <div class="top-bar-left">
+            <header class="topbar">
+                <div class="topbar-left">
                     <span class="eyebrow">{{ topBarEyebrow }}</span>
-                    <span class="top-bar-divider">|</span>
-                    <h2>{{ topBarTitle }}</h2>
+                    <span style="color:rgba(0,0,0,.2);font-size:.8rem">/</span>
+                    <span class="topbar-title">{{ topBarTitle }}</span>
                 </div>
-                <div class="top-bar-actions d-flex align-items-center gap-2">
+                <div class="topbar-right">
                     <input v-if="hasSearch"
-                           class="search-pill" type="text"
+                           class="search-box" type="text"
                            :value="searchText"
                            @input="$emit('update:searchText', $event.target.value)"
                            :placeholder="searchPlaceholder">
                     
                     <!-- Action buttons based on current catalog view -->
-                    <button v-if="isAdmin && currentView === 'programs'" @click="$emit('open-program-modal', 'add')" class="btn-pill btn-pill-green btn-pill-sm py-1.5"><i class="fa-solid fa-plus me-1"></i> Add Program</button>
-                    <button v-if="isAdmin && currentView === 'subjects'" @click="$emit('open-subject-modal', 'add')" class="btn-pill btn-pill-green btn-pill-sm py-1.5"><i class="fa-solid fa-plus me-1"></i> Add Subject</button>
-                    <button v-if="isAdmin && currentView === 'curriculum'" @click="$emit('open-curriculum-modal', 'add')" class="btn-pill btn-pill-green btn-pill-sm py-1.5"><i class="fa-solid fa-plus me-1"></i> Map Subject</button>
-                    <button v-if="isAdmin && currentView === 'academic-periods'" @click="$emit('open-period-modal', 'add')" class="btn-pill btn-pill-green btn-pill-sm py-1.5"><i class="fa-solid fa-plus me-1"></i> Add Period</button>
-                    <button v-if="isAdmin && currentView === 'subject-sections'" @click="$emit('open-section-modal', 'add')" class="btn-pill btn-pill-green btn-pill-sm py-1.5"><i class="fa-solid fa-plus me-1"></i> Add Section</button>
-                    <button v-if="isAdmin && currentView === 'fee-schedule'" @click="$emit('open-fee-modal', 'add')" class="btn-pill btn-pill-green btn-pill-sm py-1.5"><i class="fa-solid fa-plus me-1"></i> Add Fee</button>
+                    <button v-if="isAdmin && currentView === 'programs'" @click="$emit('open-program-modal', 'add')" class="btn-add"><i class="fa-solid fa-plus me-1"></i> Add Program</button>
+                    <button v-if="isAdmin && currentView === 'subjects'" @click="$emit('open-subject-modal', 'add')" class="btn-add"><i class="fa-solid fa-plus me-1"></i> Add Subject</button>
+                    <button v-if="isAdmin && currentView === 'curriculum'" @click="$emit('open-curriculum-modal', 'add')" class="btn-add"><i class="fa-solid fa-plus me-1"></i> Map Subject</button>
+                    <button v-if="isAdmin && currentView === 'academic-periods'" @click="$emit('open-period-modal', 'add')" class="btn-add"><i class="fa-solid fa-plus me-1"></i> Add Period</button>
+                    <button v-if="isAdmin && currentView === 'subject-sections'" @click="$emit('open-section-modal', 'add')" class="btn-add"><i class="fa-solid fa-plus me-1"></i> Add Section</button>
+                    <button v-if="isAdmin && currentView === 'fee-schedule'" @click="$emit('open-fee-modal', 'add')" class="btn-add"><i class="fa-solid fa-plus me-1"></i> Add Fee</button>
                 </div>
             </header>
         `
@@ -161,8 +171,8 @@
                 let list = this.students || [];
 
                 if (query) {
-                    list = list.filter(s => 
-                        (s.id && s.id.toLowerCase().includes(query)) || 
+                    list = list.filter(s =>
+                        (s.id && s.id.toLowerCase().includes(query)) ||
                         (s.name && s.name.toLowerCase().includes(query)) ||
                         (s.program && s.program.toLowerCase().includes(query))
                     );
@@ -182,7 +192,7 @@
                 return [...list].sort((a, b) => {
                     let valA = a[this.sortBy];
                     let valB = b[this.sortBy];
-                    
+
                     // Year level fallback matching UI display
                     if (this.sortBy === 'year_level') {
                         valA = valA || '1st Year';
@@ -191,10 +201,10 @@
                         valA = valA || '';
                         valB = valB || '';
                     }
-                    
+
                     if (typeof valA === 'string') valA = valA.toLowerCase();
                     if (typeof valB === 'string') valB = valB.toLowerCase();
-                    
+
                     if (valA < valB) return this.sortDesc ? 1 : -1;
                     if (valA > valB) return this.sortDesc ? -1 : 1;
                     return 0;
@@ -401,14 +411,14 @@
 
         data() {
             return {
-                sortBy:         'dateSubmitted',
-                sortDesc:       true,
-                filterStatus:   'ALL',
-                filterProgram:  'ALL',
-                filterAdmType:  'ALL',
+                sortBy: 'dateSubmitted',
+                sortDesc: true,
+                filterStatus: 'ALL',
+                filterProgram: 'ALL',
+                filterAdmType: 'ALL',
                 filterDateFrom: '',
-                filterDateTo:   '',
-                showDateRange:  false
+                filterDateTo: '',
+                showDateRange: false
             };
         },
 
@@ -417,7 +427,7 @@
                 if (this.sortBy === field) {
                     this.sortDesc = !this.sortDesc;
                 } else {
-                    this.sortBy   = field;
+                    this.sortBy = field;
                     this.sortDesc = field === 'dateSubmitted';
                 }
             },
@@ -428,33 +438,33 @@
             getSectionsForProgram(programCode, yearLevel, semester) {
                 if (!programCode || !this.sections) return [];
                 const search = programCode.trim().toLowerCase();
-                
+
                 // Dynamic lookup of program name from program code
                 const progObj = this.programs ? this.programs.find(p => p.code.trim().toLowerCase() === search) : null;
                 const searchName = progObj ? progObj.name.trim().toLowerCase() : search;
-                
+
                 const targetYear = (yearLevel || '1st Year').trim().toLowerCase();
                 const targetSem = (semester || '1st Semester').trim().toLowerCase();
-                
+
                 return this.sections.filter(s => {
                     const progName = (s.program || '').trim().toLowerCase();
-                    const isProgMatch = (progName === searchName || 
-                                         progName.includes(search) || 
-                                         search.includes(progName));
-                    
+                    const isProgMatch = (progName === searchName ||
+                        progName.includes(search) ||
+                        search.includes(progName));
+
                     const secYear = (s.yearLevel || '1st Year').trim().toLowerCase();
                     const secSem = (s.semester || '1st Semester').trim().toLowerCase();
-                    
+
                     return isProgMatch && secYear === targetYear && secSem === targetSem;
                 });
             },
             clearFilters() {
-                this.filterStatus   = 'ALL';
-                this.filterProgram  = 'ALL';
-                this.filterAdmType  = 'ALL';
+                this.filterStatus = 'ALL';
+                this.filterProgram = 'ALL';
+                this.filterAdmType = 'ALL';
                 this.filterDateFrom = '';
-                this.filterDateTo   = '';
-                this.showDateRange  = false;
+                this.filterDateTo = '';
+                this.showDateRange = false;
             },
             fmtDate(d) {
                 if (!d) return '—';
@@ -468,8 +478,8 @@
                 return (status || '').toLowerCase().replace(/[\s_]+/g, '-');
             },
             typeColor(t) {
-                if (t === 'RETURNING')  return { bg: 'rgba(245,158,11,0.09)',  color: '#b45309', border: 'rgba(245,158,11,0.3)' };
-                if (t === 'TRANSFEREE') return { bg: 'rgba(59,130,246,0.09)',  color: '#1d4ed8', border: 'rgba(59,130,246,0.3)' };
+                if (t === 'RETURNING') return { bg: 'rgba(245,158,11,0.09)', color: '#b45309', border: 'rgba(245,158,11,0.3)' };
+                if (t === 'TRANSFEREE') return { bg: 'rgba(59,130,246,0.09)', color: '#1d4ed8', border: 'rgba(59,130,246,0.3)' };
                 return { bg: 'rgba(22,163,74,0.08)', color: '#166534', border: 'rgba(22,163,74,0.25)' };
             }
         },
@@ -492,13 +502,13 @@
                 });
                 return map;
             },
-            pendingCount()    { return this.countByStatus['PRE_REGISTERED'] || 0; },
-            approvedCount()   { return this.countByStatus['APPROVED'] || 0; },
-            rejectedCount()   { return this.countByStatus['REJECTED'] || 0; },
+            pendingCount() { return this.countByStatus['PRE_REGISTERED'] || 0; },
+            approvedCount() { return this.countByStatus['APPROVED'] || 0; },
+            rejectedCount() { return this.countByStatus['REJECTED'] || 0; },
             inProgressCount() { return (this.countByStatus['IN_PROGRESS'] || 0) + (this.countByStatus['REGISTRAR_APPROVED'] || 0); },
             activeFilterCount() {
                 let n = 0;
-                if (this.filterStatus  !== 'ALL') n++;
+                if (this.filterStatus !== 'ALL') n++;
                 if (this.filterProgram !== 'ALL') n++;
                 if (this.filterAdmType !== 'ALL') n++;
                 if (this.filterDateFrom || this.filterDateTo) n++;
@@ -511,12 +521,12 @@
                 if (query) {
                     list = list.filter(a =>
                         (a.referenceNumber && a.referenceNumber.toLowerCase().includes(query)) ||
-                        (a.applicantName   && a.applicantName.toLowerCase().includes(query))   ||
-                        (a.program         && a.program.toLowerCase().includes(query))
+                        (a.applicantName && a.applicantName.toLowerCase().includes(query)) ||
+                        (a.program && a.program.toLowerCase().includes(query))
                     );
                 }
-                if (this.filterStatus  !== 'ALL') list = list.filter(a => a.status      === this.filterStatus);
-                if (this.filterProgram !== 'ALL') list = list.filter(a => a.program     === this.filterProgram);
+                if (this.filterStatus !== 'ALL') list = list.filter(a => a.status === this.filterStatus);
+                if (this.filterProgram !== 'ALL') list = list.filter(a => a.program === this.filterProgram);
                 if (this.filterAdmType !== 'ALL') list = list.filter(a => a.studentType === this.filterAdmType);
 
                 if (this.filterDateFrom) {
@@ -766,26 +776,13 @@
                                         <div style="font-size:0.82rem;font-weight:500;">{{ fmtDate(app.dateSubmitted) }}</div>
                                         <div style="font-size:0.7rem;color:#9ca3af;">{{ fmtTime(app.dateSubmitted) }}</div>
                                     </td>
-                                    <!-- Block section capsules -->
-                                    <td>
-                                        <div class="d-flex flex-wrap gap-1 align-items-center">
-                                            <span v-for="sect in getSectionsForProgram(app.program, app.yearLevel, '1st Semester')" :key="sect.code"
-                                                  class="badge rounded-pill border py-1 px-2"
-                                                  :style="{
-                                                      cursor:'pointer',
-                                                      borderColor:     app.sectionCode === sect.code ? '#198754' : '#dee2e6',
-                                                      backgroundColor: app.sectionCode === sect.code ? '#f4faf6' : '#fff',
-                                                      color:           app.sectionCode === sect.code ? '#198754' : '#6c757d',
-                                                      fontSize:        '0.72rem',
-                                                      fontWeight:      app.sectionCode === sect.code ? 700 : 400,
-                                                      transition:      'all 0.15s'
-                                                  }"
-                                                  @click="app.sectionCode = sect.code">
-                                                {{ sect.code }}
-                                            </span>
-                                            <span v-if="!getSectionsForProgram(app.program, app.yearLevel, '1st Semester').length" style="font-size:0.72rem;color:#9ca3af;">—</span>
-                                        </div>
-                                    </td>
+                                    <!-- Block section -->
+                                     <td>
+                                         <span v-if="app.sectionCode" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 font-monospace px-2.5 py-1" style="font-size:0.75rem;">
+                                             <i class="fa-solid fa-layer-group me-1"></i>{{ app.sectionCode }}
+                                         </span>
+                                         <span v-else class="text-muted small fst-italic">Unassigned</span>
+                                     </td>
                                     <!-- Status + section badge stacked -->
                                     <td>
                                         <span class="status-badge d-block mb-1" :class="statusClass(app.status)">{{ app.status }}</span>
@@ -849,8 +846,8 @@
                 const query = this.searchText ? this.searchText.trim().toLowerCase() : '';
                 const valid = this.programs.filter(p => p.code || p.name);
                 if (!query) return valid;
-                return valid.filter(p => 
-                    (p.code || '').toLowerCase().includes(query) || 
+                return valid.filter(p =>
+                    (p.code || '').toLowerCase().includes(query) ||
                     (p.name || '').toLowerCase().includes(query) ||
                     (p.department || '').toLowerCase().includes(query)
                 );
@@ -975,8 +972,8 @@
             filteredSubjects() {
                 const query = this.searchText ? this.searchText.trim().toLowerCase() : '';
                 if (!query) return this.subjects;
-                return this.subjects.filter(s => 
-                    s.code.toLowerCase().includes(query) || 
+                return this.subjects.filter(s =>
+                    s.code.toLowerCase().includes(query) ||
                     s.title.toLowerCase().includes(query) ||
                     s.department.toLowerCase().includes(query)
                 );
@@ -1120,8 +1117,8 @@
             filteredCurriculum() {
                 const query = this.searchText ? this.searchText.trim().toLowerCase() : '';
                 if (!query) return this.curriculum;
-                return this.curriculum.filter(c => 
-                    c.program.toLowerCase().includes(query) || 
+                return this.curriculum.filter(c =>
+                    c.program.toLowerCase().includes(query) ||
                     c.subject.toLowerCase().includes(query) ||
                     (c.subjectCode && c.subjectCode.toLowerCase().includes(query)) ||
                     c.yearLevel.toLowerCase().includes(query) ||
@@ -1273,8 +1270,8 @@
             filteredPeriods() {
                 const query = this.searchText ? this.searchText.trim().toLowerCase() : '';
                 if (!query) return this.academicPeriods;
-                return this.academicPeriods.filter(p => 
-                    p.name.toLowerCase().includes(query) || 
+                return this.academicPeriods.filter(p =>
+                    p.name.toLowerCase().includes(query) ||
                     p.academicYear.toLowerCase().includes(query) ||
                     p.semester.toLowerCase().includes(query)
                 );
@@ -1418,8 +1415,8 @@
             filteredSections() {
                 const query = this.searchText ? this.searchText.trim().toLowerCase() : '';
                 if (!query) return this.subjectSections;
-                return this.subjectSections.filter(s => 
-                    s.subject.toLowerCase().includes(query) || 
+                return this.subjectSections.filter(s =>
+                    s.subject.toLowerCase().includes(query) ||
                     s.code.toLowerCase().includes(query) ||
                     s.instructor.toLowerCase().includes(query) ||
                     s.room.toLowerCase().includes(query)
@@ -1591,8 +1588,8 @@
             filteredFees() {
                 const query = this.searchText ? this.searchText.trim().toLowerCase() : '';
                 if (!query) return this.feeSchedule;
-                return this.feeSchedule.filter(f => 
-                    f.type.toLowerCase().includes(query) || 
+                return this.feeSchedule.filter(f =>
+                    f.type.toLowerCase().includes(query) ||
                     f.label.toLowerCase().includes(query)
                 );
             }

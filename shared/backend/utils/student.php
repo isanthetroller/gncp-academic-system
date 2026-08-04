@@ -145,7 +145,8 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
         'phone' => $record['phone'],
         'birthDate' => $record['birth_date'],
         'gender' => $record['gender'],
-        'address' => $record['address']
+        'address' => $record['address'],
+        'temp_pin' => $record['temp_pin'] ?? '' // Persisted to allow recovery in QueueService
     ]);
     $academicInfoJson = json_encode([
         'elementarySchool' => $record['elementary_school'],
@@ -225,10 +226,11 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
         ]);
     }
 
-    $checkEnroll = $pdo->prepare("SELECT COUNT(*) FROM `enrollments` WHERE `student` = :name");
-    $checkEnroll->execute(['name' => $studName]);
+    // Check existing snapshot in enrollments table by student name and course
+    $checkEnroll = $pdo->prepare("SELECT COUNT(*) FROM `enrollments` WHERE `student` = :student AND `course` = :course");
+    $checkEnroll->execute(['student' => $studName, 'course' => $record['course_code']]);
     if ($checkEnroll->fetchColumn() == 0) {
-        $insertEnrollStmt = $pdo->prepare("INSERT INTO `enrollments` (`student`, `course`, `status`) 
+        $insertEnrollStmt = $pdo->prepare("INSERT INTO `enrollments` (`student`, `course`, `status`)
                                            VALUES (:student, :course, 'Enrolled')");
         $insertEnrollStmt->execute([
             'student' => $studName,
@@ -236,8 +238,8 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
         ]);
     }
 
-    // Delete the completed temporary pre-enrollment record!
-    $delStmt = $pdo->prepare("DELETE FROM `pre_enrollments` WHERE `temp_student_id` = :ref");
+    // Soft-delete: mark as PROMOTED instead of hard DELETE to preserve audit trail
+    $delStmt = $pdo->prepare("UPDATE `pre_enrollments` SET `status` = 'PROMOTED' WHERE `temp_student_id` = :ref");
     $delStmt->execute(['ref' => $refNum]);
 
     return [

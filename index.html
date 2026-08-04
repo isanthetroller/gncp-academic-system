@@ -22,7 +22,7 @@
                 if (admin) { user = JSON.parse(admin); }
                 else if (station) { user = JSON.parse(station); }
 
-                if (user && user.role) {
+                if (user && user.role && !user.must_change_password) {
                     const getRoleRedirectUrl = (role) => {
                         if (role === 'SUPER_ADMIN' || role === 'ADMIN') return 'admin/index.html';
                         if (role === 'REGISTRAR') return 'registrar/index.html';
@@ -49,6 +49,8 @@
     <link rel="stylesheet" href="shared/libs/fonts/fonts.css">
     <link rel="stylesheet" href="shared/libs/bootstrap.min.css">
     <link rel="stylesheet" href="shared/libs/font-awesome/css/all.min.css">
+    <script src="shared/libs/sweetalert2.all.min.js"></script>
+    <script src="shared/js/PasswordChangeGuard.js"></script>
     
     <style>
         :root {
@@ -810,10 +812,18 @@
 
                     if (user && user.role) {
                         currentUser.value = user;
-                        const redirectParam = urlParams.get('redirect');
-                        const target = redirectParam ? decodeURIComponent(redirectParam) : getRoleRedirectUrl(user.role);
-                        if (target) {
-                            window.location.replace(target);
+                        if (user.must_change_password) {
+                            PasswordChangeGuard.checkAndPrompt(user, function() {
+                                const redirectParam = urlParams.get('redirect');
+                                const target = redirectParam ? decodeURIComponent(redirectParam) : getRoleRedirectUrl(user.role);
+                                if (target) window.location.replace(target);
+                            });
+                        } else {
+                            const redirectParam = urlParams.get('redirect');
+                            const target = redirectParam ? decodeURIComponent(redirectParam) : getRoleRedirectUrl(user.role);
+                            if (target) {
+                                window.location.replace(target);
+                            }
                         }
                     }
                 };
@@ -847,7 +857,8 @@
                             const user = {
                                 username: result.data.username,
                                 name: result.data.name,
-                                role: result.data.role
+                                role: result.data.role,
+                                must_change_password: !!result.data.must_change_password
                             };
 
                             // Save to session storage corresponding to system role
@@ -857,12 +868,15 @@
                                 sessionStorage.setItem('gncp_station_user', JSON.stringify(user));
                             }
 
-                            // Do NOT mutate currentUser.value here to prevent Vue from triggering layout changes/flashing.
-                            // Immediately redirect using replace() to clear the gateway page state.
                             const urlParams = new URLSearchParams(window.location.search);
                             const redirectUrl = urlParams.get('redirect');
                             const target = redirectUrl ? decodeURIComponent(redirectUrl) : (result.data.redirectUrl || getRoleRedirectUrl(user.role));
-                            if (target) {
+
+                            if (user.must_change_password) {
+                                PasswordChangeGuard.checkAndPrompt(user, function() {
+                                    if (target) window.location.replace(target);
+                                });
+                            } else if (target) {
                                 window.location.replace(target);
                             }
                         } else {

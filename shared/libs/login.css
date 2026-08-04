@@ -137,3 +137,43 @@
     -webkit-text-fill-color: #1F2937 !important;
     transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Input Icon and Password Toggle Helpers */
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-wrapper .unified-login-input,
+.input-wrapper .form-input {
+    padding-left: 40px;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #9CA3AF;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 0.9rem;
+    z-index: 2;
+}
+.password-toggle-btn:hover {
+    color: #006A4E;
+}
+

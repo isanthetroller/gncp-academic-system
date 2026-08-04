@@ -5,6 +5,7 @@
     const reactive = Vue.reactive;
     const computed = Vue.computed;
     const onMounted = Vue.onMounted;
+    const onUnmounted = Vue.onUnmounted;
 
     createApp({
         setup() {
@@ -14,6 +15,30 @@
             const showPassword = ref(false);
             const rememberMe = ref(true);
             const hasSavedCredentials = ref(false);
+
+            let pollTimer = null;
+
+            const startLivePolling = () => {
+                if (pollTimer) clearInterval(pollTimer);
+                pollTimer = setInterval(() => {
+                    if (currentView.value === 'DASHBOARD' && loginForm.tempStudentId && loginForm.tempPin) {
+                        window.ApiService.getEnrollment(loginForm.tempStudentId, loginForm.tempPin)
+                            .then(res => {
+                                if (res.success && res.data) {
+                                    enrollmentData.value = res.data;
+                                }
+                            })
+                            .catch(err => console.warn('[TrackerApp] Live sync error:', err));
+                    }
+                }, 4000);
+            };
+
+            const stopLivePolling = () => {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+            };
 
             const loginForm = reactive({
                 tempStudentId: '',
@@ -57,6 +82,10 @@
                 }
             });
 
+            onUnmounted(() => {
+                stopLivePolling();
+            });
+
             const handleLogin = () => {
                 if (!loginForm.tempStudentId.trim() || !loginForm.tempPin.trim()) {
                     loginError.value = 'Please enter both your Student ID and PIN.';
@@ -72,6 +101,7 @@
                         if (res.success) {
                             enrollmentData.value = res.data;
                             currentView.value = 'DASHBOARD';
+                            startLivePolling();
 
                             if (rememberMe.value) {
                                 localStorage.setItem('gncp_saved_tracker_credentials', JSON.stringify({
@@ -95,6 +125,7 @@
             };
 
             const logout = () => {
+                stopLivePolling();
                 enrollmentData.value = null;
                 loginForm.tempStudentId = '';
                 loginForm.tempPin = '';

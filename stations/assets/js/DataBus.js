@@ -1,40 +1,32 @@
 /**
  * ================================================================
- *  GNCP Enrollment Stations — Shared Data Bus  v1.2
- * ================================================================
- *
- *  Corrected Theoretical Flow (Best Practice):
- *  1. Online Pre-Reg
- *  2. Registrar Verification & Admission (Room 1109) -> sets advising step IN_PROGRESS
- *  3. Academic Advising & NSTP (TLC Helpdesk) -> Step 2
- *  4. Medical Clearance (Fit / Unfit check) -> Step 3 (handled by medical-checkup)
- *  5. Scholarship Verification -> Step 4 (handled by scholarship-verification)
- *  6. Cashier Payment (Clear Ledger Balance) -> Step 5 (handled by payment-processing)
- *  7. IT Center: ID Photo & Portal Activation -> Step 6 (handled by it-center)
- *
- *  NOTE: requirements-verification station has been REMOVED from the flow.
- *        The registrar handles document admission directly.
- *  SCHEMA VERSION: 2
+ *  GNCP Enrollment Stations — Shared Data Bus  v3.0
+ *  - Single source of truth: REST API gateway (api/index.php)
+ *  - Delta-only updates: sends only changed fields per station
+ *  - Exponential backoff: adapts polling interval on failures
  * ================================================================
  */
 
-const SCHEMA_VERSION = 3;
-const STORAGE_KEY    = 'gncp_enrollment_queue';
+const STORAGE_KEY = 'gncp_enrollment_queue';
 
 class StationDataBus {
     static _syncing = false;
+    static _consecutiveFailures = 0;
+    static _pollTimer = null;
+    static _lastEtag = null;
 
     static getApiUrl(action) {
-        const path = window.location.pathname;
-        const isSubdir = path.includes('/stations/') && !path.endsWith('/stations/') && !path.includes('dashboard.html');
-        const base = isSubdir ? '../backend/api.php' : 'backend/api.php';
-        return `${base}?action=${action}`;
+        let baseApi = '/systemtest/api/index.php';
+        if (action === 'fetch_queue') {
+            return `${baseApi}?action=stations/queue`;
+        } else if (action === 'update_student') {
+            return `${baseApi}?action=stations/update`;
+        }
+        return `${baseApi}?action=${action}`;
     }
 
     static getQueue() {
-        // Fetch updates from backend asynchronously in the background
         this.syncWithBackend();
-
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : [];
     }
@@ -47,7 +39,15 @@ class StationDataBus {
         return this.getQueue().find(s => s.referenceNumber === refNo) || null;
     }
 
-    static updateStudent(refNo, updateFn) {
+    /**
+     * Updates a student record locally and syncs the delta to the backend.
+     * @param {string} refNo - The student reference number.
+     * @param {function} updateFn - Callback that mutates the student object.
+     * @param {string[]} [deltaKeys] - If provided, only these keys are sent to the backend.
+     *   Examples: ['medical','roadmap'], ['payment','roadmap'], ['enrollment','roadmap','status']
+     *   If omitted, the full student object is sent (legacy fallback).
+     */
+    static updateStudent(refNo, updateFn, deltaKeys = null) {
         const queue = this.getQueue();
         const idx   = queue.findIndex(s => s.referenceNumber === refNo);
         if (idx === -1) {
@@ -57,75 +57,72 @@ class StationDataBus {
         updateFn(queue[idx]);
         this.saveQueue(queue);
 
-        // Async dispatch updates to PHP/MySQL backend (skip if student was promoted / ENROLLED)
-        if (queue[idx].status !== 'ENROLLED') {
-            this.sendUpdateToBackend(refNo, queue[idx]);
-        }
-
+        this.sendUpdateToBackend(refNo, queue[idx], deltaKeys);
         return queue[idx];
     }
-
-    // ----------------------------------------------------------------
-    // BACKEND SYNC OPERATIONS (Background Cache Sync)
-    // ----------------------------------------------------------------
 
     static async syncWithBackend() {
         if (this._syncing) return;
         this._syncing = true;
 
         try {
-            const response = await fetch(this.getApiUrl('fetch_queue'));
+            const headers = {};
+            if (this._lastEtag) {
+                headers['If-None-Match'] = this._lastEtag;
+            }
+
+            const response = await fetch(this.getApiUrl('fetch_queue'), { headers });
+
+            if (response.status === 304) {
+                // Queue has not changed — skip JSON decoding and localStorage write
+                StationDataBus._consecutiveFailures = 0;
+                return;
+            }
+
             if (response.ok) {
+                const etagHeader = response.headers.get('ETag');
+                if (etagHeader) {
+                    this._lastEtag = etagHeader;
+                }
                 const result = await response.json();
                 if (result.success && Array.isArray(result.data)) {
-                    const localRaw = localStorage.getItem(STORAGE_KEY);
                     const dbRaw = JSON.stringify(result.data);
-                    
-                    // Only reload and dispatch storage events if data changed
+                    const localRaw = localStorage.getItem(STORAGE_KEY);
                     if (localRaw !== dbRaw) {
                         localStorage.setItem(STORAGE_KEY, dbRaw);
-                        // Trigger reload in the active tab
                         window.dispatchEvent(new Event('storage'));
                     }
                 }
             }
+            // Reset failure counter on success
+            StationDataBus._consecutiveFailures = 0;
         } catch (err) {
-            console.warn('[DataBus] Live server unreachable. Operating in local storage mode.', err);
+            console.warn('[DataBus] REST API sync error:', err);
+            StationDataBus._consecutiveFailures++;
         } finally {
             this._syncing = false;
         }
     }
 
-    static async sendUpdateToBackend(refNo, studentData) {
+    /**
+     * Sends a student update to the backend.
+     * When deltaKeys is provided, only those fields are included in updateData.
+     * This prevents one station from overwriting another station's concurrent changes.
+     */
+    static async sendUpdateToBackend(refNo, studentData, deltaKeys = null) {
         try {
-            // Role-isolated atomic payload filtering (prevents concurrent stale overrides)
-            const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
-            const role = stored ? JSON.parse(stored).role : '';
-            
-            const ROLE_PAYLOAD_MAP = {
-                'REGISTRAR': ['requirements', 'status', 'sectionCode'],
-                'HELPDESK': ['helpdesk', 'payment'],
-                'ADMIN': ['helpdesk', 'payment'],
-                'SUPER_ADMIN': ['helpdesk', 'payment'],
-                'MEDICAL': ['medical'],
-                'CASHIER': ['payment'],
-                'IT_CENTER': ['enrollment', 'status']
-            };
-
-            const filteredUpdate = {
-                roadmap: studentData.roadmap
-            };
-
-            const allowedKeys = ROLE_PAYLOAD_MAP[role];
-            if (allowedKeys) {
-                allowedKeys.forEach(key => {
-                    if (studentData[key] !== undefined) {
-                        const apiKey = key === 'sectionCode' ? 'section_code' : key;
-                        filteredUpdate[apiKey] = studentData[key];
+            let updateData;
+            if (deltaKeys && Array.isArray(deltaKeys) && deltaKeys.length > 0) {
+                // Delta mode: send only the changed fields
+                updateData = {};
+                for (const key of deltaKeys) {
+                    if (key in studentData) {
+                        updateData[key] = studentData[key];
                     }
-                });
+                }
             } else {
-                Object.assign(filteredUpdate, studentData);
+                // Legacy fallback: send full student object
+                updateData = studentData;
             }
 
             const response = await fetch(this.getApiUrl('update_student'), {
@@ -133,38 +130,48 @@ class StationDataBus {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     referenceNumber: refNo,
-                    updateData: filteredUpdate
+                    updateData: updateData
                 })
             });
-            if (!response.ok) {
-                console.error('[DataBus] PHP backend rejected update for student:', refNo);
+            if (response.ok) {
+                // Immediately refresh database queue after write
+                this.syncWithBackend();
+            } else {
+                console.error('[DataBus] REST API rejected update for student:', refNo);
             }
         } catch (err) {
-            console.error('[DataBus] Failed to sync updates to backend server:', err);
+            console.error('[DataBus] Failed to send REST API update:', err);
         }
     }
 
-    /** Wipe local cache and trigger refresh from database */
     static resetQueue() {
         localStorage.removeItem(STORAGE_KEY);
         this.syncWithBackend();
         return [];
     }
-
-    /** Remove the stored queue cache */
-    static clearSeed() {
-        localStorage.removeItem(STORAGE_KEY);
-    }
 }
 
-// Expose globally for CDN Vue usage (no bundler)
 window.StationDataBus = StationDataBus;
 
-// Trigger immediate sync on load and poll every 4 seconds in the background
-if (typeof window !== 'undefined') {
-    setTimeout(() => StationDataBus.syncWithBackend(), 50);
-    setInterval(() => StationDataBus.syncWithBackend(), 4000);
-}
+/**
+ * Adaptive polling engine with exponential backoff.
+ * On consecutive failures: 3s → 3s → 10s → 30s → 60s, then holds.
+ * Resets to 3s immediately on first success.
+ */
+(function schedulePoll() {
+    if (typeof window === 'undefined') return;
 
-// Initial cache setup
-StationDataBus.getQueue();
+    const delays = [3000, 3000, 10000, 30000, 60000];
+
+    async function poll() {
+        await StationDataBus.syncWithBackend();
+        const nextDelay = delays[Math.min(StationDataBus._consecutiveFailures, delays.length - 1)];
+        StationDataBus._pollTimer = setTimeout(poll, nextDelay);
+    }
+
+    // Initial sync after 50ms, then begin adaptive polling
+    setTimeout(() => {
+        StationDataBus.syncWithBackend();
+        StationDataBus._pollTimer = setTimeout(poll, 3000);
+    }, 50);
+})();

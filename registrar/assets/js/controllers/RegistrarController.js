@@ -9,6 +9,7 @@
     const reactive = Vue.reactive;
     const computed = Vue.computed;
     const onMounted = Vue.onMounted;
+    const onUnmounted = Vue.onUnmounted;
     const watch = Vue.watch;
 
     const Model = global.RegistrarModel;
@@ -22,6 +23,31 @@
             const loginError = ref('');
             const loginForm = reactive({ username: '', password: '' });
 
+            const timeGreeting = computed(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Great Morning';
+                if (hour < 18) return 'Great Afternoon';
+                return 'Great Evening';
+            });
+
+            let pollTimer = null;
+
+            const startLiveSync = () => {
+                if (pollTimer) clearInterval(pollTimer);
+                pollTimer = setInterval(() => {
+                    if (currentUser.value) {
+                        loadData();
+                    }
+                }, 4000);
+            };
+
+            const stopLiveSync = () => {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+            };
+
             // ── View State ────────────────────────────────────────────────
             const currentView = ref('pending-applications'); // Registrar: application review only
             const searchText = ref('');
@@ -34,7 +60,7 @@
             const requirementsError = ref('');
             const showRequirementsValidation = ref(false);
             const selectedStudent = ref(null);
-            
+
             // ── Academic Catalog States ───────────────────────────────────
             const selectedProgram = ref(null);
             const programModalMode = ref('add');
@@ -102,20 +128,65 @@
                     });
             };
 
-            // ── Auth Handling ─────────────────────────────────────────────
-            const checkSession = () => {
-                const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
-                if (stored) {
-                    const user = JSON.parse(stored);
-                    if (user.role === 'REGISTRAR' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
-                        currentUser.value = user;
-                        loadData();
-                        return;
-                    }
+            // ── Auth & Live Profile Handling ─────────────────────────────
+            const checkSession = async () => {
+                const stored = sessionStorage.getItem('gncp_station_user') 
+                            || sessionStorage.getItem('gncp_admin_user')
+                            || localStorage.getItem('gncp_station_user')
+                            || localStorage.getItem('gncp_admin_user');
+                if (!stored) {
+                    currentUser.value = null;
+                    return;
                 }
-                sessionStorage.removeItem('gncp_station_user');
-                sessionStorage.removeItem('gncp_admin_user');
-                window.location.href = '../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+
+                let user = null;
+                try {
+                    user = JSON.parse(stored);
+                } catch (e) {
+                    currentUser.value = null;
+                    return;
+                }
+
+                const allowedRoles = ['REGISTRAR', 'SUPER_ADMIN', 'ADMIN'];
+                if (!user || !user.role || !allowedRoles.includes(user.role)) {
+                    currentUser.value = null;
+                    return;
+                }
+
+                currentUser.value = user;
+
+                // Sync live user profile from backend (Avatar, Name, Email)
+                try {
+                    const profRes = await RegistrarApiService.fetchUserProfile(user.username);
+                    if (profRes && profRes.success && profRes.data) {
+                        const updatedUser = {
+                            ...user,
+                            name: profRes.data.name || user.name,
+                            email: profRes.data.email || user.email,
+                            avatar: profRes.data.avatar || user.avatar
+                        };
+                        currentUser.value = updatedUser;
+                        const sessionKey = (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                        sessionStorage.setItem(sessionKey, JSON.stringify(updatedUser));
+                    }
+                } catch (err) {
+                    console.warn('Profile sync warning:', err);
+                }
+
+                // Password change guard check
+                if (user.must_change_password && typeof global.PasswordChangeGuard !== 'undefined') {
+                    global.PasswordChangeGuard.checkAndPrompt(user, function () {
+                        const updatedUser = { ...currentUser.value, must_change_password: false };
+                        currentUser.value = updatedUser;
+                        const sessionKey = (updatedUser.role === 'SUPER_ADMIN' || updatedUser.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                        sessionStorage.setItem(sessionKey, JSON.stringify(updatedUser));
+                        loadData();
+                        startLiveSync();
+                    });
+                } else {
+                    loadData();
+                    startLiveSync();
+                }
             };
 
 
@@ -125,15 +196,26 @@
 
             const confirmLogout = () => {
                 showLogoutConfirm.value = false;
+                stopLiveSync();
+                currentUser.value = null;
                 sessionStorage.removeItem('gncp_station_user');
                 sessionStorage.removeItem('gncp_admin_user');
                 localStorage.removeItem('gncp_station_user');
                 localStorage.removeItem('gncp_admin_user');
-                window.location.href = '../index.html';
+
+                fetch('../api/index.php?action=auth/logout', { method: 'POST' })
+                    .catch(() => {})
+                    .finally(() => {
+                        window.location.href = '../index.html?clear=true';
+                    });
             };
 
             onMounted(() => {
                 checkSession();
+            });
+
+            onUnmounted(() => {
+                stopLiveSync();
             });
 
             // ── Computed Properties ───────────────────────────────────────
@@ -151,15 +233,15 @@
             const topBarTitle = computed(() => {
                 const view = currentView.value;
                 if (view === 'pending-applications') return 'Pending Applications';
-                if (view === 'students')             return 'Students';
-                if (view === 'enrollment-overview')  return 'Enrollment Overview';
-                if (view === 'reports')              return 'Reports';
-                if (view === 'programs')             return 'Programs Catalog';
-                if (view === 'subjects')             return 'Subjects Catalog';
-                if (view === 'curriculum')           return 'Curriculum Mapping';
-                if (view === 'academic-periods')     return 'Academic Periods';
-                if (view === 'subject-sections')     return 'Subject Sections';
-                if (view === 'fee-schedule')         return 'Fee Schedule';
+                if (view === 'students') return 'Students';
+                if (view === 'enrollment-overview') return 'Enrollment Overview';
+                if (view === 'reports') return 'Reports';
+                if (view === 'programs') return 'Programs Catalog';
+                if (view === 'subjects') return 'Subjects Catalog';
+                if (view === 'curriculum') return 'Curriculum Mapping';
+                if (view === 'academic-periods') return 'Academic Periods';
+                if (view === 'subject-sections') return 'Subject Sections';
+                if (view === 'fee-schedule') return 'Fee Schedule';
                 return 'Dashboard';
             });
 
@@ -212,21 +294,34 @@
 
             const availableSectionsForApplication = ref([]);
 
+            const ensureRoadmapNormalized = (roadmap, status) => {
+                if (!roadmap || !Array.isArray(roadmap) || roadmap.length === 0) {
+                    return [
+                        { stepId: 'online_registration', title: 'Online Pre-Enrollment Submission', station: 'Online Portal', location: 'Remote / Web', status: 'COMPLETED' },
+                        { stepId: 'registrar_verification', title: 'Registrar Application Review', station: 'Station 1: Registrar', location: 'Admin Building G/F', status: ['APPROVED', 'Approved', 'REGISTRAR_APPROVED', 'VERIFIED'].includes(status) ? 'COMPLETED' : 'IN_PROGRESS' },
+                        { stepId: 'advising_assessment', title: 'Academic Advising & Block Sectioning', station: 'Station 2: Academic Advising', location: 'College Department Hall', status: 'PENDING' },
+                        { stepId: 'clinic_checkup', title: 'Medical Pre-Screening & Physical Exam', station: 'Station 3: School Clinic', location: 'Health Services Building', status: 'PENDING' },
+                        { stepId: 'cashier_payment', title: 'Tuition Assessment & Cashier Payment', station: 'Station 4: Cashier', location: 'Finance Building 1st Flr', status: 'PENDING' },
+                        { stepId: 'id_email_final', title: 'Student ID & Institutional Email Issuance', station: 'Station 5: IT Center', location: 'Computer Lab 2', status: 'PENDING' }
+                    ];
+                }
+                return roadmap.map((item, idx) => ({
+                    stepId: item.stepId || item.id || ('step_' + idx),
+                    title: item.title || item.name || ('Step ' + (idx + 1)),
+                    station: item.station || item.location || ('Station ' + (idx + 1)),
+                    location: item.location || 'GNCP Campus',
+                    status: item.status || 'PENDING'
+                }));
+            };
+
             const openApplicationModal = (application, mode = 'review') => {
                 applicationModalMode.value = mode;
                 selectedApplication.value = JSON.parse(JSON.stringify(application));
                 if (selectedApplication.value && !selectedApplication.value.hasOwnProperty('sectionCode')) {
                     selectedApplication.value.sectionCode = null;
                 }
-                if (selectedApplication.value && (!selectedApplication.value.roadmap || !Array.isArray(selectedApplication.value.roadmap) || selectedApplication.value.roadmap.length === 0)) {
-                    selectedApplication.value.roadmap = [
-                        { stepId: 'online_registration', title: 'Online Pre-Enrollment Submission', station: 'Online Portal', location: 'Remote / Web', status: 'COMPLETED' },
-                        { stepId: 'registrar_verification', title: 'Registrar Application Review', station: 'Station 1: Registrar', location: 'Admin Building G/F', status: ['APPROVED', 'Approved', 'REGISTRAR_APPROVED'].includes(selectedApplication.value.status) ? 'COMPLETED' : 'IN_PROGRESS' },
-                        { stepId: 'advising_assessment', title: 'Academic Advising & Block Sectioning', station: 'Station 2: Academic Advising', location: 'College Department Hall', status: 'PENDING' },
-                        { stepId: 'clinic_checkup', title: 'Medical Pre-Screening & Physical Exam', station: 'Station 3: School Clinic', location: 'Health Services Building', status: 'PENDING' },
-                        { stepId: 'cashier_payment', title: 'Tuition Assessment & Cashier Payment', station: 'Station 4: Cashier', location: 'Finance Building 1st Flr', status: 'PENDING' },
-                        { stepId: 'id_email_final', title: 'Student ID & Institutional Email Issuance', station: 'Station 5: IT Center', location: 'Computer Lab 2', status: 'PENDING' }
-                    ];
+                if (selectedApplication.value) {
+                    selectedApplication.value.roadmap = ensureRoadmapNormalized(selectedApplication.value.roadmap, selectedApplication.value.status);
                 }
                 requirementsError.value = '';
                 showRequirementsValidation.value = false;
@@ -259,19 +354,19 @@
                 const getSectionsFromLoaded = (progCode, targetYearLevel) => {
                     if (!sections.value || !progCode) return [];
                     const search = progCode.trim().toLowerCase();
-                    
+
                     const progObj = programs.value ? programs.value.find(p => p.code.trim().toLowerCase() === search || p.name.trim().toLowerCase() === search) : null;
                     const searchName = progObj ? progObj.name.trim().toLowerCase() : search;
                     const searchCode = progObj ? progObj.code.trim().toLowerCase() : search;
-                    
+
                     const targetYear = (targetYearLevel || '1st Year').trim().toLowerCase();
                     return sections.value.filter(s => {
                         const progName = (s.program || '').trim().toLowerCase();
-                        const isProgMatch = (progName === searchName || 
-                                             progName === searchCode ||
-                                             progName.includes(search) || 
-                                             search.includes(progName));
-                        
+                        const isProgMatch = (progName === searchName ||
+                            progName === searchCode ||
+                            progName.includes(search) ||
+                            search.includes(progName));
+
                         const sectionYear = (s.yearLevel || '1st Year').trim().toLowerCase();
                         const isYearMatch = !targetYear || sectionYear === targetYear || sectionYear.includes(targetYear) || targetYear.includes(sectionYear);
                         return isProgMatch && isYearMatch;
@@ -325,6 +420,9 @@
 
             const openStudentModal = (student) => {
                 selectedStudent.value = JSON.parse(JSON.stringify(student));
+                if (selectedStudent.value) {
+                    selectedStudent.value.roadmap = ensureRoadmapNormalized(selectedStudent.value.roadmap, selectedStudent.value.status);
+                }
                 getModalInstance('studentProfileModal')?.show();
             };
 
@@ -349,14 +447,14 @@
 
             const toggleDocStatus = (item, checked) => {
                 if (!selectedApplication.value) return;
-                
+
                 const currentStatus = selectedApplication.value.status;
                 const isApproved = ['Approved', 'APPROVED', 'REGISTRAR_APPROVED'].includes(currentStatus);
-                
+
                 if (['ENROLLED', 'Rejected', 'REJECTED'].includes(currentStatus)) {
                     return;
                 }
-                
+
                 if (!selectedApplication.value.requirementsData) {
                     selectedApplication.value.requirementsData = {
                         status: 'PENDING',
@@ -366,9 +464,9 @@
                 if (!selectedApplication.value.requirementsData.docs) {
                     selectedApplication.value.requirementsData.docs = {};
                 }
-                
+
                 const key = getDocKey(item);
-                
+
                 if (isApproved && !checked) {
                     Swal.fire({
                         title: 'Action Blocked',
@@ -384,7 +482,7 @@
                 }
 
                 selectedApplication.value.requirementsData.docs[key] = checked ? 'verified' : 'not-submitted';
-                
+
                 if (isApproved) {
                     // Immediately save the requirements change
                     const refNum = selectedApplication.value.referenceNumber;
@@ -415,7 +513,7 @@
 
             const updateApplicationStatus = async (status) => {
                 if (!selectedApplication.value) return;
-                
+
                 const currentStatus = selectedApplication.value.status;
                 if (['APPROVED', 'Approved', 'REGISTRAR_APPROVED'].includes(currentStatus)) {
                     await Swal.fire({
@@ -436,7 +534,7 @@
                     });
                     return;
                 }
-                
+
                 if (status === 'Approved' && !selectedApplication.value.sectionCode) {
                     await Swal.fire({
                         title: 'Section Required',
@@ -472,10 +570,10 @@
                 const labels = {
                     'Approved': `Approve application ${refNum}? This will mark the applicant as approved and advance their enrollment roadmap.`,
                     'Rejected': `Reject application ${refNum}? This action is permanent and cannot be undone. The applicant must submit a completely new pre-registration application if they wish to apply again.`,
-                    'Pending':  `Send application ${refNum} back for correction? The student will be asked to resubmit or update information.`
+                    'Pending': `Send application ${refNum} back for correction? The student will be asked to resubmit or update information.`
                 };
                 const msg = labels[status] || 'Are you sure?';
-                
+
                 const confirmRes = await Swal.fire({
                     title: 'Confirm Action',
                     html: msg.replace(/\n/g, '<br>'),
@@ -807,7 +905,8 @@
                 deleteSubjectSection,
                 openFeeModal,
                 saveFee,
-                deleteFee
+                deleteFee,
+                timeGreeting
             };
         }
     };
@@ -815,18 +914,20 @@
     const app = createApp(App);
 
     // Component registration mapped to views
-    app.component('sidebar-nav',             View.SidebarNav);
-    app.component('top-bar',                 View.TopBar);
-    app.component('students-view',           View.StudentsView);
-    app.component('pending-applications-view',View.PendingApplicationsView);
-    app.component('enrollment-overview-view',View.EnrollmentOverviewView);
-    app.component('reports-view',            View.ReportsView);
-    app.component('programs-view',           View.ProgramsView);
-    app.component('subjects-view',           View.SubjectsView);
-    app.component('curriculum-view',         View.CurriculumView);
-    app.component('academic-periods-view',   View.AcademicPeriodsView);
-    app.component('subject-sections-view',   View.SubjectSectionsView);
-    app.component('fee-schedule-view',       View.FeeScheduleView);
+    if (typeof View !== 'undefined' && View) {
+        if (View.SidebarNav) app.component('sidebar-nav', View.SidebarNav);
+        if (View.TopBar) app.component('top-bar', View.TopBar);
+        if (View.StudentsView) app.component('students-view', View.StudentsView);
+        if (View.PendingApplicationsView) app.component('pending-applications-view', View.PendingApplicationsView);
+        if (View.EnrollmentOverviewView) app.component('enrollment-overview-view', View.EnrollmentOverviewView);
+        if (View.ReportsView) app.component('reports-view', View.ReportsView);
+        if (View.ProgramsView) app.component('programs-view', View.ProgramsView);
+        if (View.SubjectsView) app.component('subjects-view', View.SubjectsView);
+        if (View.CurriculumView) app.component('curriculum-view', View.CurriculumView);
+        if (View.AcademicPeriodsView) app.component('academic-periods-view', View.AcademicPeriodsView);
+        if (View.SubjectSectionsView) app.component('subject-sections-view', View.SubjectSectionsView);
+        if (View.FeeScheduleView) app.component('fee-schedule-view', View.FeeScheduleView);
+    }
 
     app.mount('#app');
 })(typeof window !== 'undefined' ? window : this);

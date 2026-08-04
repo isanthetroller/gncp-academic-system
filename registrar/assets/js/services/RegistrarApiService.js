@@ -230,6 +230,26 @@
                 console.error('Failed to update roadmap step:', err);
                 return createResponse(false, null, 'Failed to update roadmap step.');
             }
+        },
+
+        async checkSession() {
+            try {
+                const response = await fetch('../api/index.php?action=auth/check');
+                return await response.json();
+            } catch (err) {
+                console.error('Failed to verify backend session:', err);
+                return createResponse(false, null, 'Failed to verify backend session.');
+            }
+        },
+
+        async fetchUserProfile(username) {
+            try {
+                const response = await fetch(`../api/index.php?action=auth/profile&username=${encodeURIComponent(username || '')}`);
+                return await response.json();
+            } catch (err) {
+                console.error('Failed to fetch user profile:', err);
+                return createResponse(false, null, 'Failed to fetch user profile.');
+            }
         }
     };
 

@@ -187,20 +187,24 @@ const App = {
 const app = Vue.createApp(App);
 
 // Register Components
-app.component('top-bar', MainView.TopBar);
-app.component('nav-bar', MainView.NavBar);
-app.component('hero-slider', MainView.HeroSlider);
-app.component('feature-grid', MainView.FeatureGrid);
-app.component('about-section', MainView.AboutSection);
-app.component('campus-feed', MainView.CampusFeed);
-app.component('countdown-timer', MainView.CountdownTimer);
-app.component('main-footer', MainView.MainFooter);
+if (typeof MainView !== 'undefined' && MainView) {
+    if (MainView.TopBar) app.component('top-bar', MainView.TopBar);
+    if (MainView.NavBar) app.component('nav-bar', MainView.NavBar);
+    if (MainView.HeroSlider) app.component('hero-slider', MainView.HeroSlider);
+    if (MainView.FeatureGrid) app.component('feature-grid', MainView.FeatureGrid);
+    if (MainView.AboutSection) app.component('about-section', MainView.AboutSection);
+    if (MainView.CampusFeed) app.component('campus-feed', MainView.CampusFeed);
+    if (MainView.CountdownTimer) app.component('countdown-timer', MainView.CountdownTimer);
+    if (MainView.MainFooter) app.component('main-footer', MainView.MainFooter);
+}
 
 // Register Sub-page Components
-app.component('about-page', PagesView.AboutPage);
-app.component('academics-page', PagesView.AcademicsPage);
-app.component('admissions-page', PagesView.AdmissionsPage);
-app.component('campus-life-page', PagesView.CampusLifePage);
-app.component('payments-page', PagesView.PaymentsPage);
+if (typeof PagesView !== 'undefined' && PagesView) {
+    if (PagesView.AboutPage) app.component('about-page', PagesView.AboutPage);
+    if (PagesView.AcademicsPage) app.component('academics-page', PagesView.AcademicsPage);
+    if (PagesView.AdmissionsPage) app.component('admissions-page', PagesView.AdmissionsPage);
+    if (PagesView.CampusLifePage) app.component('campus-life-page', PagesView.CampusLifePage);
+    if (PagesView.PaymentsPage) app.component('payments-page', PagesView.PaymentsPage);
+}
 
 app.mount('#app');
