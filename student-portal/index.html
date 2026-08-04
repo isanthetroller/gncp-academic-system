@@ -19,7 +19,322 @@
     <style>
         [v-cloak] { display: none !important; }
         
-        /* ── Student Portal Custom Overrides ── */
+        :root {
+            --primary-green: #006A4E;
+            --dark-green: #003D2B;
+            --accent-green: #3E9B6C;
+            --light-accent-green: #e6f4ed;
+            --gold: #D4AF37;
+            --gold-light: #FCD34D;
+            --light-bg: #F8FAFC;
+            --white: #FFFFFF;
+            
+            --charcoal: #1F2937;
+            --muted-grey: #4B5563;
+            --zinc-200: #E4E4E7;
+            --zinc-300: #D4D4D8;
+            --zinc-400: #A1A1AA;
+            
+            --radius-lg: 16px;
+            --radius-md: 8px;
+            --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 106, 78, 0.04), 0 8px 10px -6px rgba(0, 106, 78, 0.02);
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, rgba(0, 61, 43, 0.82) 0%, rgba(0, 34, 23, 0.88) 100%),
+                        url('../school-website/assets/images/hero1.webp') center/cover no-repeat fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 32px 24px;
+            color: var(--charcoal);
+            box-sizing: border-box;
+        }
+
+        .portal-container {
+            width: 100%;
+            max-width: 1080px;
+            background: var(--white);
+            border: 1px solid var(--zinc-200);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            min-height: 640px;
+            transition: var(--transition-smooth);
+            margin: auto;
+        }
+
+        @media (max-width: 992px) {
+            .portal-container {
+                grid-template-columns: 1fr;
+                max-width: 520px;
+                min-height: auto;
+            }
+            .info-pane { display: none; }
+        }
+
+        .info-pane {
+            background: linear-gradient(135deg, rgba(0, 61, 43, 0.92) 0%, rgba(0, 106, 78, 0.95) 100%),
+                        url('../school-website/assets/images/hero1.webp') center/cover no-repeat;
+            background-blend-mode: overlay;
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            color: var(--white);
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .school-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background-color: var(--white);
+            padding: 2px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .school-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            line-height: 1.2;
+            color: var(--white);
+            margin: 0;
+        }
+
+        .school-sub {
+            color: var(--gold-light);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .info-body {
+            margin: 48px 0;
+        }
+
+        .welcome-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1.25;
+            margin-bottom: 16px;
+        }
+
+        .welcome-title span {
+            color: var(--gold-light);
+        }
+
+        .welcome-text {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .info-footer {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 24px;
+        }
+
+        .right-pane {
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--white);
+        }
+
+        .login-header {
+            margin-bottom: 32px;
+        }
+
+        .login-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            margin: 0 0 8px 0;
+        }
+
+        .login-subtitle {
+            color: var(--muted-grey);
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--charcoal);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted-grey);
+            font-size: 0.95rem;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .form-input {
+            width: 100%;
+            background: #F9FAFB;
+            border: 1px solid var(--zinc-300);
+            border-radius: var(--radius-md);
+            color: var(--charcoal);
+            padding: 14px 16px 14px 44px;
+            font-size: 0.875rem;
+            outline: none;
+            transition: var(--transition-smooth);
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.12);
+            background: var(--white);
+        }
+
+        .form-input:focus + .input-icon {
+            color: var(--primary-green);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: var(--primary-green);
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--white);
+            font-weight: 700;
+            padding: 14px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .login-btn:hover {
+            background: var(--dark-green);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-1px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-banner {
+            background: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            color: #B91C1C;
+            font-size: 0.8125rem;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: shake 0.4s ease;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #64748B;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease;
+            z-index: 5;
+        }
+        .password-toggle-btn:hover {
+            color: var(--primary-green);
+        }
+
+        .student-escape-hatch {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--zinc-200);
+        }
+
+        .student-escape-hatch p {
+            font-size: 0.8125rem;
+            color: var(--muted-grey);
+            margin: 0;
+        }
+
+        .student-escape-hatch a {
+            color: var(--primary-green);
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 4px;
+            transition: var(--transition-smooth);
+        }
+
+        .student-escape-hatch a:hover {
+            color: var(--dark-green);
+            text-decoration: underline;
+        }
+
         .student-hero-card {
             background: linear-gradient(135deg, #003D2B 0%, #002217 100%);
             border: 1px solid rgba(212,175,55,0.3);
@@ -181,130 +496,113 @@
 <body>
     <div id="app" v-cloak>
 
-        <!-- ── 1. UNAUTHENTICATED STUDENT LOGIN VIEW (CUSTOM SPLIT-PANE DESIGN) ── -->
-        <div v-if="!currentStudent" class="student-login-viewport">
-            <div class="student-login-wrapper">
-                
-                <!-- Left Hero Showcase Pane -->
-                <div class="student-hero-pane">
-                    <div class="student-brand-header">
-                        <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="student-brand-logo">
-                        <div class="student-brand-text">
-                            <h2>Go-on National College</h2>
-                            <p>Student Portal System</p>
-                        </div>
-                    </div>
-
-                    <div class="student-hero-content">
-                        <div class="student-hero-tag">
-                            <i class="fas fa-graduation-cap"></i> Official Academic Station
-                        </div>
-                        <h1 class="student-hero-title">
-                            Empowering <span>Next-Gen</span> Scholars
-                        </h1>
-                        <p class="student-hero-desc">
-                            Access your real-time clearance roadmap, enrolled class schedules, financial ledger, and digital credentials in one seamless portal.
-                        </p>
-
-                        <div class="student-feature-list">
-                            <div class="student-feature-item">
-                                <div class="student-feature-icon">
-                                    <i class="fas fa-route"></i>
-                                </div>
-                                <div class="student-feature-text">
-                                    <h4>Station Clearance Roadmap</h4>
-                                    <p>Live progress tracking across Registrar, Clinic, Cashier, &amp; IT Center</p>
-                                </div>
-                            </div>
-
-                            <div class="student-feature-item">
-                                <div class="student-feature-icon">
-                                    <i class="fas fa-file-invoice"></i>
-                                </div>
-                                <div class="student-feature-text">
-                                    <h4>Digital COR &amp; Enrolled Classes</h4>
-                                    <p>View official section assignments, units, and subject schedules</p>
-                                </div>
-                            </div>
-
-                            <div class="student-feature-item">
-                                <div class="student-feature-icon">
-                                    <i class="fas fa-receipt"></i>
-                                </div>
-                                <div class="student-feature-text">
-                                    <h4>Financial Ledger &amp; Receipts</h4>
-                                    <p>Verify downpayments, tuition balances, and Official Receipts</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="student-hero-footer">
-                        <span><i class="fas fa-shield-halved me-1"></i> Encrypted Institutional Gateway</span>
-                        <span>v2.4 Production</span>
+        <!-- ── 1. UNAUTHENTICATED STUDENT LOGIN VIEW (LITERAL EMPLOYEE LOGIN LAYOUT MATCH) ── -->
+        <div v-if="!currentStudent" class="portal-container">
+            
+            <!-- Left Banner Pane -->
+            <div class="info-pane">
+                <div class="info-header">
+                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="school-logo">
+                    <div>
+                        <h1 class="school-title">Go-on National College</h1>
+                        <div class="school-sub">of the Philippines</div>
                     </div>
                 </div>
 
-                <!-- Right Form Login Pane -->
-                <div class="student-form-pane">
-                    <div class="student-form-header">
-                        <span class="student-form-badge">
-                            <i class="fas fa-user-lock me-1"></i> Student Authentication
+                <div class="info-body">
+                    <h2 class="welcome-title">Student Portal<br><span>Gateway</span></h2>
+                    <p class="welcome-text">
+                        Sign in to access your digital Certificate of Registration (COR), section schedules, clearance roadmap, and official receipts.
+                    </p>
+                </div>
+
+                <div class="info-footer">
+                    <span>GNCP Student &amp; Applicant Portal</span>
+                    <span>Institutional Access</span>
+                </div>
+            </div>
+
+            <!-- Right Content Pane -->
+            <div class="right-pane">
+                <div class="login-header">
+                    <h2 class="login-title">Student Sign In</h2>
+                    <p class="login-subtitle">Please enter your Student ID or Reference Code</p>
+                </div>
+
+                <!-- Error Banner -->
+                <div v-if="loginError" class="error-banner">
+                    <i class="fas fa-triangle-exclamation mt-0.5"></i>
+                    <div>{{ loginError }}</div>
+                </div>
+
+                <form @submit.prevent="handleLogin">
+                    <div class="form-group">
+                        <label class="form-label" for="studentIdInput">Student ID / Reference</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="studentIdInput" 
+                                class="form-input" 
+                                v-model="loginForm.studentId" 
+                                required 
+                                placeholder="e.g. GNCP-2026-XXXX"
+                                :disabled="isLoggingIn"
+                            >
+                            <i class="fas fa-user-graduate input-icon"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="studentPasswordInput">Account Password</label>
+                        <div class="input-wrapper">
+                            <input 
+                                :type="showPassword ? 'text' : 'password'" 
+                                id="studentPasswordInput" 
+                                class="form-input" 
+                                v-model="loginForm.password" 
+                                required 
+                                placeholder="••••••••"
+                                :disabled="isLoggingIn"
+                                style="padding-right: 44px;"
+                            >
+                            <i class="fas fa-lock input-icon"></i>
+                            <button 
+                                type="button" 
+                                class="password-toggle-btn" 
+                                @click="showPassword = !showPassword" 
+                                tabindex="-1"
+                                :title="showPassword ? 'Hide password' : 'Show password'"
+                            >
+                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between mb-4 fs-7 text-muted">
+                        <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                            <input type="checkbox" v-model="rememberMe" class="form-check-input mt-0">
+                            <span style="font-size:0.83rem; font-weight:600; color:var(--charcoal);">Remember login</span>
+                        </label>
+                        <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-danger cursor-pointer fw-semibold" style="font-size:0.83rem;"><i class="fas fa-trash-can me-1"></i>Clear</span>
+                    </div>
+
+                    <button type="submit" class="login-btn" :disabled="isLoggingIn">
+                        <span v-if="isLoggingIn">
+                            <i class="fas fa-spinner fa-spin me-2"></i> Authenticating...
                         </span>
-                        <h3 class="student-form-title">Welcome Back, Scholar!</h3>
-                        <p class="student-form-sub">Sign in with your permanent Student ID or application reference code.</p>
-                    </div>
+                        <span v-else>
+                            <i class="fas fa-right-to-bracket me-2"></i> Sign In to Student Portal
+                        </span>
+                    </button>
+                </form>
 
-                    <div v-if="loginError" class="unified-login-err mb-4">
-                        <i class="fas fa-triangle-exclamation me-2"></i>{{ loginError }}
-                    </div>
-
-                    <form @submit.prevent="handleLogin">
-                        <div class="student-input-group">
-                            <label class="student-input-label" for="studentIdInput">
-                                Student ID / Reference
-                                <span class="text-muted text-lowercase font-monospace fw-normal" style="font-size:0.7rem;">e.g. GNCP-2026-XXXX</span>
-                            </label>
-                            <div class="student-field-wrapper">
-                                <input type="text" id="studentIdInput" class="student-input-field" v-model="loginForm.studentId" required placeholder="Enter Permanent ID or Reference">
-                                <i class="fas fa-user-graduate student-field-icon"></i>
-                            </div>
-                        </div>
-
-                        <div class="student-input-group">
-                            <label class="student-input-label" for="studentPasswordInput">Account Password</label>
-                            <div class="student-field-wrapper">
-                                <input :type="showPassword ? 'text' : 'password'" id="studentPasswordInput" class="student-input-field" v-model="loginForm.password" required placeholder="••••••••" style="padding-right: 44px;">
-                                <i class="fas fa-key student-field-icon"></i>
-                                <button type="button" class="student-toggle-eye" @click="showPassword = !showPassword" tabindex="-1">
-                                    <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-between mb-4 fs-7 text-muted">
-                            <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
-                                <input type="checkbox" v-model="rememberMe" class="form-check-input mt-0">
-                                <span style="font-size:0.83rem; font-weight:600; color:var(--student-text-main);">Remember my login</span>
-                            </label>
-                            <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-danger cursor-pointer fw-semibold" style="font-size:0.83rem;"><i class="fas fa-trash-can me-1"></i>Clear</span>
-                        </div>
-
-                        <button type="submit" class="student-submit-btn" :disabled="isLoggingIn">
-                            <span v-if="isLoggingIn"><i class="fas fa-spinner fa-spin me-2"></i> Authenticating...</span>
-                            <span v-else>Sign In to Student Portal <i class="fas fa-arrow-right ms-2"></i></span>
-                        </button>
-                    </form>
-
-                    <div class="student-form-footer">
-                        <p class="small text-muted mb-0">
-                            Staff or Administrative Access? <a href="../index.html" class="fw-bold text-success text-decoration-none">Access Staff Gateway →</a>
-                        </p>
-                    </div>
+                <!-- Employee Escape Hatch -->
+                <div class="student-escape-hatch">
+                    <p>Are you a staff or faculty employee? <a href="../index.html">Access Staff Gateway →</a></p>
                 </div>
-
             </div>
         </div>
+
 
 
 
