@@ -130,7 +130,7 @@
         }
 
         .info-body {
-            margin: 48px 0;
+            margin: 40px 0 24px 0;
         }
 
         .welcome-title {
@@ -139,7 +139,7 @@
             font-weight: 700;
             color: var(--white);
             line-height: 1.25;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .welcome-title span {
@@ -149,8 +149,32 @@
         .welcome-text {
             color: rgba(255, 255, 255, 0.85);
             font-size: 0.875rem;
-            line-height: 1.6;
-            margin-bottom: 32px;
+            line-height: 1.55;
+            margin-bottom: 24px;
+        }
+
+        .portal-features-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .portal-features-list li {
+            font-size: 0.8125rem;
+            color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .portal-features-list li i {
+            color: var(--gold-light);
+            font-size: 0.85rem;
+            flex-shrink: 0;
         }
 
         .info-footer {
@@ -162,6 +186,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             padding-top: 24px;
         }
+
 
         .right-pane {
             padding: 48px;
@@ -512,8 +537,14 @@
                 <div class="info-body">
                     <h2 class="welcome-title">Student Portal<br><span>Gateway</span></h2>
                     <p class="welcome-text">
-                        Sign in to access your digital Certificate of Registration (COR), section schedules, clearance roadmap, and official receipts.
+                        Sign in to access your digital Certificate of Registration (COR), clearance status, section schedules, and official receipts.
                     </p>
+                    <ul class="portal-features-list">
+                        <li><i class="fas fa-circle-check"></i> <span>Certificate of Registration (COR)</span></li>
+                        <li><i class="fas fa-circle-check"></i> <span>Station Clearance Roadmap</span></li>
+                        <li><i class="fas fa-circle-check"></i> <span>Class &amp; Section Schedules</span></li>
+                        <li><i class="fas fa-circle-check"></i> <span>Financial Ledger &amp; Receipts</span></li>
+                    </ul>
                 </div>
 
                 <div class="info-footer">
@@ -545,7 +576,7 @@
                                 class="form-input" 
                                 v-model="loginForm.studentId" 
                                 required 
-                                placeholder="e.g. GNCP-2026-XXXX"
+                                placeholder="e.g. GNCP-2026-1011 or REF-2026-XXXX"
                                 :disabled="isLoggingIn"
                             >
                             <i class="fas fa-user-graduate input-icon"></i>
@@ -583,8 +614,9 @@
                             <input type="checkbox" v-model="rememberMe" class="form-check-input mt-0">
                             <span style="font-size:0.83rem; font-weight:600; color:var(--charcoal);">Remember login</span>
                         </label>
-                        <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-danger cursor-pointer fw-semibold" style="font-size:0.83rem;"><i class="fas fa-trash-can me-1"></i>Clear</span>
+                        <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-secondary cursor-pointer fw-medium" style="font-size:0.81rem;"><i class="fas fa-eraser me-1"></i>Clear saved</span>
                     </div>
+
 
                     <button type="submit" class="login-btn" :disabled="isLoggingIn">
                         <span v-if="isLoggingIn">
