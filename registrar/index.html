@@ -350,18 +350,23 @@
                                     <ul class="list-unstyled mb-0">
                                         <li v-for="(item, idx) in selectedApplication.requirements" :key="idx"
                                             class="mb-2">
-                                            <div class="form-check d-flex align-items-start gap-2 mb-0">
-                                                <input class="form-check-input mt-1 cursor-pointer" type="checkbox"
-                                                    style="width: 1.15rem; height: 1.15rem; flex-shrink: 0;"
-                                                    :class="{'border-danger bg-danger bg-opacity-10': !isDocVerified(item) && showRequirementsValidation}"
-                                                    :id="'req-' + idx" :checked="isDocVerified(item)"
-                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status) || (['Approved', 'APPROVED'].includes(selectedApplication.status) && isDocVerified(item))"
-                                                    @change="toggleDocStatus(item, $event.target.checked)">
-                                                <label class="form-check-label small cursor-pointer select-none"
-                                                    :class="[isDocVerified(item) ? 'text-dark' : (showRequirementsValidation ? 'text-danger fw-bold' : 'text-dark')]"
-                                                    :for="'req-' + idx">
-                                                    {{ item }}
-                                                </label>
+                                            <div class="form-check d-flex align-items-center justify-content-between gap-2 mb-0">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <input class="form-check-input mt-1 cursor-pointer" type="checkbox"
+                                                        style="width: 1.15rem; height: 1.15rem; flex-shrink: 0;"
+                                                        :class="{'border-danger bg-danger bg-opacity-10': !isDocVerified(item) && showRequirementsValidation}"
+                                                        :id="'req-' + idx" :checked="isDocVerified(item)"
+                                                        :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status) || (['Approved', 'APPROVED'].includes(selectedApplication.status) && isDocVerified(item))"
+                                                        @change="toggleDocStatus(item, $event.target.checked)">
+                                                    <label class="form-check-label small cursor-pointer select-none mb-0"
+                                                        :class="[isDocVerified(item) ? 'text-dark' : (showRequirementsValidation ? 'text-danger fw-bold' : 'text-dark')]"
+                                                        :for="'req-' + idx">
+                                                        {{ item }}
+                                                    </label>
+                                                </div>
+                                                <button v-if="getDocFile(item)" type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill flex-shrink-0" @click.stop="openDocumentModal(getDocFile(item))" title="View uploaded soft copy">
+                                                    <i class="fas fa-eye me-1"></i>Soft Copy
+                                                </button>
                                             </div>
                                         </li>
                                     </ul>
@@ -711,10 +716,15 @@
                                 <div class="card p-3 border border-light-subtle rounded-3 bg-white shadow-sm"
                                     v-if="selectedStudent.requirementsData">
                                     <ul class="list-unstyled mb-0">
-                                        <li class="d-flex align-items-center mb-2"
+                                        <li class="d-flex align-items-center justify-content-between mb-2"
                                             v-for="doc in selectedStudent.requirementsData.requirements" :key="doc">
-                                            <i class="fa-solid fa-circle-check text-success me-2"></i>
-                                            <span class="small text-muted">{{ doc }}</span>
+                                            <div class="d-flex align-items-center me-2">
+                                                <i class="fa-solid fa-circle-check text-success me-2"></i>
+                                                <span class="small text-muted">{{ doc }}</span>
+                                            </div>
+                                            <button v-if="getDocFile(doc, selectedStudent)" type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill flex-shrink-0" @click="openDocumentModal(getDocFile(doc, selectedStudent))" title="View uploaded soft copy">
+                                                <i class="fas fa-eye me-1"></i>Soft Copy
+                                            </button>
                                         </li>
                                     </ul>
                                 </div>
@@ -724,6 +734,47 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn-pill btn-pill-ghost" data-bs-dismiss="modal">Close Profile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── DOCUMENT SOFT COPY PREVIEW MODAL ── -->
+        <div v-if="activePreviewDoc" class="modal fade show d-block" style="background: rgba(0,0,0,0.6); z-index: 2050;" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header bg-dark text-white rounded-top-4 py-2.5 px-4">
+                        <h6 class="modal-title d-flex align-items-center mb-0">
+                            <i class="fas fa-file-invoice text-success me-2 fs-5"></i>
+                            <span>Document Soft Copy — {{ activePreviewDoc.fileName }}</span>
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" @click="activePreviewDoc = null"></button>
+                    </div>
+                    <div class="modal-body p-3 text-center bg-light" style="min-height: 380px; max-height: 75vh; overflow-y: auto;">
+                        <template v-if="isImageFile(activePreviewDoc.filePath || activePreviewDoc.fileName)">
+                            <img :src="'../' + activePreviewDoc.filePath" class="img-fluid rounded border shadow-sm max-mw-100" style="max-height: 65vh; object-fit: contain;">
+                        </template>
+                        <template v-else-if="isPdfFile(activePreviewDoc.filePath || activePreviewDoc.fileName)">
+                            <iframe :src="'../' + activePreviewDoc.filePath" style="width: 100%; height: 60vh; border: none;" class="rounded border"></iframe>
+                        </template>
+                        <template v-else>
+                            <div class="py-5">
+                                <i class="fas fa-file-arrow-down fs-1 text-muted mb-3 d-block"></i>
+                                <p class="mb-3 text-dark fw-bold">File preview not directly embeddable.</p>
+                                <a :href="'../' + activePreviewDoc.filePath" target="_blank" download class="btn btn-primary btn-sm rounded-pill px-4">
+                                    <i class="fas fa-download me-1.5"></i>Download File ({{ activePreviewDoc.fileName }})
+                                </a>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="modal-footer bg-white py-2 px-4 d-flex justify-content-between align-items-center rounded-bottom-4">
+                        <span class="text-muted small">Uploaded: {{ activePreviewDoc.uploadedAt || 'N/A' }}</span>
+                        <div>
+                            <a :href="'../' + activePreviewDoc.filePath" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill me-2">
+                                <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+                            </a>
+                            <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" @click="activePreviewDoc = null">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>

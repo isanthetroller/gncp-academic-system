@@ -128,11 +128,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, null, 'Method not allowed. Use POST.', 405);
 }
 
-// Get raw input body and parse JSON
+// Get raw input body or form_data field if multipart/form-data
 $rawInput = file_get_contents('php://input');
 $formData = json_decode($rawInput, true);
 
-if ($rawInput && json_last_error() !== JSON_ERROR_NONE) {
+if (!empty($_POST['form_data'])) {
+    $formData = json_decode($_POST['form_data'], true);
+}
+
+if ($rawInput && !$formData && json_last_error() !== JSON_ERROR_NONE) {
     sendResponse(false, null, 'Invalid JSON payload received.', 400);
 }
 
@@ -333,16 +337,55 @@ try {
         ];
     }
 
+    // Process uploaded document soft copies if provided
+    $uploadedFilesMeta = [];
+    $uploadDir = __DIR__ . '/../../uploads/documents/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    if (!empty($_FILES)) {
+        foreach ($_FILES as $inputKey => $fileInfo) {
+            if (strpos($inputKey, 'doc_') === 0 && $fileInfo['error'] === UPLOAD_ERR_OK && $fileInfo['size'] > 0) {
+                $rawKey = substr($inputKey, 4);
+                $ext = strtolower(pathinfo($fileInfo['name'], PATHINFO_EXTENSION));
+                $allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
+                if (in_array($ext, $allowedExts)) {
+                    $sanitizedKey = preg_replace('/[^a-zA-Z0-9_]/', '', $rawKey);
+                    $newFileName = 'doc_' . $sanitizedKey . '_' . $tempStudentId . '_' . time() . '.' . $ext;
+                    $targetPath = $uploadDir . $newFileName;
+                    $moved = is_uploaded_file($fileInfo['tmp_name']) 
+                        ? move_uploaded_file($fileInfo['tmp_name'], $targetPath) 
+                        : copy($fileInfo['tmp_name'], $targetPath);
+                    if ($moved) {
+                        $uploadedFilesMeta[$sanitizedKey] = [
+                            'fileName'   => basename($fileInfo['name']),
+                            'filePath'   => 'uploads/documents/' . $newFileName,
+                            'fileType'   => $fileInfo['type'],
+                            'uploadedAt' => date('Y-m-d H:i:s')
+                        ];
+                    }
+                }
+            }
+        }
+    }
+
+    $requirementsDocs = [
+        'psa'        => isset($uploadedFilesMeta['psa']) ? 'submitted' : 'not-submitted',
+        'reportCard' => isset($uploadedFilesMeta['reportCard']) ? 'submitted' : 'not-submitted',
+        'goodMoral'  => isset($uploadedFilesMeta['goodMoral']) ? 'submitted' : 'not-submitted'
+    ];
+    foreach ($uploadedFilesMeta as $k => $v) {
+        $requirementsDocs[$k] = 'submitted';
+    }
+
     // Seed defaults matching Vue client models
     $requirementsData = [
         'status' => 'PENDING',
-        'docs' => [
-            'psa' => 'not-submitted',
-            'reportCard' => 'not-submitted',
-            'goodMoral' => 'not-submitted'
-        ],
-        'notes' => '',
-        'verifiedBy' => '',
+        'docs'   => $requirementsDocs,
+        'files'  => $uploadedFilesMeta,
+        'notes'  => '',
+        'verifiedBy'   => '',
         'dateVerified' => ''
     ];
 
@@ -386,7 +429,7 @@ try {
     ];
 
     // Convert arrays/objects to strings for database storage
-    $conditionsStr = is_array($formData['medicalConditions']) 
+    $conditionsStr = is_array($formData['medicalConditions'] ?? null) 
         ? implode(', ', $formData['medicalConditions']) 
         : (string)($formData['medicalConditions'] ?? '');
     

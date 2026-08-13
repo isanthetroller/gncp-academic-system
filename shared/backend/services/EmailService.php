@@ -24,17 +24,17 @@ class EmailService {
         if (file_exists($configFile)) {
             return require $configFile;
         }
-        return [
-            'driver' => 'smtp',
-            'host' => 'smtp.gmail.com',
-            'port' => 587,
-            'encryption' => 'tls',
-            'username' => 'goontech1@gmail.com',
-            'password' => 'eclwhoxqsjkscdmz',
-            'from_email' => 'goontech1@gmail.com',
-            'from_name' => 'GNCP Portal Administrator',
-            'debug_mode' => true,
-        ];
+        // SECURITY: Never fall back to hardcoded credentials.
+        // If mail.php is missing, fail loudly so the issue is caught immediately.
+        if (function_exists('logAppError')) {
+            logAppError('EmailService: mail.php config file is missing. Email dispatch aborted.', [
+                'expected_path' => $configFile
+            ]);
+        }
+        throw new \RuntimeException(
+            'GNCP Mail configuration file not found: ' . $configFile . '. ' .
+            'Create shared/backend/config/mail.php with your SMTP credentials.'
+        );
     }
 
     /**
@@ -180,6 +180,115 @@ class EmailService {
             'success' => false,
             'message' => 'SMTP Username or Password missing in shared/backend/config/mail.php.'
         ];
+    }
+
+    /**
+     * Sends a password reset email containing a 6-digit verification code.
+     */
+    public static function sendPasswordResetCode($recipientEmail, $recipientName, $resetCode) {
+        if (empty($recipientEmail)) {
+            return ['success' => false, 'message' => 'Recipient email address is empty.'];
+        }
+
+        $config = self::getConfig();
+        $subject = 'GNCP Student Portal — Password Reset Code';
+
+        $htmlBody = "
+        <!DOCTYPE html>
+        <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Password Reset Verification Code</title>
+        </head>
+        <body style='margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'>
+            <table role='presentation' width='100%' cellspacing='0' cellpadding='0' border='0' style='background-color: #f8fafc; padding: 30px 10px;'>
+                <tr>
+                    <td align='center'>
+                        <table role='presentation' width='100%' cellspacing='0' cellpadding='0' border='0' style='max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;'>
+                            
+                            <!-- Header Banner -->
+                            <tr>
+                                <td style='background: linear-gradient(135deg, #006A4E 0%, #003D2B 100%); padding: 32px 36px; text-align: left; border-bottom: 4px solid #D4AF37;'>
+                                    <div style='color: #FCD34D; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;'>
+                                        Go-on National College of the Philippines
+                                    </div>
+                                    <div style='color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;'>
+                                        Student Portal Password Reset
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Body Content -->
+                            <tr>
+                                <td style='padding: 36px;'>
+                                    <p style='margin: 0 0 16px 0; color: #1e293b; font-size: 16px; font-weight: 700;'>
+                                        Hello " . htmlspecialchars($recipientName) . ",
+                                    </p>
+                                    <p style='margin: 0 0 24px 0; color: #475569; font-size: 15px; line-height: 1.6;'>
+                                        We received a request to reset your GNCP Student Portal account password. Use the 6-digit verification code below to authorize your password change.
+                                    </p>
+
+                                    <!-- Reset Code Box -->
+                                    <div style='background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #006A4E; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;'>
+                                        <div style='color: #166534; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;'>
+                                            Your Verification Code
+                                        </div>
+                                        <div style='display: inline-block; background-color: #ffffff; border: 2px dashed #006A4E; border-radius: 10px; padding: 12px 28px;'>
+                                            <code style='color: #006A4E; font-family: \"Courier New\", Courier, monospace; font-size: 32px; font-weight: 800; letter-spacing: 6px;'>
+                                                " . htmlspecialchars($resetCode) . "
+                                            </code>
+                                        </div>
+                                        <div style='color: #64748b; font-size: 12px; margin-top: 12px; font-weight: 600;'>
+                                            This code will expire in 30 minutes.
+                                        </div>
+                                    </div>
+
+                                    <!-- Security Notice -->
+                                    <div style='background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px;'>
+                                        <p style='margin: 0; color: #991b1b; font-size: 13px; line-height: 1.5; font-weight: 600;'>
+                                            <strong>Security Notice:</strong> If you did not request a password reset, please ignore this message or report it to the GNCP IT Center immediately.
+                                        </p>
+                                    </div>
+
+                                    <p style='margin: 0; color: #64748b; font-size: 13px;'>
+                                        Regards,<br>
+                                        <strong>GNCP IT Center & Portal Administration</strong>
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style='background-color: #f8fafc; padding: 20px 36px; text-align: center; border-top: 1px solid #e2e8f0;'>
+                                    <p style='margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.5;'>
+                                        © " . date('Y') . " Go-on National College of the Philippines. All rights reserved.<br>
+                                        Automated notification — do not reply directly to this email.
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        ";
+
+        if (!empty($config['username']) && !empty($config['password'])) {
+            $smtpResult = self::sendViaSmtpSocket($config, $recipientEmail, $subject, $htmlBody);
+            if ($smtpResult['success']) return $smtpResult;
+
+            $altConfig = $config;
+            $altConfig['port'] = ($config['port'] == 587) ? 465 : 587;
+            $altResult = self::sendViaSmtpSocket($altConfig, $recipientEmail, $subject, $htmlBody);
+            if ($altResult['success']) return $altResult;
+
+            return ['success' => false, 'message' => 'Gmail SMTP dispatch failed: ' . ($altResult['message'] ?? $smtpResult['message'])];
+        }
+
+        return ['success' => false, 'message' => 'SMTP Username or Password missing in shared/backend/config/mail.php.'];
     }
 
     /**

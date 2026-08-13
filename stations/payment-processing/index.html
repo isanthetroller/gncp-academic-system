@@ -57,49 +57,23 @@
 <body>
     <div id="app" class="dashboard-shell" v-cloak>
         <template v-if="currentUser">
-            <aside class="sidebar">
-            <div class="brand">
-                <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
-                <div>
-                    <h1>Go-on National College</h1>
-                    <p>CASHIER STATION</p>
-                </div>
-            </div>
-
-
-            <nav class="sidebar-nav">
-                <div class="sidebar-category-group">
-                    <div class="sidebar-category-title">Overview</div>
-                    <a href="#" :class="{ active: currentView === 'dashboard' }" @click.prevent="setView('dashboard')">
-                        <span class="nav-link-content"><i class="fa-solid fa-gauge"></i> Dashboard</span>
-                    </a>
-                    <a href="#" :class="{ active: currentView === 'queue' }" @click.prevent="setView('queue')">
-                        <span class="nav-link-content"><i class="fa-solid fa-users-line"></i> Student Queue</span>
-                        <span class="nav-badge" v-if="totalInQueue > 0">{{ totalInQueue }}</span>
-                    </a>
-                </div>
-                <div class="sidebar-category-group">
-                    <div class="sidebar-category-title">System</div>
-                    <a href="../../shared/profile.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-user-circle"></i> My Profile</span>
-                    </a>
-                    <a href="#" @click.prevent="handleLogout" style="color: rgba(248,113,113,0.9);">
-                        <span class="nav-link-content"><i class="fa-solid fa-right-from-bracket"></i> Logout</span>
-                    </a>
-                </div>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-avatar">
-                    <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar">
-                    <span v-else>{{ (currentUser.name || currentUser.username || 'C').substring(0,2).toUpperCase() }}</span>
-                </div>
-                <div class="sidebar-footer-text">
-                    <strong>{{ currentUser.name || currentUser.username }}</strong>
-                    <span>{{ currentUser.role || 'CASHIER' }}</span>
-                </div>
-            </div>
-        </aside>
+            <station-sidebar 
+                station-name="Go-on National College" 
+                station-tag="CASHIER STATION"
+                :nav-groups="[
+                    {
+                        title: 'Treasury Operations',
+                        items: [
+                            { id: 'dashboard', label: 'Dashboard Overview', icon: 'fa-gauge' },
+                            { id: 'queue', label: 'Student Queue', icon: 'fa-users-line', badge: totalInQueue > 0 ? totalInQueue : null }
+                        ]
+                    }
+                ]"
+                :current-view="currentView"
+                :current-user="currentUser"
+                @set-view="setView"
+                @logout="handleLogout">
+            </station-sidebar>
 
         <main class="main-panel">
             <div class="top-bar">
@@ -656,6 +630,7 @@
 
     <script src="../../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../../shared/libs/vue.global.js"></script>
+    <script src="../../shared/js/components/StationSidebar.js?v=1"></script>
     <script src="../../shared/libs/sweetalert2.all.min.js"></script>
     <script src="../assets/js/DataBus.js?v=2.2"></script>
     <script src="assets/js/app.js?v=2.2.2"></script>

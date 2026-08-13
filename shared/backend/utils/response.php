@@ -51,9 +51,11 @@ register_shutdown_function(function() {
 });
 
 function sendResponse($success, $data = null, $error = null, $statusCode = 200) {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: Content-Type');
+    // CORS headers - dynamically reflect request origin if present
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+    header("Access-Control-Allow-Origin: {$origin}");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Headers: Content-Type, X-Request-ID');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     
     if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

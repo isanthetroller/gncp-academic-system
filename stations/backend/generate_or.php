@@ -1,6 +1,9 @@
-<?php
 require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/response.php';
+require_once __DIR__ . '/../../shared/backend/utils/session_guard.php';
+
+// Enforce session authentication for OR generation
+requireAuth(['CASHIER', 'ADMIN', 'SUPER_ADMIN']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, null, 'Method not allowed. Use POST.', 405);
@@ -32,10 +35,13 @@ try {
     $enrolledAt = $student['enrolled_at'];
 
     if (empty($orNumber)) {
-        // Generate unique OR number
         $year = date('Y');
-        $randomDigits = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
-        $orNumber = "OR-{$year}-{$randomDigits}";
+        do {
+            $randomDigits = str_pad(random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $orNumber = "OR-{$year}-{$randomDigits}";
+            $orCheck = $pdo->prepare("SELECT COUNT(*) FROM `pre_enrollments` WHERE `or_number` = :or_num");
+            $orCheck->execute(['or_num' => $orNumber]);
+        } while ((int)$orCheck->fetchColumn() > 0);
         $enrolledAt = date('Y-m-d H:i:s');
 
         // Update pre_enrollments table

@@ -16,7 +16,7 @@ class QueueService {
                     COALESCE(MAX(`id`), 0) AS max_id,
                     COALESCE(SUM(CHAR_LENGTH(CONCAT_WS(':', `status`, COALESCE(`section_code`,''), COALESCE(`or_number`,''), COALESCE(`medical_conditions`,''), COALESCE(`scholarship`,'')))), 0) AS d_hash
                 FROM `pre_enrollments`
-                WHERE `status` NOT IN ('PRE_REGISTERED', 'Rejected', 'PROMOTED')
+                WHERE UPPER(`status`) NOT IN ('PRE_REGISTERED', 'REJECTED', 'PROMOTED')
             ");
             $pe = $peStmt ? $peStmt->fetch(PDO::FETCH_ASSOC) : ['cnt'=>0, 'max_id'=>0, 'd_hash'=>0];
 
@@ -52,7 +52,7 @@ class QueueService {
         }
 
         // 2. Fetch staging pre_enrollments (exclude pre-registered, rejected, promoted)
-        $stmt = $pdo->query("SELECT * FROM `pre_enrollments` WHERE `status` NOT IN ('PRE_REGISTERED', 'Rejected', 'PROMOTED') ORDER BY `id` DESC");
+        $stmt = $pdo->query("SELECT * FROM `pre_enrollments` WHERE UPPER(`status`) NOT IN ('PRE_REGISTERED', 'REJECTED', 'PROMOTED') ORDER BY `id` DESC");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // 3. Fetch permanent student directory records and index by reference ID/Email for seamless merging
@@ -349,20 +349,37 @@ class QueueService {
 
     private static function getCurriculumSubjects(PDO $pdo, string $courseCode, string $yearLevel, string $semester): array {
         try {
+            // Resolve program code to program name for curriculum lookup
+            $progStmt = $pdo->prepare("SELECT `name` FROM `programs` WHERE `code` = :code");
+            $progStmt->execute([':code' => $courseCode]);
+            $programName = $progStmt->fetchColumn() ?: $courseCode;
+
             $stmt = $pdo->prepare("
-                SELECT c.subject_code, s.subject_title, s.units
-                FROM curriculum c
-                JOIN subjects s ON c.subject_code = s.subject_code
-                WHERE c.program_code = :code AND c.year_level = :year_level AND c.semester = :sem
+                SELECT s.code, s.title, s.lecture_units, s.lab_units, s.lab_fee, s.prerequisites
+                FROM `curriculum` c
+                JOIN `subjects` s ON (c.subject = s.title OR c.subject = s.code)
+                WHERE (c.program = :progName OR c.program = :progCode)
+                  AND c.year_level = :year_level
+                  AND c.semester = :sem
             ");
             $stmt->execute([
-                ':code'       => $courseCode,
+                ':progName'   => $programName,
+                ':progCode'   => $courseCode,
                 ':year_level' => $yearLevel,
                 ':sem'        => $semester
             ]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
+            if (function_exists('logAppError')) {
+                logAppError('QueueService::getCurriculumSubjects Error', [
+                    'error' => $e->getMessage(),
+                    'courseCode' => $courseCode,
+                    'yearLevel' => $yearLevel,
+                    'semester' => $semester
+                ]);
+            }
             return [];
         }
     }
 }
+

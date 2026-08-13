@@ -170,6 +170,14 @@ window.DataModel = {
                         { text: "Payment Portals", page: "payments-portals" },
                         { text: "Payment Terms", page: "payments-terms" }
                     ] 
+                },
+                { 
+                    text: "Portals", 
+                    url: "#", 
+                    dropdown: [
+                        { text: "Student Portal", page: "portal-student" },
+                        { text: "Application Tracker", page: "portal-tracker" }
+                    ] 
                 }
             ],
             cta: {

@@ -16,7 +16,7 @@ $stationSession = $_SESSION['gncp_station_user'] ?? null;
 $userJson = $adminSession ?: $stationSession;
 
 if ($userJson) {
-    $user = json_decode($userJson, true);
+    $user = is_array($userJson) ? $userJson : json_decode($userJson, true);
     if ($user && isset($user['role'])) {
         sendResponse(true, $user, 'Active session found.', 200);
     }

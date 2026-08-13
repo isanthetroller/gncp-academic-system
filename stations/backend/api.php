@@ -1,12 +1,31 @@
 <?php
 /**
- * GNCP Workstations — Unified API Gateway Router
- * Modular router delegating to QueueService, EnrollmentService, and PaymentService.
+ * GNCP Workstations — Station-Local API Router (LEGACY)
+ * ======================================================
+ * ⚠️  ARCHITECTURAL NOTE — DO NOT ADD NEW ACTIONS HERE  ⚠️
+ *
+ * This file is a legacy station-local router that predates the canonical
+ * central REST gateway at `/api/index.php`. It remains functional and
+ * has its own session auth guard, but it operates as a PARALLEL path,
+ * which means requests routed here bypass the central X-Request-ID chain
+ * and are not tracked by the canonical audit trail.
+ *
+ * CANONICAL ROUTES (use these in all frontend fetch() calls instead):
+ *   fetch_queue      → GET  /api/index.php?action=stations/queue
+ *   update_student   → POST /api/index.php?action=stations/update
+ *   upload_photo     → POST /api/index.php?action=stations/upload_photo
+ *
+ * If you are adding a new workstation action, add it to:
+ *   api/index.php ($routes array) + api/controllers/StationController.php
+ *
+ * This file is retained for backward compatibility with any station
+ * HTML file that still references the legacy endpoints.
  */
 
 require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/logger.php';
 require_once __DIR__ . '/../../shared/backend/utils/response.php';
+require_once __DIR__ . '/../../shared/backend/utils/session_guard.php';
 require_once __DIR__ . '/../../shared/backend/utils/student.php';
 
 require_once __DIR__ . '/services/QueueService.php';
@@ -16,6 +35,9 @@ require_once __DIR__ . '/services/EnrollmentService.php';
 // Emit X-Request-ID correlation header for all station API responses
 $stationReqId = getRequestId();
 header('X-Request-ID: ' . $stationReqId);
+
+// Enforce session authentication for workstation endpoints
+requireAuth(['REGISTRAR', 'HELPDESK', 'MEDICAL', 'CASHIER', 'IT_CENTER', 'ADMIN', 'SUPER_ADMIN']);
 
 $action = $_GET['action'] ?? '';
 

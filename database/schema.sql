@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `pre_enrollments` (
     `cashier_name`              VARCHAR(100) DEFAULT NULL COMMENT 'Cashier who processed payment',
     `existing_student_id`       VARCHAR(50)  DEFAULT NULL COMMENT 'RETURNING students only — references students.id',
     `year_level_applied`        VARCHAR(50)  DEFAULT NULL COMMENT 'Year level the student is re-enrolling at',
+    `curriculum_version`        VARCHAR(100) DEFAULT '2022 Curriculum',
     `created_at`                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_existing_student_id` (`existing_student_id`)
 ) ENGINE=InnoDB;
@@ -88,53 +89,17 @@ CREATE TABLE IF NOT EXISTS `station_users` (
     `name`                  VARCHAR(100) NOT NULL,
     `email`                 VARCHAR(150) NULL,
     `status`                VARCHAR(20) DEFAULT 'PENDING',
+    `avatar`                VARCHAR(255) DEFAULT NULL,
     `must_change_password`  TINYINT(1) NOT NULL DEFAULT 1,
     `created_at`            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- Default admin account (password: admin12345)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`)
+-- Default bootstrap admin account (Requires password change on first login)
+INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`, `must_change_password`)
 SELECT 'admin',
-       '$2y$10$AuqzJGhwPulNu5GVrmLLWOw190TQROnAHh5ORRSfj0RniSFF9OTMC',
-       'SUPER_ADMIN', 'System Administrator', 'ACTIVE'
+       '$2y$10$.fglgoP5NckmejZX75IL.edj9NGdhaNlrFYH50k.e3PXt3sjDcydi',
+       'SUPER_ADMIN', 'System Administrator', 'ACTIVE', 1
 WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'admin');
-
--- Default IT Center operator (password: itpassword)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`)
-SELECT 'it_officer',
-       '$2y$10$3FUtPNUNzmBEh9.sILq8O.vqWMbeWfYxD3Z71iFRKocm7Qz535t.O',
-       'IT_CENTER', 'IT Desk Officer', 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'it_officer');
-
-
--- Default Registrar Verification operator (password: kriz123)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`)
-SELECT 'kriz',
-       '$2y$10$2BdnfrTIq.nRX5hXrM1Wfuds4UK0.lNPteVwQWfzzmviA8yE/Np/C',
-       'REGISTRAR', 'Registrar Officer', 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'kriz');
-
--- Default Academic Advising operator (password: tristan123)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`)
-SELECT 'tristan',
-       '$2y$10$xVa8mb9N3mZdPH8/2qD.NeMBoIpwLrQrKmb6oeUaoHXLdieD6/1li',
-       'HELPDESK', 'Academic Advisor', 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'tristan');
-
--- Default Medical Clinic operator (password: ethan123)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`)
-SELECT 'ethan',
-       '$2y$10$epKFlBo/Bcf145WBDrQ8ZeFoVXD73gE2O2cSfnVSJKhyqCdrjPES2',
-       'MEDICAL', 'Clinic Medical Officer', 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'ethan');
-
-
--- Default Cashier Payment operator (password: cashier123)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`)
-SELECT 'cashier',
-       '$2y$10$NQBzjHU1kcsUOVaAXPVApOl2m6i1JKpnPjZY9ypAWTWCWHBdlZ5zq',
-       'CASHIER', 'Main Cashier', 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'cashier');
 
 -- ============================================================
 --  TABLE 3: students
@@ -150,6 +115,7 @@ CREATE TABLE IF NOT EXISTS `students` (
     `password`      VARCHAR(255) DEFAULT NULL,
     `photo`         VARCHAR(255) DEFAULT NULL,
     `year_level`    VARCHAR(50) DEFAULT '1st Year',
+    `curriculum_version` VARCHAR(100) DEFAULT '2022 Curriculum',
     `status`        VARCHAR(20) DEFAULT 'Active',
     `temp_reference_no` VARCHAR(50) DEFAULT NULL,
     `personal_info` TEXT DEFAULT NULL,
@@ -168,7 +134,9 @@ CREATE TABLE IF NOT EXISTS `students` (
 
 -- ============================================================
 --  TABLE 6: enrollments
---  Registrar snapshot table.
+--  LEGACY SNAPSHOT TABLE — not actively written to by any station service.
+--  Kept for historical compatibility. Do NOT build new features on this table.
+--  Live enrollment data is stored in pre_enrollments (staging) and students (permanent).
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS `enrollments` (
@@ -669,5 +637,62 @@ CREATE TABLE IF NOT EXISTS `sections` (
     `adviser`            VARCHAR(150) DEFAULT NULL,
     UNIQUE KEY `unique_section_cohort` (`code`, `program`, `year_level`, `academic_period_id`)
 ) ENGINE=InnoDB;
+
+-- ============================================================
+--  TABLE 15: audit_logs
+--  System-wide structured audit trail for workstation actions.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+    `id`                 INT AUTO_INCREMENT PRIMARY KEY,
+    `reference_number`  VARCHAR(50) NOT NULL,
+    `operator_username` VARCHAR(50) NOT NULL,
+    `station_role`       VARCHAR(50) NOT NULL,
+    `action_performed`  VARCHAR(100) NOT NULL,
+    `previous_state`    JSON NULL,
+    `new_state`         JSON NULL,
+    `created_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_ref_num` (`reference_number`),
+    INDEX `idx_operator` (`operator_username`)
+) ENGINE=InnoDB;
+
+-- ============================================================
+--  TABLE 16: password_resets
+--  Stores hashed password reset tokens and verification codes.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `password_resets` (
+    `id`         INT AUTO_INCREMENT PRIMARY KEY,
+    `email`      VARCHAR(150) NOT NULL,
+    `token`      VARCHAR(255) NOT NULL,
+    `code`       VARCHAR(6) NOT NULL,
+    `user_type`  VARCHAR(20) DEFAULT 'STUDENT',
+    `expires_at` DATETIME NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_email` (`email`),
+    INDEX `idx_code` (`code`)
+) ENGINE=InnoDB;
+
+-- ============================================================
+--  TABLE 17: announcements
+--  Admin-authored campus announcements with media attachments.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `announcements` (
+    `id`              INT AUTO_INCREMENT PRIMARY KEY,
+    `title`           VARCHAR(255) NOT NULL,
+    `category`        VARCHAR(50) DEFAULT 'GENERAL',
+    `content`         TEXT NOT NULL,
+    `image_url`       VARCHAR(255) DEFAULT NULL,
+    `author_id`       INT DEFAULT NULL,
+    `author_name`     VARCHAR(100) DEFAULT 'GNCP Administration',
+    `target_audience` VARCHAR(50) DEFAULT 'ALL',
+    `is_pinned`       TINYINT(1) DEFAULT 0,
+    `status`          VARCHAR(20) DEFAULT 'PUBLISHED',
+    `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_status_created` (`status`, `created_at`),
+    INDEX `idx_category` (`category`)
+) ENGINE=InnoDB;
+
+
+
 
 

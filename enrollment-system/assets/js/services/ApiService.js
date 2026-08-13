@@ -15,11 +15,16 @@
          */
         async submitEnrollment(formData) {
             try {
-                const response = await fetch('backend/register.php', {
+                const isFormData = typeof FormData !== 'undefined' && formData instanceof FormData;
+                const fetchOptions = {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
+                    body: isFormData ? formData : JSON.stringify(formData)
+                };
+                if (!isFormData) {
+                    fetchOptions.headers = { 'Content-Type': 'application/json' };
+                }
+
+                const response = await fetch('backend/register.php', fetchOptions);
 
                 if (!response.ok) {
                     let errorMsg = `Server error (HTTP ${response.status}).`;

@@ -14,6 +14,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 *.log
+shared/backend/logs/
+
+# Python Caches & Selenium Screenshots
+__pycache__/
+*.pyc
+tests/selenium/__pycache__/
+tests/selenium/screenshots/*.png
+!tests/selenium/screenshots/.gitkeep
 
 # IDEs and editors
 .idea/
@@ -28,6 +36,24 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Temporary scratch directories
+# Temporary scratch dumps and text diffs
 scratch/
 test_output.txt
+snippet_*.txt
+line_*.txt
+recovered_*.txt
+recovered_*.html
+admin_index_diff.txt
+unstaged_changes.diff
+announcement_*.txt
+announcements_modal_full.html
+announcements_table_full.html
+test_station_integration.html
+test_ui.html
+
+# User Uploaded Avatars & Documents (keep folder structure)
+uploads/avatars/avatar_*
+shared/assets/uploads/avatar_*
+stations/it-center/assets/uploads/avatar_*
+uploads/documents/*
+!uploads/documents/.gitkeep

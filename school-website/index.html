@@ -60,6 +60,7 @@
         <admissions-page v-else-if="currentPage.startsWith('admission-')" :sub-page="currentPage" :enroll-now-url="enrollNowUrl" :data="admissionsData"></admissions-page>
         <campus-life-page v-else-if="currentPage.startsWith('life-') || currentPage.startsWith('campus-')" :sub-page="currentPage" :data="campusLifeData"></campus-life-page>
         <payments-page v-else-if="currentPage.startsWith('payments-')" :sub-page="currentPage" :data="paymentsData"></payments-page>
+        <portals-page v-else-if="currentPage.startsWith('portal-')" :sub-page="currentPage"></portals-page>
 
         <!-- Footer Component -->
         <main-footer :navigation="navigation" @navigate="navigate"></main-footer>

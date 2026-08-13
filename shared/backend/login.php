@@ -88,20 +88,23 @@ try {
     }
     $mustChangePassword = (bool)($user['must_change_password'] ?? false);
     $userAvatar = $user['avatar'] ?? $user['photo'] ?? null;
-    $sessionUser = json_encode([
+    $sessionUser = [
         'username'             => $user['username'],
         'name'                 => $user['name'],
         'email'                => $user['email'] ?? '',
         'role'                 => $role,
         'avatar'               => $userAvatar,
         'must_change_password' => $mustChangePassword
-    ]);
+    ];
 
     if ($role === 'SUPER_ADMIN' || $role === 'ADMIN') {
         $_SESSION['gncp_admin_user'] = $sessionUser;
+        unset($_SESSION['gncp_station_user']);
     } else {
         $_SESSION['gncp_station_user'] = $sessionUser;
+        unset($_SESSION['gncp_admin_user']);
     }
+    session_write_close();
 
     // Return success response with user profile and redirect details
     sendResponse(true, [

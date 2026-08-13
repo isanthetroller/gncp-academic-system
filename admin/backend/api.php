@@ -11,6 +11,10 @@
 
 require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/response.php';
+require_once __DIR__ . '/../../shared/backend/utils/session_guard.php';
+
+// Enforce session authentication for admin API endpoints
+requireAuth(['ADMIN', 'SUPER_ADMIN']);
 
 $action = $_GET['action'] ?? '';
 
@@ -414,6 +418,29 @@ try {
     // ──────────────────────────────────────────────────────────────────
 
 
+
+    } elseif ($action === 'fetch_announcements') {
+        require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
+        $res = AnnouncementService::getAnnouncements($pdo, ['all' => true]);
+        sendResponse($res['success'], $res['data'] ?? [], $res['message'] ?? '');
+
+    } elseif ($action === 'save_announcement') {
+        require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
+        $payload = json_decode(file_get_contents('php://input'), true) ?? [];
+        $announcement = $payload['announcement'] ?? $payload;
+        $res = AnnouncementService::saveAnnouncement($pdo, $announcement);
+        sendResponse($res['success'], $res['id'] ?? null, $res['message'] ?? '', $res['code'] ?? 200);
+
+    } elseif ($action === 'delete_announcement') {
+        require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
+        $payload = json_decode(file_get_contents('php://input'), true) ?? [];
+        $res = AnnouncementService::deleteAnnouncement($pdo, $payload);
+        sendResponse($res['success'], null, $res['message'] ?? '', $res['code'] ?? 200);
+
+    } elseif ($action === 'upload_announcement_image') {
+        require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
+        $res = AnnouncementService::uploadImage();
+        sendResponse($res['success'], ['image_url' => $res['image_url'] ?? null], $res['message'] ?? '', $res['code'] ?? 200);
 
     } else {
         // Delegate to modular sub-files

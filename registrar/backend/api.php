@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/response.php';
+require_once __DIR__ . '/../../shared/backend/utils/session_guard.php';
 require_once __DIR__ . '/../../shared/backend/utils/student.php';
 require_once __DIR__ . '/../../shared/backend/utils/logger.php';
 
@@ -13,6 +14,9 @@ require_once __DIR__ . '/../../shared/backend/services/CatalogService.php';
 require_once __DIR__ . '/../../shared/backend/services/SectionService.php';
 require_once __DIR__ . '/../../shared/backend/services/RegistrarService.php';
 require_once __DIR__ . '/../../stations/backend/services/QueueService.php';
+
+// Enforce session authentication for registrar API endpoints
+requireAuth(['REGISTRAR', 'ADMIN', 'SUPER_ADMIN']);
 
 $action = $_GET['action'] ?? null;
 $rawInput = file_get_contents('php://input');
@@ -37,7 +41,7 @@ try {
         
         case 'fetch_all_data':
             try {
-                $pdo->query("DELETE FROM `pre_enrollments` WHERE `status` != 'ENROLLED' AND `created_at` < NOW() - INTERVAL 30 DAY");
+                $pdo->query("UPDATE `pre_enrollments` SET `status` = 'EXPIRED' WHERE `status` = 'PRE_REGISTERED' AND `created_at` < NOW() - INTERVAL 90 DAY");
             } catch (Exception $ex) {}
 
             $catalogData = CatalogService::fetchCatalogData($pdo);

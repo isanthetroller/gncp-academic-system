@@ -24,10 +24,22 @@ function logAppError($message, $context = []) {
     $logFile = $logDir . '/app_errors.log';
     
     $reqId = getRequestId();
-    $timestamp = date('Y-m-d H:i:s');
-    $contextStr = !empty($context) ? ' | Context: ' . json_encode($context) : '';
-    
-    $entry = "[{$timestamp}] [{$reqId}] {$message}{$contextStr}" . PHP_EOL;
+    $timestamp = date('c');
+
+    $sessionUser = $_SESSION['gncp_admin_user'] ?? $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_student'] ?? null;
+    $userRole    = is_array($sessionUser) ? ($sessionUser['role'] ?? 'STUDENT') : 'GUEST';
+
+    $payload = [
+        'timestamp'      => $timestamp,
+        'correlation_id' => $reqId,
+        'request_method' => $_SERVER['REQUEST_METHOD'] ?? 'CLI',
+        'request_uri'    => $_SERVER['REQUEST_URI'] ?? 'CLI',
+        'user_role'      => $userRole,
+        'message'        => $message,
+        'context'        => $context
+    ];
+
+    $entry = json_encode($payload, JSON_UNESCAPED_SLASHES) . PHP_EOL;
     @file_put_contents($logFile, $entry, FILE_APPEND);
-    error_log("[{$reqId}] {$message}");
+    error_log("[{$reqId}] [{$userRole}] {$message}");
 }

@@ -4,6 +4,7 @@
  * Unified Gateway with X-Request-ID Tracking & Modular Service Delegation
  */
 require_once __DIR__ . '/../shared/backend/utils/logger.php';
+require_once __DIR__ . '/../shared/backend/utils/rate_limit.php';
 
 $reqId = getRequestId();
 header('Content-Type: application/json; charset=utf-8');
@@ -38,40 +39,53 @@ try {
 
     $response = ['success' => false, 'message' => 'Route not found.', 'code' => 404];
 
-    // Auth Routes
-    if ($action === 'auth/login' || $action === 'login') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->login($payload);
-    } elseif ($action === 'auth/logout' || $action === 'logout') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->logout();
-    } elseif ($action === 'auth/check' || $action === 'check_session') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->checkSession();
-    } elseif ($action === 'auth/change_password' || $action === 'change_password') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->changePassword($payload);
-    } elseif ($action === 'auth/profile' || $action === 'get_profile') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->getProfile();
-    } elseif ($action === 'auth/update_profile' || $action === 'update_profile') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->updateProfile($payload);
-    } elseif ($action === 'auth/upload_avatar' || $action === 'upload_avatar' || $action === 'stations/upload_photo') {
-        $ctrl = new AuthController($pdo);
-        $response = $ctrl->uploadAvatar($payload);
-    }
-    // Student Public Routes
-    elseif ($action === 'student/register' || $action === 'register') {
-        $ctrl = new StudentController($pdo);
-        $response = $ctrl->register($payload);
-    } elseif ($action === 'student/track' || $action === 'track') {
-        $refNo = $_GET['ref'] ?? $_GET['referenceNumber'] ?? ($payload['referenceNumber'] ?? '');
-        $ctrl = new StudentController($pdo);
-        $response = $ctrl->track($refNo);
-    }
-    // Station & Queue Live Operations
-    elseif ($action === 'stations/queue' || $action === 'fetch_queue') {
+    $routes = [
+        'auth/login'              => fn($p) => (new AuthController($pdo))->login($p),
+        'auth/logout'             => fn($p) => (new AuthController($pdo))->logout(),
+        'auth/check'              => fn($p) => (new AuthController($pdo))->checkSession(),
+        'auth/change_password'    => fn($p) => (new AuthController($pdo))->changePassword($p),
+        'auth/profile'            => fn($p) => (new AuthController($pdo))->getProfile(),
+        'auth/update_profile'     => fn($p) => (new AuthController($pdo))->updateProfile($p),
+        'auth/upload_avatar'      => fn($p) => (new AuthController($pdo))->uploadAvatar($p),
+        'stations/upload_photo'   => fn($p) => (new AuthController($pdo))->uploadAvatar($p),
+
+        'student/register'        => function($p) use ($pdo) {
+            // Rate limit: max 5 registration attempts per IP per 60 seconds
+            checkRateLimit('student_register', 5, 60);
+            pruneRateLimitFiles(); // Opportunistic cleanup
+            return (new StudentController($pdo))->register($p);
+        },
+        'student/track'           => function($p) use ($pdo) {
+            // Rate limit: max 20 lookups per IP per 60 seconds
+            checkRateLimit('student_track', 20, 60);
+            return (new StudentController($pdo))->track($_GET['ref'] ?? $_GET['referenceNumber'] ?? ($p['referenceNumber'] ?? ''));
+        },
+        'student/cleanup_test_records'=> fn($p) => (new StudentController($pdo))->cleanupTestRecords($p),
+
+        'stations/update'         => fn($p) => (new StationController($pdo))->updateStudent($p),
+
+        'registrar/update_status' => fn($p) => RegistrarService::updateApplicationStatus($pdo, $p),
+        'registrar/update_step'   => fn($p) => RegistrarService::updateRoadmapStep($pdo, $p),
+        'registrar/sections'      => fn($p) => SectionService::getSectionsForProgram($pdo, $_GET['program'] ?? ($p['program'] ?? ''), $_GET['year_level'] ?? ($p['year_level'] ?? '1st Year'), $_GET['semester'] ?? ($p['semester'] ?? '1st Semester')),
+
+        'admin/catalog'           => fn($p) => (new AdminController($pdo))->getCatalog(),
+        'admin/sections'          => fn($p) => (new AdminController($pdo))->getSections(),
+        'admin/terms'             => fn($p) => (new AdminController($pdo))->getTerms(),
+        'admin/users'             => fn($p) => (new AdminController($pdo))->getUsers(),
+        'admin/save_program'      => fn($p) => (new AdminController($pdo))->saveProgram($p),
+        'admin/save_subject'      => fn($p) => (new AdminController($pdo))->saveSubject($p),
+        'admin/save_section'      => fn($p) => (new AdminController($pdo))->saveSection($p),
+        'admin/save_term'         => fn($p) => (new AdminController($pdo))->saveTerm($p),
+        'admin/save_user'         => fn($p) => (new AdminController($pdo))->saveUser($p),
+        'admin/cleanup_test_users'=> fn($p) => (new AdminController($pdo))->cleanupTestUsers($p),
+
+        'announcements/list'              => fn($p) => (new AdminController($pdo))->getAnnouncements($_GET),
+        'admin/save_announcement'         => fn($p) => (new AdminController($pdo))->saveAnnouncement($p),
+        'admin/delete_announcement'       => fn($p) => (new AdminController($pdo))->deleteAnnouncement($p),
+        'admin/upload_announcement_image' => fn($p) => (new AdminController($pdo))->uploadAnnouncementImage()
+    ];
+
+    if ($action === 'stations/queue' || $action === 'fetch_queue') {
         require_once __DIR__ . '/../stations/backend/services/QueueService.php';
         $etag = QueueService::getQueueHash($pdo);
         header('ETag: ' . $etag);
@@ -85,53 +99,10 @@ try {
 
         $ctrl = new StationController($pdo);
         $response = $ctrl->getQueue();
-    } elseif ($action === 'stations/update' || $action === 'update_student') {
-        $ctrl = new StationController($pdo);
-        $response = $ctrl->updateStudent($payload);
+    } elseif (isset($routes[$action])) {
+        $response = $routes[$action]($payload);
     }
-    // Registrar & Domain Operations
-    elseif ($action === 'registrar/update_status' || $action === 'update_application_status') {
-        $response = RegistrarService::updateApplicationStatus($pdo, $payload);
-    } elseif ($action === 'registrar/update_step' || $action === 'update_roadmap_step') {
-        $response = RegistrarService::updateRoadmapStep($pdo, $payload);
-    } elseif ($action === 'registrar/sections' || $action === 'get_sections_for_program') {
-        $prog = $_GET['program'] ?? ($payload['program'] ?? '');
-        $year = $_GET['year_level'] ?? ($payload['year_level'] ?? '1st Year');
-        $sem  = $_GET['semester']   ?? ($payload['semester']   ?? '1st Semester');
-        $response = SectionService::getSectionsForProgram($pdo, $prog, $year, $sem);
-    }
-    // Admin Operations
-    elseif ($action === 'admin/catalog' || $action === 'get_catalog') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->getCatalog();
-    } elseif ($action === 'admin/sections' || $action === 'get_sections') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->getSections();
-    } elseif ($action === 'admin/terms' || $action === 'get_terms') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->getTerms();
-    } elseif ($action === 'admin/users' || $action === 'get_users') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->getUsers();
-    } elseif ($action === 'admin/save_program') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->saveProgram($payload);
-    } elseif ($action === 'admin/save_subject') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->saveSubject($payload);
-    } elseif ($action === 'admin/save_section') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->saveSection($payload);
-    } elseif ($action === 'admin/save_term') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->saveTerm($payload);
-    } elseif ($action === 'admin/save_user') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->saveUser($payload);
-    } elseif ($action === 'admin/cleanup_test_users') {
-        $ctrl = new AdminController($pdo);
-        $response = $ctrl->cleanupTestUsers($payload);
-    }
+
 
     $httpCode = $response['code'] ?? ($response['success'] ? 200 : 400);
     http_response_code($httpCode);

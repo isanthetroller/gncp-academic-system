@@ -9,8 +9,10 @@
     <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="../shared/libs/login.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css?v=5">
     <script src="../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../shared/libs/vue.global.js"></script>
+    <script src="assets/js/components/AdminSidebar.js?v=5"></script>
     <script src="../shared/libs/sweetalert2.all.min.js"></script>
     <script src="../shared/js/PasswordChangeGuard.js"></script>
     <script src="../shared/academic_constants.js"></script>
@@ -272,112 +274,14 @@
     <!-- ══ DASHBOARD ════════════════════════════════════════════════════ -->
     <div v-if="currentAdmin" class="shell">
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="brand">
-                <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
-                <div>
-                    <h1>Go-on National College</h1>
-                    <p>SUPER ADMIN PORTAL</p>
-                </div>
-            </div>
-
-
-            <nav class="nav-body">
-                <button class="nav-item" :class="{active:view==='dashboard'}" @click="setView('dashboard')">
-                    <i class="fa-solid fa-chart-line"></i> Dashboard
-                </button>
-
-                <!-- Category 1: School Subjects & Degree Courses -->
-                <div class="nav-category-wrapper">
-                    <button class="nav-cat-header" @click="expandedCats.catalog = !expandedCats.catalog">
-                        <span><i class="fa-solid fa-folder-open" style="margin-right:6px"></i>Subjects &amp; Courses</span>
-                        <i class="fa-solid" :class="expandedCats.catalog ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:0.6rem"></i>
-                    </button>
-                    <div class="nav-cat-items" v-show="expandedCats.catalog">
-                        <button class="nav-item sub-item" :class="{active:view==='departments_programs'}" @click="setView('departments_programs')">
-                            <i class="fa-solid fa-graduation-cap"></i> Departments &amp; Courses
-                        </button>
-                        <button class="nav-item sub-item" :class="{active:view==='curriculum'}" @click="setView('curriculum')">
-                            <i class="fa-solid fa-network-wired"></i> Subjects per Semester
-                        </button>
-                        <button class="nav-item sub-item" :class="{active:view==='subjects'}" @click="setView('subjects')">
-                            <i class="fa-solid fa-book-open"></i> Master List of Subjects
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Category 2: School Terms & Class Sections -->
-                <div class="nav-category-wrapper">
-                    <button class="nav-cat-header" @click="expandedCats.term = !expandedCats.term">
-                        <span><i class="fa-solid fa-calendar-days" style="margin-right:6px"></i>Terms &amp; Class Sections</span>
-                        <i class="fa-solid" :class="expandedCats.term ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:0.6rem"></i>
-                    </button>
-                    <div class="nav-cat-items" v-show="expandedCats.term">
-                        <button class="nav-item sub-item" :class="{active:view==='periods'}" @click="setView('periods')">
-                            <i class="fa-solid fa-calendar-check"></i> Enrollment Semesters
-                        </button>
-                        <button class="nav-item sub-item" :class="{active:view==='sections'}" @click="setView('sections')">
-                            <i class="fa-solid fa-shapes"></i> Class Sections (e.g. Sec A)
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Category 3: Class Schedules & Billing -->
-                <div class="nav-category-wrapper">
-                    <button class="nav-cat-header" @click="expandedCats.scheduling = !expandedCats.scheduling">
-                        <span><i class="fa-solid fa-clock" style="margin-right:6px"></i>Schedules &amp; Fees</span>
-                        <i class="fa-solid" :class="expandedCats.scheduling ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:0.6rem"></i>
-                    </button>
-                    <div class="nav-cat-items" v-show="expandedCats.scheduling">
-                        <button class="nav-item sub-item" :class="{active:view==='classOfferings'}" @click="setView('classOfferings')">
-                            <i class="fa-solid fa-calendar-check"></i> Create Class Schedules
-                        </button>
-                        <button class="nav-item sub-item" :class="{active:view==='students'}" @click="setView('students')">
-                            <i class="fa-solid fa-user-graduate"></i> Student Records
-                        </button>
-                        <button class="nav-item sub-item" :class="{active:view==='fees'}" @click="setView('fees')">
-                            <i class="fa-solid fa-wallet"></i> Tuition &amp; Misc Fees
-                        </button>
-                    </div>
-                </div>
-
-                <div class="nav-category-wrapper" style="margin-top: 10px;">
-                    <button class="nav-item" :class="{active:view==='operators'}" @click="setView('operators')">
-                        <i class="fa-solid fa-users-cog"></i> Staff Logins (Operators)
-                    </button>
-                </div>
-
-                <div class="nav-category-wrapper" style="margin-top: 4px;">
-                    <button class="nav-item" :class="{active:view==='student_accounts'}" @click="setView('student_accounts')">
-                        <i class="fa-solid fa-id-card"></i> Student Portal Accounts
-                    </button>
-                </div>
-
-                <div class="nav-category-wrapper" style="margin-top: 4px;">
-                    <a href="../shared/profile.html" class="nav-item" style="text-decoration:none;">
-                        <i class="fa-solid fa-user-circle"></i> My Profile
-                    </a>
-                </div>
-
-                <div class="nav-category-wrapper" style="margin-top: 10px;">
-                    <button class="nav-item nav-logout" @click="handleLogout">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
-                    </button>
-                </div>
-            </nav>
-
-            <div class="sidebar-footer" v-if="currentAdmin">
-                <div class="footer-avatar">
-                    <img v-if="currentAdmin.avatar" :src="currentAdmin.avatar" alt="Avatar">
-                    <span v-else>{{ (currentAdmin.name || currentAdmin.username || 'A').substring(0,2).toUpperCase() }}</span>
-                </div>
-                <div class="footer-info">
-                    <strong>{{ currentAdmin.name || currentAdmin.username }}</strong>
-                    <span>{{ currentAdmin.role || 'SUPER ADMIN' }}</span>
-                </div>
-            </div>
-        </aside>
+        <!-- Sidebar Component -->
+        <admin-sidebar 
+            :view="view" 
+            :expanded-cats="expandedCats" 
+            :current-admin="currentAdmin" 
+            @set-view="setView" 
+            @logout="handleLogout">
+        </admin-sidebar>
 
         <!-- Main Panel -->
         <div class="main">
@@ -1779,6 +1683,9 @@ const post = (action, body) => fetch(`${API}?action=${action}`, { method:'POST',
 const get  = (action)        => fetch(`${API}?action=${action}`).then(handleFetchResponse);
 
 createApp({
+    components: {
+        'admin-sidebar': window.AdminSidebar
+    },
     setup() {
         // Auth
         const currentAdmin = ref(null);

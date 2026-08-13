@@ -16,13 +16,7 @@ class StationDataBus {
     static _lastEtag = null;
 
     static getApiUrl(action) {
-        let baseApi = '/systemtest/api/index.php';
-        if (action === 'fetch_queue') {
-            return `${baseApi}?action=stations/queue`;
-        } else if (action === 'update_student') {
-            return `${baseApi}?action=stations/update`;
-        }
-        return `${baseApi}?action=${action}`;
+        return `/systemtest/api/index.php?action=${action}`;
     }
 
     static getQueue() {
@@ -71,7 +65,7 @@ class StationDataBus {
                 headers['If-None-Match'] = this._lastEtag;
             }
 
-            const response = await fetch(this.getApiUrl('fetch_queue'), { headers });
+            const response = await fetch(this.getApiUrl('stations/queue'), { headers });
 
             if (response.status === 304) {
                 // Queue has not changed — skip JSON decoding and localStorage write
@@ -125,7 +119,7 @@ class StationDataBus {
                 updateData = studentData;
             }
 
-            const response = await fetch(this.getApiUrl('update_student'), {
+            const response = await fetch(this.getApiUrl('stations/update'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -155,13 +149,13 @@ window.StationDataBus = StationDataBus;
 
 /**
  * Adaptive polling engine with exponential backoff.
- * On consecutive failures: 3s → 3s → 10s → 30s → 60s, then holds.
- * Resets to 3s immediately on first success.
+ * On consecutive failures: 5s → 10s → 30s → 60s → 120s, then holds.
+ * Resets to 5s immediately on first success.
  */
 (function schedulePoll() {
     if (typeof window === 'undefined') return;
 
-    const delays = [3000, 3000, 10000, 30000, 60000];
+    const delays = [5000, 10000, 30000, 60000, 120000];
 
     async function poll() {
         await StationDataBus.syncWithBackend();
@@ -172,6 +166,6 @@ window.StationDataBus = StationDataBus;
     // Initial sync after 50ms, then begin adaptive polling
     setTimeout(() => {
         StationDataBus.syncWithBackend();
-        StationDataBus._pollTimer = setTimeout(poll, 3000);
+        StationDataBus._pollTimer = setTimeout(poll, 5000);
     }, 50);
 })();

@@ -591,5 +591,65 @@ window.PagesView = {
                 </div>
             </div>
         `
+    },
+
+    PortalsPage: {
+        props: ['subPage'],
+        template: `
+            <div class="subpage-wrapper">
+                <!-- Page Banner Header -->
+                <div class="subpage-banner text-center d-flex align-items-center justify-content-center">
+                    <div class="container position-relative" style="z-index: 2;">
+                        <span class="subpage-banner-tag text-gold text-uppercase fw-bold">Online Services</span>
+                        <h1 class="subpage-banner-title text-white text-uppercase">College Access Portals</h1>
+                    </div>
+                </div>
+
+                <div class="container py-5">
+                    <div class="text-center mb-5">
+                        <span class="section-tagline">Student &amp; Staff Access</span>
+                        <h2 class="section-title">Select Your Portal</h2>
+                    </div>
+
+                    <div class="row g-4 justify-content-center">
+                        <!-- Student Portal Card -->
+                        <div class="col-lg-5 col-md-6">
+                            <div class="content-card shadow-sm h-100 p-4 border-0 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="card-icon-header bg-green-light mb-3">
+                                        <i class="fas fa-user-graduate text-green fs-3"></i>
+                                    </div>
+                                    <h3 class="fw-bold text-green mb-2">Student Portal</h3>
+                                    <p class="text-muted leading-relaxed mb-4" style="font-size: 0.95rem;">
+                                        Sign in to view your Certificate of Registration (COR), class schedules, clearance status, and official fee breakdown.
+                                    </p>
+                                </div>
+                                <a href="../student-portal/login.html" class="btn btn-pill btn-pill-green w-100 fw-bold py-3">
+                                    <i class="fas fa-right-to-bracket me-2"></i>STUDENT PORTAL LOGIN
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Application Tracker Card -->
+                        <div class="col-lg-5 col-md-6">
+                            <div class="content-card shadow-sm h-100 p-4 border-0 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="card-icon-header bg-gold-light mb-3">
+                                        <i class="fas fa-search-location text-gold-dark fs-3"></i>
+                                    </div>
+                                    <h3 class="fw-bold text-green mb-2">Application Tracker</h3>
+                                    <p class="text-muted leading-relaxed mb-4" style="font-size: 0.95rem;">
+                                        Check the progress of your online pre-registration application using your reference code.
+                                    </p>
+                                </div>
+                                <a href="../enrollment-system/tracker.html" class="btn btn-pill btn-pill-white border border-2 border-green text-green w-100 fw-bold py-3">
+                                    <i class="fas fa-magnifying-glass me-2"></i>TRACK APPLICATION
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `
     }
 };

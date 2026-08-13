@@ -3,360 +3,601 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GNCP Selenium Automated Testing Dashboard</title>
+    <title>GNCP — Selenium Automated System Testing Suite</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/shared/libs/font-awesome/css/all.min.css">
+    
+    <!-- Vue 3 Framework -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="/shared/libs/vue.global.js"></script>
     <style>
         :root {
-            --bg-primary: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.7);
-            --bg-card-hover: rgba(51, 65, 85, 0.8);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-red: #ef4444;
+            --bg:             #f4f6f8;
+            --topbar-bg:      linear-gradient(135deg, #00553e 0%, #003d2b 100%);
+            --primary:        #006A4E;
+            --primary-hover:  #00533C;
+            --gold:           #D4AF37;
+            --gold-dark:      #b89320;
+            --gold-light:     rgba(212, 175, 55, 0.12);
+            --green:          #10b981;
+            --amber:          #d97706;
+            --red:            #ef4444;
+            --sky:            #0284c7;
+            --text:           #0f172a;
+            --muted:          #64748b;
+            --border:         #e2e8f0;
+            --card-bg:        #ffffff;
+            --radius:         12px;
+            --radius-sm:      8px;
+            --t:              0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, #0f172a 60%);
-            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            padding: 24px;
+            overflow-x: hidden;
         }
 
-        .header {
+        .app {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px;
-            background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            margin-bottom: 24px;
-        }
-
-        .header-title h1 {
-            font-size: 22px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #60a5fa, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-title p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px 24px 32px;
             gap: 16px;
         }
 
-        .btn-run {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: #ffffff;
-            border: none;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 700;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-        }
-
-        .btn-run:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
-        }
-
-        .btn-run:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .toggle-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .grid-layout {
-            display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: 24px;
-        }
-
-        .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-        }
-
-        .card-header {
+        /* ── HEADER TOOLBAR (Matching GNCP Topbar Aesthetic) ── */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-
+            background: var(--topbar-bg);
+            border-bottom: 3px solid var(--gold);
+            border-radius: var(--radius);
+            padding: 16px 24px;
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 61, 43, 0.25);
+            flex-wrap: wrap;
+            gap: 14px;
         }
 
-        .card-title {
-            font-size: 15px;
-            font-weight: 700;
+        .brand-block { display: flex; align-items: center; gap: 14px; }
+        .brand-logo { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.35)); flex-shrink: 0; }
+        .brand-titles h1 { font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.2px; line-height: 1.25; margin: 0; }
+        .brand-titles p { font-size: 0.72rem; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+
+        .server-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.70rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 20px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: var(--text-secondary);
         }
+        .server-online { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .server-offline { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
 
-        /* Screenshot Viewport */
-        .viewport-box {
-            width: 100%;
-            height: 380px;
-            background: #020617;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            display: flex;
+        .topbar-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+        .mode-pills { display: flex; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; overflow: hidden; padding: 2px; }
+        .mode-pills button { background: none; border: none; color: rgba(255,255,255,0.75); padding: 6px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: var(--t); font-family: inherit; border-radius: 6px; }
+        .mode-pills button.active { background: var(--gold); color: #002217; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .mode-pills button:hover:not(.active) { color: #ffffff; background: rgba(255,255,255,0.1); }
+
+        .toggle-wrap { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: rgba(255,255,255,0.85); cursor: pointer; user-select: none; font-weight: 600; }
+        .toggle-box { width: 34px; height: 18px; border-radius: 10px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); position: relative; transition: background .2s; }
+        .toggle-box.on { background: var(--gold); border-color: var(--gold); }
+        .toggle-box::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+        .toggle-box.on::after { left: 18px; }
+
+        .btn-action {
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .viewport-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .viewport-placeholder {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Pipeline Steps Cards */
-        .pipeline-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .step-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 18px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            transition: all 0.2s;
-        }
-
-        .step-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .step-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .badge-idle { background: #334155; color: #94a3b8; }
-        .badge-running { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
-        .badge-passed { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
-        .badge-failed { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
-
-        /* Terminal Console */
-        .terminal-box {
-            background: #020617;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            height: 520px;
-            padding: 16px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
             gap: 8px;
+            background: linear-gradient(135deg, #d4af37 0%, #b89320 100%);
+            color: #002217;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 20px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: var(--t);
+            box-shadow: 0 4px 14px rgba(212,175,55,0.4);
+            white-space: nowrap;
         }
+        .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212,175,55,0.6); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; color: #fff !important; box-shadow: 0 4px 14px rgba(239,68,68,0.4) !important; }
 
-        .terminal-line {
-            display: flex;
-            gap: 10px;
-            line-height: 1.5;
-        }
+        /* ── SUMMARY METRICS BAR ── */
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .metric-card { background: var(--card-bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 14px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+        .metric-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; }
+        .metric-val { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; line-height: 1.2; color: var(--text); }
 
-        .t-time { color: #64748b; }
-        .t-info { color: #38bdf8; }
-        .t-success { color: #4ade80; font-weight: 600; }
+        .progress-bar-wrap { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--gold) 100%); transition: width 0.3s ease; }
+
+        /* ── MAIN WORKSPACE 3-COL GRID ── */
+        .workspace-grid { display: grid; grid-template-columns: 1fr 1fr 420px; gap: 16px; flex: 1; }
+
+        .panel { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); background: #f8fafc; }
+        .panel-title { font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .panel-body { padding: 16px; flex: 1; overflow-y: auto; }
+
+        /* Sleek custom scrollbars */
+        .panel-body::-webkit-scrollbar,
+        .terminal::-webkit-scrollbar { width: 6px; }
+        .panel-body::-webkit-scrollbar-track,
+        .terminal::-webkit-scrollbar-track { background: transparent; }
+        .panel-body::-webkit-scrollbar-thumb,
+        .terminal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .panel-body::-webkit-scrollbar-thumb:hover,
+        .terminal::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* PIPELINE CARDS */
+        .pipeline-list { display: flex; flex-direction: column; gap: 8px; }
+        .step-card { border: 1px solid var(--border); border-radius: var(--radius-sm); background: #f8fafc; transition: var(--t); overflow: hidden; }
+        .step-card.active { border-color: var(--primary); background: rgba(0, 106, 78, 0.05); box-shadow: 0 0 12px rgba(0, 106, 78, 0.15); border-left: 4px solid var(--primary); }
+        .step-card.passed { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.04); border-left: 4px solid var(--green); }
+        .step-card.failed { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.04); border-left: 4px solid var(--red); }
+
+        .step-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; }
+        .step-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .step-icon { width: 30px; height: 30px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.80rem; color: var(--muted); flex-shrink: 0; transition: var(--t); }
+        .step-card.active .step-icon { background: var(--primary); color: #fff; font-weight: 800; }
+        .step-card.passed .step-icon { background: var(--green); color: #fff; }
+        .step-card.failed .step-icon { background: var(--red); color: #fff; }
+        .step-text { min-width: 0; }
+        .step-title { font-size: 0.85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .step-sub { font-size: 0.70rem; color: var(--muted); }
+
+        .step-badge { font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .badge-idle { background: #e2e8f0; color: var(--muted); }
+        .badge-running { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .badge-passed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-failed { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+        .step-traceback { padding: 10px 14px; background: #0f172a; border-top: 2px solid var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #fca5a5; line-height: 1.45; word-break: break-all; border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+
+        /* LIVE FRAME & SCREENSHOTS */
+        .preview-box { aspect-ratio: 16/9; background: #0f172a; border-radius: var(--radius-sm); border: 2px solid var(--border); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+        .preview-img { width: 100%; height: 100%; object-fit: contain; cursor: pointer; transition: transform 0.2s ease; }
+        .preview-img:hover { transform: scale(1.01); }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+        .gallery-thumb { aspect-ratio: 16/9; background: #e2e8f0; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; position: relative; transition: var(--t); }
+        .gallery-thumb:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,106,78,0.15); }
+        .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-thumb label { position: absolute; bottom: 0; inset-x: 0; background: rgba(15, 23, 42, 0.85); color: #ffffff; font-size: 0.60rem; font-weight: 700; padding: 2px 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* CREDENTIALS INSPECTOR */
+        .cred-card { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.35); border-left: 4px solid var(--gold); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; }
+        .cred-head { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #92400e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .cred-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .cred-item:last-child { border-bottom: none; }
+        .cred-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #003d2b; background: #ffffff; padding: 2px 7px; border-radius: 4px; font-size: 0.72rem; border: 1px solid var(--border); }
+
+        /* LOG TERMINAL */
+        .log-filter-bar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .log-filter-btn { background: #f1f5f9; border: 1px solid var(--border); color: var(--muted); font-size: 0.68rem; font-weight: 700; padding: 3px 9px; border-radius: 5px; cursor: pointer; transition: var(--t); }
+        .log-filter-btn.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+
+        .log-search { width: 100%; background: #ffffff; border: 1px solid var(--border); color: var(--text); font-size: 0.75rem; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; outline: none; transition: border-color 0.2s; }
+        .log-search:focus { border-color: var(--primary); }
+
+        .terminal { background: #0f172a; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; line-height: 1.45; }
+        .t-line { display: flex; gap: 8px; word-break: break-all; }
+        .t-ts { color: #64748b; flex-shrink: 0; font-size: 0.65rem; }
+        .t-info { color: #cbd5e1; }
+        .t-success { color: #4ade80; font-weight: 700; }
         .t-warn { color: #fbbf24; }
-        .t-error { color: #f87171; font-weight: 600; }
+        .t-error { color: #f87171; font-weight: 700; }
+        .t-step { color: var(--gold); font-weight: 800; }
+
+        /* LIGHTBOX MODAL */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .modal-img { max-width: 92vw; max-height: 92vh; border-radius: var(--radius); border: 2px solid var(--gold); box-shadow: 0 25px 60px rgba(0,0,0,0.5); }
+        .modal-close { position: absolute; top: 20px; right: 24px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: var(--t); }
+        .modal-close:hover { background: rgba(239,68,68,0.8); }
+
+        @media (max-width: 1200px) { .workspace-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) { .workspace-grid { grid-template-columns: 1fr; } .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
-    <div id="app">
-        <header class="header">
-            <div class="header-title">
-                <h1>GNCP Selenium Automated Testing Dashboard</h1>
-                <p>Live Web E2E Pipeline Verification & Visual Screenshot Stream</p>
-            </div>
-            <div class="controls">
-                <label class="toggle-option">
-                    <input type="checkbox" v-model="headless"> Headless Mode
-                </label>
-                <button class="btn-run" :disabled="status === 'RUNNING'" @click="runTest">
-                    {{ status === 'RUNNING' ? '⏳ Test Suite Executing...' : '🚀 Run Full E2E Pipeline Test' }}
-                </button>
-            </div>
-        </header>
+<div id="app" class="app" v-cloak>
 
-        <div class="grid-layout">
-            <!-- Left Panel: Live Screenshot Viewport & Pipeline Cards -->
-            <div>
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Live Chrome Browser Viewport</span>
-                        <span class="badge" :class="'badge-' + status.toLowerCase()">{{ status }} ({{ duration }}s)</span>
-                    </div>
-                    <div class="viewport-box">
-                        <img v-if="latestScreenshot" :src="'/' + latestScreenshot + '?t=' + lastUpdate" alt="Live Screenshot">
-                        <div v-else class="viewport-placeholder">
-                            <p>📸 Live Selenium Screenshot Overlay</p>
-                            <p style="font-size:12px; margin-top:6px;">Click "Run Full E2E Pipeline Test" to launch browser automation</p>
-                        </div>
-                    </div>
+    <!-- HEADER TOOLBAR (Matching GNCP Primary Portal Theme) -->
+    <header class="topbar">
+        <div class="brand-block">
+            <img src="/school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo" onError="this.onerror=null;this.src='../school-website/assets/images/logo-removebg-preview.png';">
+            <div class="brand-titles">
+                <h1>Go-on National College</h1>
+                <p>Selenium Automated System Testing Suite</p>
+            </div>
+            <span class="server-status-pill" :class="isServerOnline ? 'server-online' : 'server-offline'">
+                <i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> {{ isServerOnline ? 'Server Online' : 'Server Offline' }}
+            </span>
+        </div>
 
-                    <div class="pipeline-list">
-                        <div v-for="step in steps" :key="step.name" class="step-item">
+        <div class="topbar-controls">
+            <div class="mode-pills">
+                <button :class="{ active: mode === 'all' }" @click="mode = 'all'">Full Pipeline Suite</button>
+                <button :class="{ active: mode === 'pipeline' }" @click="mode = 'pipeline'">Enrollment Flow Only</button>
+                <button :class="{ active: mode === 'admin' }" @click="mode = 'admin'">Admin Features Suite</button>
+            </div>
+
+            <label class="toggle-wrap" title="Toggle between background headless execution and visible Chrome browser">
+                <div class="toggle-box" :class="{ on: headless }" @click="headless = !headless"></div>
+                <span>Headless Mode</span>
+            </label>
+
+            <button v-if="!isRunning" class="btn-action" @click="runTest" :disabled="!isServerOnline">
+                <i class="fa-solid fa-play"></i> Execute Suite
+            </button>
+            <button v-else class="btn-action btn-danger" @click="stopTest">
+                <i class="fa-solid fa-stop"></i> Abort Run
+            </button>
+        </div>
+    </header>
+
+    <!-- SUMMARY METRICS BAR -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">Execution Status</div>
+            <div class="metric-val" :style="{ color: statusColorCode }">{{ status }}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Step Progress</div>
+            <div class="metric-val" style="color:var(--primary);">{{ passedCount }} / {{ allSteps.length }}</div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" :style="{ width: progressPct + '%' }"></div>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Elapsed Clock</div>
+            <div class="metric-val" style="color:var(--sky);">{{ duration }}s</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Pipeline Pass Rate</div>
+            <div class="metric-val" :style="{ color: failedCount > 0 ? 'var(--red)' : 'var(--green)' }">{{ progressPct }}%</div>
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE 3-COLUMN GRID -->
+    <div class="workspace-grid">
+
+        <!-- COLUMN 1: TEST PIPELINE STEPS -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fa-solid fa-diagram-project"></i> Sequential Test Pipeline</span>
+                <span class="step-badge" :class="status === 'RUNNING' ? 'badge-running' : (status === 'PASSED' ? 'badge-passed' : 'badge-idle')">
+                    {{ isRunning ? 'Executing' : 'Standby' }}
+                </span>
+            </div>
+            <div class="panel-body">
+                <div class="pipeline-list">
+                    <div v-for="s in allSteps" :key="s.key" class="step-card" :class="getStepClass(s.key)">
+                        <div class="step-header" @click="toggleTraceback(s.key)">
                             <div class="step-info">
-                                <span class="step-name">{{ step.name }}</span>
+                                <div class="step-icon"><i :class="'fa-solid ' + s.icon"></i></div>
+                                <div class="step-text">
+                                    <div class="step-title">{{ s.label }}</div>
+                                    <div class="step-sub">{{ s.sub }}</div>
+                                </div>
                             </div>
-                            <div>
-                                <span v-if="getStepResult(step.name)" class="badge badge-passed">PASSED</span>
-                                <span v-else-if="status === 'RUNNING'" class="badge badge-running">WAITING</span>
-                                <span v-else class="badge badge-idle">READY</span>
-                            </div>
+                            <span class="step-badge" :class="getStepBadge(s.key)">{{ getStepStatus(s.key) }}</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel: Execution Terminal Logs -->
-            <div>
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Real-Time Execution Logs</span>
-                    </div>
-                    <div class="terminal-box" ref="term">
-                        <div v-if="logs.length === 0" class="t-time">Ready for test execution...</div>
-                        <div v-for="(log, idx) in logs" :key="idx" class="terminal-line">
-                            <span class="t-time">[{{ log.timestamp }}]</span>
-                            <span :class="'t-' + log.level.toLowerCase()">{{ log.message }}</span>
+                        <div v-if="expandedSteps[s.key] || (findResult(s.key) && findResult(s.key).status === 'FAILED')" class="step-traceback">
+                            <strong><i class="fa-solid fa-bug"></i> Traceback / Failure Details:</strong><br>
+                            {{ getStepDetail(s.key) || 'Step completed successfully with 0 assertions failed.' }}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- COLUMN 2: LIVE BROWSER FRAME & SCREENSHOTS -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fa-solid fa-display"></i> Live Browser Frame</span>
+                <span style="font-size:0.68rem; color:var(--muted);" v-if="latestScreenshot">Click to enlarge</span>
+            </div>
+            <div class="panel-body">
+                <div class="preview-box">
+                    <img v-if="latestScreenshot" :src="getImageUrl(latestScreenshot)" class="preview-img" @click="openModal(getImageUrl(latestScreenshot))" @error="latestScreenshot = null" alt="Live Frame">
+                    <div v-else style="text-align:center; color:var(--muted);">
+                        <i class="fa-solid fa-camera" style="font-size:2rem; opacity:0.4; margin-bottom:8px; display:block;"></i>
+                        <span style="font-size:0.78rem;">No active frame captured</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:8px;">
+                    <div class="panel-title" style="font-size:0.78rem; color:var(--primary);">
+                        <i class="fa-solid fa-images"></i> Historical Step Frame Gallery
+                    </div>
+                    <button @click="clearScreenshots" class="log-filter-btn" style="background:rgba(239,68,68,0.1); color:var(--red); border-color:rgba(239,68,68,0.3);" title="Delete all step frame captures">
+                        <i class="fa-solid fa-trash"></i> Clear Captures
+                    </button>
+                </div>
+
+                <div class="gallery-grid">
+                    <div v-for="thumb in galleryThumbs" :key="thumb.file" class="gallery-thumb" @click="openModal(getImageUrl(thumb.file))">
+                        <img :src="getImageUrl(thumb.file)" :alt="thumb.label" onError="this.parentElement.style.display='none'">
+                        <label>{{ thumb.label }}</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMN 3: CREDENTIALS & TERMINAL LOGS -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fa-solid fa-terminal"></i> Console &amp; Account State</span>
+                <button @click="copyLogs" class="log-filter-btn" style="background:var(--primary); color:#fff;"><i class="fa-solid fa-copy"></i> Copy Logs</button>
+            </div>
+            <div class="panel-body">
+
+                <!-- PROVISIONED CREDENTIALS INSPECTOR -->
+                <div class="cred-card" v-if="credentials.student_id">
+                    <div class="cred-head"><i class="fa-solid fa-id-card"></i> Provisioned Student Account</div>
+                    <div class="cred-item">
+                        <span style="color:var(--muted);">Student Name:</span>
+                        <span class="cred-val">{{ credentials.full_name }}</span>
+                    </div>
+                    <div class="cred-item">
+                        <span style="color:var(--muted);">Permanent ID:</span>
+                        <span class="cred-val">{{ credentials.student_id }}</span>
+                    </div>
+                    <div class="cred-item">
+                        <span style="color:var(--muted);">Institutional Email:</span>
+                        <span class="cred-val">{{ credentials.institutional_email }}</span>
+                    </div>
+                    <div class="cred-item">
+                        <span style="color:var(--muted);">Portal Password:</span>
+                        <span class="cred-val">{{ credentials.password }}</span>
+                    </div>
+                </div>
+
+                <!-- LOG FILTER BAR -->
+                <div class="log-filter-bar">
+                    <button v-for="f in ['ALL', 'SUCCESS', 'STEPS', 'WARN', 'ERROR']" :key="f" class="log-filter-btn" :class="{ active: logFilter === f }" @click="logFilter = f">
+                        {{ f }}
+                    </button>
+                </div>
+
+                <input type="text" v-model="logSearch" placeholder="Search terminal output..." class="log-search">
+
+                <!-- TERMINAL CONSOLE -->
+                <div class="terminal" ref="term">
+                    <div v-for="(log, i) in filteredLogs" :key="i" class="t-line">
+                        <span class="t-ts">[{{ log.timestamp }}]</span>
+                        <span :class="'t-' + (log.level || 'info').toLowerCase()">{{ log.message }}</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
-    <script>
-        const { createApp } = Vue;
+    <!-- LIGHTBOX MODAL -->
+    <div v-if="modalSrc" class="modal-backdrop" @click.self="modalSrc = null">
+        <button class="modal-close" @click="modalSrc = null">✕</button>
+        <img :src="modalSrc" class="modal-img" alt="Step Screenshot" @error="modalSrc = null">
+    </div>
 
-        createApp({
-            data() {
-                return {
-                    headless: false,
-                    status: 'IDLE',
-                    duration: 0,
-                    latestScreenshot: null,
-                    logs: [],
-                    results: [],
-                    lastUpdate: Date.now(),
-                    pollTimer: null,
-                    steps: [
-                        { name: '1. Student Pre-Registration' },
-                        { name: '2. Registrar Verification' },
-                        { name: '3. Academic Advising' },
-                        { name: '4. Medical Clearance' },
-                        { name: '5. Cashier Payment' },
-                        { name: '6. IT Center Promotion' },
-                        { name: '7. Student Portal Verification' }
-                    ]
-                };
-            },
-            methods: {
-                async runTest() {
-                    try {
-                        const res = await fetch('/api/run-test', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ headless: this.headless })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.status = 'RUNNING';
-                            this.pollStatus();
-                        }
-                    } catch (err) {
-                        console.error('Failed to launch test:', err);
-                    }
-                },
-                async pollStatus() {
-                    try {
-                        const res = await fetch('/api/status');
-                        const data = await res.json();
-                        this.status = data.status;
-                        this.duration = data.duration;
-                        this.logs = data.logs || [];
-                        this.results = data.results || [];
-                        if (data.latest_screenshot) {
-                            this.latestScreenshot = data.latest_screenshot;
-                            this.lastUpdate = Date.now();
-                        }
+</div>
 
-                        if (this.status === 'RUNNING') {
-                            this.pollTimer = setTimeout(() => this.pollStatus(), 800);
-                        }
-                    } catch (err) {
-                        console.warn('Status poll error:', err);
-                    }
-                },
-                getStepResult(stepName) {
-                    return this.results.find(r => r.step === stepName);
+<script>
+const { createApp } = Vue;
+createApp({
+    data() {
+        return {
+            testServer: 'http://localhost:8090',
+            isServerOnline: true,
+            headless: false,
+            mode: 'all',
+            status: 'IDLE',
+            duration: 0,
+            logs: [],
+            results: [],
+            latestScreenshot: null,
+            lastUpdate: Date.now(),
+            modalSrc: null,
+            credentials: {},
+            isRunning: false,
+            logFilter: 'ALL',
+            logSearch: '',
+            expandedSteps: {},
+            allSteps: [
+                { num: '0', key: '0. DB Cleanup',                          label: '0. Purge Stale Test Data',        sub: 'Database Purge & Reset',       icon: 'fa-database' },
+                { num: '1', key: '1. Student Pre-Registration',             label: '1. Online Application Form',      sub: 'Applicant Pre-Registration',   icon: 'fa-user-pen' },
+                { num: '2', key: '2. Registrar Verification',               label: '2. Registrar Document Check',     sub: 'Document Approval State',      icon: 'fa-clipboard-check' },
+                { num: '3', key: '3. Academic Advising',                    label: '3. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',  icon: 'fa-graduation-cap' },
+                { num: '4', key: '4. Medical Clearance',                    label: '4. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',   icon: 'fa-stethoscope' },
+                { num: '5', key: '5. Cashier Payment',                      label: '5. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',    icon: 'fa-wallet' },
+                { num: '6', key: '6. IT Center Promotion',                  label: '6. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',     icon: 'fa-id-card' },
+                { num: '7', key: '7. Student Portal Verification',          label: '7. Student Portal Live Login',    sub: 'Portal Credential Verification', icon: 'fa-desktop' },
+                { num: '8', key: '8. Admin Student Accounts Check',         label: '8. Admin Directory Audit',        sub: 'Admin Directory Verification', icon: 'fa-shield-halved' },
+                { num: '9', key: '9. Profile UI & Audit Logs Verification', label: '9. Staff Profile & Log Audit',    sub: 'Profile UI Audit Verification', icon: 'fa-user-gear' }
+            ],
+            galleryThumbs: [
+                { file: 'step01_registration.png', label: '1. Pre-Registration' },
+                { file: 'step02_registrar.png',    label: '2. Registrar' },
+                { file: 'step03_helpdesk.png',     label: '3. Helpdesk' },
+                { file: 'step04_medical.png',      label: '4. Medical' },
+                { file: 'step05_cashier.png',      label: '5. Cashier' },
+                { file: 'step06_it_center.png',    label: '6. IT Center' },
+                { file: 'step07_student_portal_dashboard.png', label: '7. Student Portal' },
+                { file: 'step08_admin_student_accounts.png',   label: '8. Admin Audit' }
+            ]
+        };
+    },
+    computed: {
+        passedCount() { return this.results.filter(r => r.status === 'PASSED').length; },
+        failedCount()  { return this.results.filter(r => r.status === 'FAILED').length; },
+        statusColorCode() {
+            if (this.status === 'PASSED')  return 'var(--green)';
+            if (this.status === 'FAILED')  return 'var(--red)';
+            if (this.status === 'RUNNING') return 'var(--amber)';
+            return 'var(--muted)';
+        },
+        progressPct() {
+            return this.allSteps.length ? Math.round((this.passedCount / this.allSteps.length) * 100) : 0;
+        },
+        filteredLogs() {
+            return this.logs.filter(l => {
+                const matchFilter = this.logFilter === 'ALL' || (l.level && l.level.toUpperCase() === this.logFilter);
+                const matchSearch = !this.logSearch || (l.message && l.message.toLowerCase().includes(this.logSearch.toLowerCase()));
+                return matchFilter && matchSearch;
+            });
+        }
+    },
+    methods: {
+        async runTest() {
+            this.isRunning = true;
+            this.logs = []; this.results = []; this.credentials = {};
+            this.latestScreenshot = null; this.status = 'RUNNING';
+            try {
+                const res = await fetch(this.testServer + '/api/run-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ headless: this.headless, mode: this.mode })
+                });
+                const data = await res.json();
+                if (data.success) { this.pollStatus(); }
+                else {
+                    this.status = 'FAILED'; this.isRunning = false;
+                    this.logs.push({ timestamp: new Date().toTimeString().slice(0,8), level: 'ERROR', message: data.message || 'Failed to start test.' });
                 }
-            },
-            mounted() {
-                this.pollStatus();
+            } catch (err) {
+                this.status = 'FAILED'; this.isRunning = false;
+                this.isServerOnline = false;
+                this.logs.push({ timestamp: new Date().toTimeString().slice(0,8), level: 'ERROR', message: 'Cannot connect to Selenium server at http://localhost:8090. Please launch: python tests/selenium/server.py' });
             }
-        }).mount('#app');
-    </script>
+        },
+        async stopTest() {
+            try {
+                await fetch(this.testServer + '/api/stop-test', { method: 'POST' });
+                this.status = 'CANCELLED';
+                this.isRunning = false;
+            } catch (err) {}
+        },
+        async pollStatus() {
+            try {
+                const res = await fetch(this.testServer + '/api/status');
+                const data = await res.json();
+                this.isServerOnline = true;
+                this.status   = data.status   || 'IDLE';
+                this.duration = data.duration || 0;
+                this.logs     = data.logs     || [];
+                this.results  = data.results  || [];
+                if (data.latest_screenshot) { this.latestScreenshot = data.latest_screenshot; this.lastUpdate = Date.now(); }
+
+                // Extract credentials
+                const credLog = this.logs.find(l => l.level === 'SUCCESS' && l.message && l.message.startsWith('CREATED STUDENT'));
+                if (credLog && !this.credentials.student_id) {
+                    const m = credLog.message.match(/ID: ([\w-]+) \| Email: ([\w.@]+) \| Password: (\S+)/);
+                    if (m) {
+                        const refLog = this.logs.find(l => l.message && l.message.includes('Reference Number:'));
+                        const profLog = this.logs.find(l => l.message && l.message.includes('Generated Profile:'));
+                        this.credentials = {
+                            student_id: m[1], institutional_email: m[2], password: m[3],
+                            full_name: profLog ? (profLog.message.match(/Generated Profile: ([^|]+)/)||[])[1]||'' : '',
+                            reference_number: refLog ? (refLog.message.match(/(REF-[\w-]+)/)||[])[1]||'' : ''
+                        };
+                    }
+                }
+
+                this.$nextTick(() => { if (this.$refs.term) this.$refs.term.scrollTop = this.$refs.term.scrollHeight; });
+                if (this.status === 'RUNNING') { setTimeout(() => this.pollStatus(), 700); }
+                else { this.isRunning = false; }
+            } catch {
+                this.isServerOnline = false;
+                this.isRunning = false;
+            }
+        },
+        findResult(key) {
+            return this.results.find(r => r.step && r.step === key);
+        },
+        getStepClass(key) {
+            const r = this.findResult(key);
+            if (!r && this.isRunning) return '';
+            if (!r) return '';
+            if (r.status === 'PASSED') return 'passed';
+            if (r.status === 'FAILED') return 'failed';
+            return 'active';
+        },
+        getStepBadge(key) {
+            const r = this.findResult(key);
+            if (!r && this.isRunning) return 'badge-idle';
+            if (!r) return 'badge-idle';
+            if (r.status === 'PASSED') return 'badge-passed';
+            if (r.status === 'FAILED') return 'badge-failed';
+            return 'badge-running';
+        },
+        getStepStatus(key) {
+            const r = this.findResult(key);
+            if (!r) return 'Ready';
+            return r.status;
+        },
+        getStepDetail(key) {
+            const r = this.findResult(key);
+            if (r && r.details) return r.details;
+            return '';
+        },
+        toggleTraceback(key) {
+            this.expandedSteps[key] = !this.expandedSteps[key];
+        },
+        copyLogs() {
+            const text = this.logs.map(l => `[${l.timestamp}] [${l.level}] ${l.message}`).join('\n');
+            navigator.clipboard.writeText(text);
+            alert('Terminal log report copied to clipboard!');
+        },
+        getImageUrl(file) {
+            if (!file) return '';
+            const filename = file.split(/[/\\]/).pop();
+            return `${this.testServer}/screenshots/${filename}?t=${this.lastUpdate}`;
+        },
+        async clearScreenshots() {
+            if (!confirm('Are you sure you want to delete all historical step screenshots?')) return;
+            try {
+                const res = await fetch(this.testServer + '/api/clear-screenshots', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    this.latestScreenshot = null;
+                    this.lastUpdate = Date.now();
+                    alert(data.message || 'Gallery captures cleared!');
+                }
+            } catch (err) {
+                alert('Failed to clear screenshots.');
+            }
+        },
+        openModal(src) { 
+            if (src && !src.includes('null') && !src.includes('undefined')) {
+                this.modalSrc = src; 
+            }
+        }
+    },
+    mounted() { this.pollStatus(); }
+}).mount('#app');
+</script>
 </body>
 </html>

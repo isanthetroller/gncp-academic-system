@@ -15,6 +15,45 @@
     const SidebarNav = {
         props: ['navItems', 'currentView', 'currentUser'],
         emits: ['set-view'],
+        data() {
+            return {
+                avatarFailed: false
+            };
+        },
+        methods: {
+            onAvatarError() {
+                this.avatarFailed = true;
+            },
+            formattedAvatar(avatar) {
+                if (!avatar) return null;
+                if (avatar.startsWith('data:image') || avatar.startsWith('http://') || avatar.startsWith('https://')) {
+                    return avatar;
+                }
+                if (avatar.startsWith('../')) {
+                    return avatar;
+                }
+                if (avatar.startsWith('uploads/')) {
+                    return '../' + avatar;
+                }
+                return '../uploads/avatars/' + avatar.replace(/^\/+/, '');
+            },
+            formattedRole(role) {
+                if (!role) return 'Registrar Officer';
+                const r = String(role).toUpperCase();
+                if (r === 'REGISTRAR') return 'Registrar Officer';
+                if (r === 'SUPER_ADMIN') return 'Executive Admin';
+                if (r === 'ADMIN') return 'System Administrator';
+                return r.replace(/_/g, ' ');
+            },
+            displayName(user) {
+                if (!user) return 'Registrar Staff';
+                const name = user.name || user.username || 'Registrar Staff';
+                if (name.toLowerCase() === 'go-on super admin' || name.toLowerCase() === 'super admin') {
+                    return 'System Administrator';
+                }
+                return name;
+            }
+        },
         template: `
             <aside class="sidebar">
                 <div class="brand">
@@ -25,39 +64,45 @@
                     </div>
                 </div>
 
-
-                <div class="nav-body">
-                    <div v-for="cat in navItems" :key="cat.category">
-                        <div class="nav-cat">{{ cat.category }}</div>
-                        <button v-for="item in cat.items" :key="item.key"
-                                class="nav-item"
-                                :class="{ active: currentView === item.key }"
-                                @click.prevent="$emit('set-view', item.key)">
-                            <i :class="item.icon"></i> {{ item.label }}
-                        </button>
+                <nav class="nav-body">
+                    <div v-for="(cat, cIdx) in navItems" :key="cat.category">
+                        <div class="nav-cat" :style="cIdx > 0 ? 'margin-top: 8px;' : ''">{{ cat.category }}</div>
+                        <div v-for="item in cat.items" :key="item.key" class="nav-category-wrapper">
+                            <button class="nav-cat-header nav-item-top"
+                                    :class="{ active: currentView === item.key }"
+                                    @click.prevent="$emit('set-view', item.key)">
+                                <span><i :class="item.icon"></i> {{ item.label }}</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div style="margin-top: 10px;">
-                        <div class="nav-cat">Account</div>
-                        <a href="../shared/profile.html" class="nav-item" style="text-decoration:none;">
-                            <i class="fa-solid fa-user-circle"></i> My Profile
+                    <div class="nav-cat" style="margin-top: 8px;">Account Management</div>
+                    <div class="nav-category-wrapper">
+                        <a href="../shared/profile.html" class="nav-cat-header nav-item-top" style="text-decoration:none;">
+                            <span><i class="fa-solid fa-user-circle"></i> My Account Profile</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem; opacity:0.6;"></i>
                         </a>
-                        <button class="nav-item nav-logout" @click.prevent="$emit('set-view', 'logout')">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </div>
+                    <div class="nav-category-wrapper" style="margin-top: 6px;">
+                        <button class="nav-cat-header nav-item-top nav-logout" @click.prevent="$emit('set-view', 'logout')">
+                            <span><i class="fa-solid fa-right-from-bracket"></i> Sign Out / Logout</span>
                         </button>
                     </div>
-                </div>
+                </nav>
 
-                <div class="sidebar-footer" v-if="currentUser">
-                    <div class="footer-avatar">
-                        <img v-if="currentUser.avatar" :src="currentUser.avatar" alt="Avatar">
-                        <span v-else>{{ ((currentUser.name || currentUser.username) || 'R').substring(0,2).toUpperCase() }}</span>
+                <a href="../shared/profile.html" style="text-decoration:none; color:inherit;" title="View & Edit Profile">
+                    <div class="sidebar-footer" v-if="currentUser">
+                        <div class="footer-avatar">
+                            <img v-if="currentUser.avatar && !avatarFailed" :src="formattedAvatar(currentUser.avatar)" alt="" @error="onAvatarError">
+                            <span v-else>{{ displayName(currentUser).substring(0,2).toUpperCase() }}</span>
+                        </div>
+                        <div class="footer-info">
+                            <strong>{{ displayName(currentUser) }}</strong>
+                            <span>{{ formattedRole(currentUser.role) }}</span>
+                        </div>
+                        <i class="fa-solid fa-gear" style="font-size:0.85rem; color:var(--gold, #D4AF37); opacity:0.75; transition: transform 0.2s ease;" onmouseenter="this.style.transform='rotate(45deg)'" onmouseleave="this.style.transform='rotate(0deg)'"></i>
                     </div>
-                    <div class="footer-info">
-                        <strong>{{ currentUser.name || currentUser.username }}</strong>
-                        <span>{{ currentUser.role || 'REGISTRAR' }}</span>
-                    </div>
-                </div>
+                </a>
             </aside>
         `
     };

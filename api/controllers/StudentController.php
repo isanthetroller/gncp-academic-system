@@ -44,4 +44,21 @@ class StudentController {
             'data' => $student
         ];
     }
+
+    public function cleanupTestRecords($payload) {
+        $pattern = $payload['email_pattern'] ?? 'test.student.%@gncp.edu.ph';
+        try {
+            $deleted = $this->studentModel->deleteTestRecords($pattern);
+            return [
+                'success' => true,
+                'data' => ['deleted' => $deleted],
+                'message' => "Successfully purged {$deleted} test records."
+            ];
+        } catch (Exception $e) {
+            if (function_exists('logAppError')) {
+                logAppError("Cleanup Test Records Error: " . $e->getMessage());
+            }
+            return ['success' => false, 'message' => $e->getMessage(), 'code' => 500];
+        }
+    }
 }

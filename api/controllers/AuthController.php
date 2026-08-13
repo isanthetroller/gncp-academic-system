@@ -55,14 +55,14 @@ class AuthController {
 
         // Set session keys matching what all station frontends expect
         $userAvatar = $user['avatar'] ?? $user['photo'] ?? null;
-        $sessionPayload = json_encode([
+        $sessionPayload = [
             'username'             => $user['username'],
             'name'                 => $user['name'],
             'email'                => $user['email'] ?? '',
             'role'                 => $role,
             'avatar'               => $userAvatar,
             'must_change_password' => $mustChangePassword
-        ]);
+        ];
         if ($role === 'SUPER_ADMIN' || $role === 'ADMIN') {
             $_SESSION['gncp_admin_user'] = $sessionPayload;
         } else {
@@ -103,7 +103,7 @@ class AuthController {
             return ['success' => false, 'message' => 'User account not found.', 'code' => 404];
         }
 
-        $isValidPassword = password_verify($currentPassword, $user['password']) || $currentPassword === 'admin123';
+        $isValidPassword = password_verify($currentPassword, $user['password']);
         if (!$isValidPassword) {
             return ['success' => false, 'message' => 'Current password is incorrect.', 'code' => 401];
         }
@@ -113,8 +113,16 @@ class AuthController {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
-            if (isset($_SESSION['user']) && $_SESSION['user']['username'] === $username) {
-                $_SESSION['user']['must_change_password'] = false;
+            $sessionKeys = ['gncp_admin_user', 'gncp_station_user'];
+            foreach ($sessionKeys as $key) {
+                if (isset($_SESSION[$key])) {
+                    $sessionUser = is_string($_SESSION[$key]) ? json_decode($_SESSION[$key], true) : $_SESSION[$key];
+                    if (is_array($sessionUser) && ($sessionUser['username'] ?? '') === $username) {
+                        $sessionUser['must_change_password'] = false;
+                        $_SESSION[$key] = is_string($_SESSION[$key]) ? json_encode($sessionUser) : $sessionUser;
+                        break;
+                    }
+                }
             }
 
             return ['success' => true, 'message' => 'Password updated successfully. You can now use your new password.'];
@@ -136,9 +144,6 @@ class AuthController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        if (isset($_SESSION['user'])) {
-            return ['success' => true, 'data' => $_SESSION['user']];
-        }
         $stationSession = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
         if ($stationSession) {
             $parsed = is_array($stationSession) ? $stationSession : json_decode($stationSession, true);
@@ -153,12 +158,10 @@ class AuthController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $sessionUser = $_SESSION['user'] ?? null;
-        if (!$sessionUser) {
-            $raw = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
-            if ($raw) {
-                $sessionUser = is_array($raw) ? $raw : json_decode($raw, true);
-            }
+        $sessionUser = null;
+        $raw = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
+        if ($raw) {
+            $sessionUser = is_array($raw) ? $raw : json_decode($raw, true);
         }
         $username = $sessionUser['username'] ?? $_GET['username'] ?? '';
         if (!$username) {
@@ -177,7 +180,12 @@ class AuthController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $username = $_SESSION['user']['username'] ?? $payload['username'] ?? '';
+        $stationUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
+        if (is_string($stationUser)) {
+            $stationUser = json_decode($stationUser, true);
+        }
+
+        $username = $payload['username'] ?? ($stationUser['username'] ?? '');
         if (!$username) {
             return ['success' => false, 'message' => 'Unauthorized or missing username.', 'code' => 401];
         }
@@ -192,12 +200,20 @@ class AuthController {
 
         $success = $this->userModel->updateProfile($username, $name, $email, $avatar);
         if ($success) {
-            if (isset($_SESSION['user']) && $_SESSION['user']['username'] === $username) {
-                $_SESSION['user']['name'] = $name;
-                $_SESSION['user']['email'] = $email;
-                if ($avatar !== null) {
-                    $_SESSION['user']['avatar'] = $avatar;
-                    $_SESSION['user']['photo'] = $avatar;
+            $sessionKeys = ['gncp_admin_user', 'gncp_station_user'];
+            foreach ($sessionKeys as $key) {
+                if (isset($_SESSION[$key])) {
+                    $sessionUser = is_string($_SESSION[$key]) ? json_decode($_SESSION[$key], true) : $_SESSION[$key];
+                    if (is_array($sessionUser) && ($sessionUser['username'] ?? '') === $username) {
+                        $sessionUser['name'] = $name;
+                        $sessionUser['email'] = $email;
+                        if ($avatar !== null) {
+                            $sessionUser['avatar'] = $avatar;
+                            $sessionUser['photo'] = $avatar;
+                        }
+                        $_SESSION[$key] = is_string($_SESSION[$key]) ? json_encode($sessionUser) : $sessionUser;
+                        break;
+                    }
                 }
             }
             return ['success' => true, 'message' => 'Profile details updated successfully.'];
@@ -211,7 +227,7 @@ class AuthController {
             session_start();
         }
 
-        $sessionUser = $_SESSION['user'] ?? $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? $_SESSION['gncp_student_user'] ?? null;
+        $sessionUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? $_SESSION['gncp_student_user'] ?? null;
         if (is_string($sessionUser)) {
             $sessionUser = json_decode($sessionUser, true);
         }
@@ -237,12 +253,15 @@ class AuthController {
         // Target storage directories
         $dir1 = __DIR__ . '/../../shared/assets/uploads';
         $dir2 = __DIR__ . '/../../stations/it-center/assets/uploads';
+        $dir3 = __DIR__ . '/../../uploads/avatars';
 
         if (!is_dir($dir1)) @mkdir($dir1, 0777, true);
         if (!is_dir($dir2)) @mkdir($dir2, 0777, true);
+        if (!is_dir($dir3)) @mkdir($dir3, 0777, true);
 
         @file_put_contents($dir1 . '/' . $filename, $decoded);
         @file_put_contents($dir2 . '/' . $filename, $decoded);
+        @file_put_contents($dir3 . '/' . $filename, $decoded);
 
         // Update database for station_users, students, and pre_enrollments
         $profile = $this->userModel->getProfile($username);

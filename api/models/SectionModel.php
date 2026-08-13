@@ -1,6 +1,6 @@
 <?php
 /**
- * Section Model — Handles sections, subject_sections, academic_terms
+ * Section Model — Handles sections, subject_sections, academic_periods
  */
 class SectionModel {
     private $pdo;
@@ -15,51 +15,80 @@ class SectionModel {
     }
 
     public function getActiveTerm() {
-        $stmt = $this->pdo->query("SELECT * FROM `academic_terms` WHERE `is_active` = 1 LIMIT 1");
+        $stmt = $this->pdo->query("SELECT * FROM `academic_periods` WHERE `status` = 'Active' LIMIT 1");
         return $stmt->fetch();
     }
 
     public function getAllTerms() {
-        $stmt = $this->pdo->query("SELECT * FROM `academic_terms` ORDER BY `id` DESC");
+        $stmt = $this->pdo->query("SELECT * FROM `academic_periods` ORDER BY `id` DESC");
         return $stmt->fetchAll();
     }
 
     public function saveSection($sec) {
+        // Fetch active period ID if academicPeriodId not explicitly provided
+        $activePeriodId = $sec['academicPeriodId'] ?? $sec['academic_period_id'] ?? null;
+        if (!$activePeriodId) {
+            $activeTerm = $this->getActiveTerm();
+            $activePeriodId = $activeTerm['id'] ?? 1;
+        }
+
         if (!empty($sec['id'])) {
-            $stmt = $this->pdo->prepare("UPDATE `sections` SET `name`=:name, `code`=:code, `program`=:prog, `year_level`=:yl, `capacity`=:cap, `status`=:status WHERE `id`=:id");
+            $stmt = $this->pdo->prepare("
+                UPDATE `sections` 
+                SET `code` = :code, 
+                    `program` = :prog, 
+                    `year_level` = :yl, 
+                    `academic_period_id` = :ap_id, 
+                    `curriculum_version` = :cver, 
+                    `capacity` = :cap, 
+                    `adviser` = :adviser 
+                WHERE `id` = :id
+            ");
             $stmt->execute([
-                'name'   => $sec['name'],
-                'code'   => $sec['code'],
-                'prog'   => $sec['program'],
-                'yl'     => $sec['yearLevel'] ?? '1st Year',
-                'cap'    => (int)($sec['capacity'] ?? 40),
-                'status' => $sec['status'] ?? 'Open',
-                'id'     => (int)$sec['id']
+                'code'    => $sec['code'],
+                'prog'    => $sec['program'],
+                'yl'      => $sec['yearLevel'] ?? $sec['year_level'] ?? '1st Year',
+                'ap_id'   => (int)$activePeriodId,
+                'cver'    => $sec['curriculumVersion'] ?? $sec['curriculum_version'] ?? '2022 Curriculum',
+                'cap'     => (int)($sec['capacity'] ?? 40),
+                'adviser' => $sec['adviser'] ?? null,
+                'id'      => (int)$sec['id']
             ]);
         } else {
-            $stmt = $this->pdo->prepare("INSERT INTO `sections` (`name`, `code`, `program`, `year_level`, `capacity`, `enrolled_count`, `status`) VALUES (:name, :code, :prog, :yl, :cap, 0, :status)");
+            $stmt = $this->pdo->prepare("
+                INSERT INTO `sections` (`code`, `program`, `year_level`, `academic_period_id`, `curriculum_version`, `capacity`, `adviser`) 
+                VALUES (:code, :prog, :yl, :ap_id, :cver, :cap, :adviser)
+            ");
             $stmt->execute([
-                'name'   => $sec['name'],
-                'code'   => $sec['code'],
-                'prog'   => $sec['program'],
-                'yl'     => $sec['yearLevel'] ?? '1st Year',
-                'cap'    => (int)($sec['capacity'] ?? 40),
-                'status' => $sec['status'] ?? 'Open'
+                'code'    => $sec['code'],
+                'prog'    => $sec['program'],
+                'yl'      => $sec['yearLevel'] ?? $sec['year_level'] ?? '1st Year',
+                'ap_id'   => (int)$activePeriodId,
+                'cver'    => $sec['curriculumVersion'] ?? $sec['curriculum_version'] ?? '2022 Curriculum',
+                'cap'     => (int)($sec['capacity'] ?? 40),
+                'adviser' => $sec['adviser'] ?? null
             ]);
         }
         return $this->getAllSections();
     }
 
     public function saveTerm($term) {
-        if (!empty($term['isActive'])) {
-            $this->pdo->query("UPDATE `academic_terms` SET `is_active` = 0");
+        $status = !empty($term['isActive']) || ($term['status'] ?? '') === 'Active' ? 'Active' : 'Draft';
+        if ($status === 'Active') {
+            $this->pdo->query("UPDATE `academic_periods` SET `status` = 'Closed' WHERE `status` = 'Active'");
         }
-        $stmt = $this->pdo->prepare("INSERT INTO `academic_terms` (`school_year`, `semester`, `is_active`) VALUES (:sy, :sem, :active)");
+        $name = $term['name'] ?? (($term['semester'] ?? '1st Semester') . ' ' . ($term['schoolYear'] ?? $term['academicYear'] ?? '2026-2027'));
+        $stmt = $this->pdo->prepare("
+            INSERT INTO `academic_periods` (`name`, `academic_year`, `semester`, `status`) 
+            VALUES (:name, :sy, :sem, :status)
+        ");
         $stmt->execute([
-            'sy'     => $term['schoolYear'],
-            'sem'    => $term['semester'],
-            'active' => !empty($term['isActive']) ? 1 : 0
+            'name'   => $name,
+            'sy'     => $term['schoolYear'] ?? $term['academicYear'] ?? '2026-2027',
+            'sem'    => $term['semester'] ?? '1st Semester',
+            'status' => $status
         ]);
         return $this->getAllTerms();
     }
 }
+

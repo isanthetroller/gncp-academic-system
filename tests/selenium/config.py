@@ -21,7 +21,9 @@ PAGES = {
     "CASHIER":      f"{BASE_URL}/stations/payment-processing/index.html",
     "IT_CENTER":    f"{BASE_URL}/stations/it-center/index.html",
     "ADMIN":        f"{BASE_URL}/admin/index.html",
-    "STUDENT_PORTAL": f"{BASE_URL}/student-portal/index.html"
+    "STUDENT_PORTAL": f"{BASE_URL}/student-portal/index.html",
+    "STUDENT_PORTAL_LOGIN": f"{BASE_URL}/student-portal/login.html",
+    "PROFILE":      f"{BASE_URL}/shared/profile.html"
 }
 
 # Artifact Directories

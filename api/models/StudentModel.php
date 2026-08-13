@@ -102,13 +102,10 @@ class StudentModel {
     }
 
     public function getQueue() {
-        $stmt = $this->pdo->query("SELECT * FROM `pre_enrollments` ORDER BY `id` ASC");
-        $rawList = $stmt->fetchAll();
-        $result = [];
-        foreach ($rawList as $row) {
-            $result[] = $this->formatQueueItem($row);
-        }
-        return $result;
+        // Delegate to QueueService for dual-table aggregation (pre_enrollments + students),
+        // proper status filtering, and N+1-free performance.
+        require_once __DIR__ . '/../../stations/backend/services/QueueService.php';
+        return QueueService::fetchQueue($this->pdo);
     }
 
     public function updatePreEnrollment($refNo, $updateData) {
@@ -211,5 +208,23 @@ class StudentModel {
             'payment' => json_decode($row['payment_data'] ?? '{}', true),
             'enrollment' => json_decode($row['enrollment_data'] ?? '{}', true)
         ];
+    }
+
+    public function deleteTestRecords($pattern = 'test.student.%@gncp.edu.ph') {
+        $deleted = 0;
+        try {
+            $stmt1 = $this->pdo->prepare("DELETE FROM `pre_enrollments` WHERE `email` LIKE :pattern1 OR `email` LIKE 'test.%@gncp.edu.ph' OR `first_name` LIKE 'Test%'");
+            $stmt1->execute(['pattern1' => $pattern]);
+            $deleted += $stmt1->rowCount();
+
+            $stmt2 = $this->pdo->prepare("DELETE FROM `students` WHERE `email` LIKE :pattern2 OR `email` LIKE 'test.%@gncp.edu.ph' OR `first_name` LIKE 'Test%'");
+            $stmt2->execute(['pattern2' => $pattern]);
+            $deleted += $stmt2->rowCount();
+        } catch (Exception $e) {
+            if (function_exists('logAppError')) {
+                logAppError("deleteTestRecords Error: " . $e->getMessage());
+            }
+        }
+        return $deleted;
     }
 }

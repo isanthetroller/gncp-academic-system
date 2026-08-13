@@ -108,6 +108,14 @@
         getNstpOptions() { return nstpOptions; },
         getPaymentModes() { return paymentModes; },
         getMedicalConditionOptions() { return medicalConditionOptions; },
+        getDocKey(item) {
+            if (!item) return 'other';
+            const text = item.toLowerCase().trim();
+            if (text.startsWith('form 138') || (text.includes('report card') && !text.includes('old high school'))) return 'reportCard';
+            if (text.startsWith('psa birth certificate')) return 'psa';
+            if (text.startsWith('original certificate of good moral')) return 'goodMoral';
+            return text.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        },
 
         getRequirements(studentType, educationPathway = 'REGULAR') {
             if (studentType === 'FRESHMAN') {
@@ -116,24 +124,21 @@
                         'ALS Certificate of Rating (COR) with Passing Marks (Original & Photocopy)',
                         'ALS Certificate of Completion (Original)',
                         'PSA Birth Certificate (Photocopy)',
-                        '2 pieces recent 2x2 color pictures (white background with name tag)',
-                        'Long Brown Envelope'
+                        '2 pieces recent 2x2 color pictures (white background with name tag)'
                     ];
                 } else if (educationPathway === 'OLD_CURRICULUM') {
                     return [
                         'Old High School Report Card (Form 138-A) / Transcript of Record (Original)',
                         'Original Certificate of Good Moral Character (with dry seal)',
                         'PSA Birth Certificate (Photocopy)',
-                        '2 pieces recent 2x2 color pictures (white background with name tag)',
-                        'Long Brown Envelope'
+                        '2 pieces recent 2x2 color pictures (white background with name tag)'
                     ];
                 } else {
                     return [
                         'Form 138 (Original Senior High School Report Card)',
                         'Original Certificate of Good Moral Character (with dry seal)',
                         'PSA Birth Certificate (Photocopy)',
-                        '2 pieces recent 2x2 color pictures (white background with name tag)',
-                        'Long Brown Envelope'
+                        '2 pieces recent 2x2 color pictures (white background with name tag)'
                     ];
                 }
             } else if (studentType === 'TRANSFEREE') {
@@ -142,15 +147,13 @@
                     'Official Transcript of Records (TOR) or Copy of Grades (for evaluation)',
                     'Original Certificate of Good Moral Character',
                     'PSA Birth Certificate (Photocopy)',
-                    '2 pieces recent 2x2 color pictures (white background with name tag)',
-                    'Long Brown Envelope'
+                    '2 pieces recent 2x2 color pictures (white background with name tag)'
                 ];
             } else {
                 return [
                     'GNCP Student Clearance Form from the previous semester attended',
                     'Evaluation Form signed by the Registrar Coordinator / Academic Dean',
-                    'Student ID Card (for renewal)',
-                    'Long Brown Envelope'
+                    'Student ID Card (for renewal)'
                 ];
             }
         },

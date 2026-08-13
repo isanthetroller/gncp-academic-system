@@ -5,6 +5,9 @@ const computed = Vue.computed;
 const onMounted = Vue.onMounted;
 
 createApp({
+    components: {
+        'station-sidebar': window.StationSidebar
+    },
     setup() {
         const currentView = ref('dashboard');
         const searchQuery = ref('');

@@ -205,6 +205,7 @@ if (typeof PagesView !== 'undefined' && PagesView) {
     if (PagesView.AdmissionsPage) app.component('admissions-page', PagesView.AdmissionsPage);
     if (PagesView.CampusLifePage) app.component('campus-life-page', PagesView.CampusLifePage);
     if (PagesView.PaymentsPage) app.component('payments-page', PagesView.PaymentsPage);
+    if (PagesView.PortalsPage) app.component('portals-page', PagesView.PortalsPage);
 }
 
 app.mount('#app');

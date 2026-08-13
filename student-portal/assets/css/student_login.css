@@ -405,3 +405,16 @@
         padding: 40px 32px;
     }
 }
+
+@media (max-width: 576px) {
+    .student-login-viewport {
+        padding: 12px;
+    }
+    .student-form-pane {
+        padding: 28px 20px;
+    }
+    .student-submit-btn {
+        height: 46px;
+        font-size: 0.92rem;
+    }
+}

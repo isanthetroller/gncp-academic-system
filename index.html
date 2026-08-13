@@ -115,7 +115,6 @@
             display: grid;
             grid-template-columns: 1fr 1.15fr;
             min-height: 640px;
-            transition: var(--transition-smooth);
         }
 
         @media (max-width: 992px) {
@@ -302,7 +301,7 @@
             color: var(--muted-grey);
             font-size: 0.95rem;
             pointer-events: none;
-            transition: var(--transition-smooth);
+            transition: color 0.15s ease;
         }
 
         .form-input {
@@ -314,7 +313,7 @@
             padding: 14px 16px 14px 44px;
             font-size: 0.875rem;
             outline: none;
-            transition: var(--transition-smooth);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
             box-sizing: border-box;
         }
 
@@ -338,7 +337,7 @@
             padding: 14px;
             font-size: 0.875rem;
             cursor: pointer;
-            transition: var(--transition-smooth);
+            transition: background-color 0.15s ease;
             box-shadow: var(--shadow-md);
             display: flex;
             align-items: center;
@@ -351,18 +350,15 @@
 
         .login-btn:hover {
             background: var(--dark-green);
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-1px);
         }
 
         .login-btn:active {
-            transform: translateY(0);
+            opacity: 0.9;
         }
 
         .login-btn:disabled {
             opacity: 0.65;
             cursor: not-allowed;
-            transform: none;
             box-shadow: none;
         }
 
@@ -377,13 +373,6 @@
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            animation: shake 0.4s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
         }
 
         /* --- Launchpad State Layout --- */
@@ -421,7 +410,7 @@
             padding: 6px 14px;
             border-radius: 30px;
             cursor: pointer;
-            transition: var(--transition-smooth);
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
 
         .btn-signout:hover {
@@ -456,7 +445,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: var(--transition-smooth);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
         /* Authorized State */
@@ -469,7 +458,6 @@
         .launchpad-card.authorized:hover {
             border-color: var(--accent-green);
             box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
         }
 
         /* Unauthorized State */
@@ -845,6 +833,7 @@
 
                     fetch('shared/backend/login.php', {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {
                             'Content-Type': 'application/json'
                         },

@@ -50,46 +50,23 @@
      <div id="app" class="dashboard-shell" v-cloak>
          
         <template v-if="currentUser">
-            <aside class="sidebar">
-            <div class="brand">
-                <img src="../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo">
-                <div>
-                    <h1>Go-on National College</h1>
-                    <p>TLC HELPDESK STATION</p>
-                </div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <div class="sidebar-category-group">
-                    <div class="sidebar-category-title">OVERVIEW</div>
-                    <a href="#" @click.prevent="setView('dashboard')" :class="{ active: currentView === 'dashboard' }">
-                        <span class="nav-link-content"><i class="fa-solid fa-gauge"></i> Dashboard</span>
-                    </a>
-                    <a href="#" @click.prevent="setView('queue')" :class="{ active: currentView === 'queue' }">
-                        <span class="nav-link-content"><i class="fa-solid fa-users-line"></i> Student Queue</span>
-                        <span class="nav-badge" v-if="totalInQueue > 0">{{ totalInQueue }}</span>
-                    </a>
-                </div>
-                <div class="sidebar-category-group">
-                    <a href="../../shared/profile.html">
-                        <span class="nav-link-content"><i class="fa-solid fa-user-circle"></i> My Profile</span>
-                    </a>
-                    <a href="#" @click.prevent="handleLogout" style="color: rgba(248,113,113,0.9);">
-                        <span class="nav-link-content"><i class="fa-solid fa-right-from-bracket"></i> Logout</span>
-                    </a>
-                </div>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="sidebar-avatar">
-                    <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar">
-                    <span v-else>{{ (currentUser.name || currentUser.username || 'H').substring(0,2).toUpperCase() }}</span>
-                </div>
-                <div class="sidebar-footer-text">
-                    <strong>{{ currentUser.name || currentUser.username }}</strong>
-                    <span>{{ currentUser.role || 'HELPDESK STAFF' }}</span>
-                </div>
-            </div>
-        </aside>
+            <station-sidebar 
+                station-name="Go-on National College" 
+                station-tag="TLC HELPDESK STATION"
+                :nav-groups="[
+                    {
+                        title: 'Overview & Queue',
+                        items: [
+                            { id: 'dashboard', label: 'Dashboard Overview', icon: 'fa-gauge' },
+                            { id: 'queue', label: 'Student Queue', icon: 'fa-users-line', badge: totalInQueue > 0 ? totalInQueue : null }
+                        ]
+                    }
+                ]"
+                :current-view="currentView"
+                :current-user="currentUser"
+                @set-view="setView"
+                @logout="handleLogout">
+            </station-sidebar>
 
         <main class="main-panel">
             <div class="top-bar">
@@ -395,26 +372,17 @@
                             <div class="panel p-3 mb-3 shadow-sm animate-fade-in" style="background: #FFFBEB; border: 1px solid #FDE68A;">
                                 <h6 class="mb-2" style="color: #92400E; font-weight: 700;"><i class="fa-solid fa-calculator me-2"></i>Tuition &amp; Fee Assessment Preview</h6>
                                 <div class="row g-2 text-dark small">
-                                    <div class="col-8">Tuition Fee ({{ 
-                                        (selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseInt(s.lecture_units) + parseInt(s.lab_units), 0)
-                                    }} Units × ₱650):</div>
-                                    <div class="col-4 text-end fw-semibold">₱{{ 
-                                        ((selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseInt(s.lecture_units) + parseInt(s.lab_units), 0) * 650).toLocaleString('en-US')
-                                    }}</div>
+                                    <div class="col-8">Tuition Fee ({{ (selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseInt(s.lecture_units) + parseInt(s.lab_units), 0) }} Units × ₱650):</div>
+                                    <div class="col-4 text-end fw-semibold">₱{{ ((selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseInt(s.lecture_units) + parseInt(s.lab_units), 0) * 650).toLocaleString('en-US') }}</div>
 
                                     <div class="col-8">Total Laboratory Fees:</div>
-                                    <div class="col-4 text-end fw-semibold">₱{{ 
-                                        (selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseFloat(s.lab_fee), 0).toLocaleString('en-US')
-                                    }}</div>
+                                    <div class="col-4 text-end fw-semibold">₱{{ (selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseFloat(s.lab_fee), 0).toLocaleString('en-US') }}</div>
 
                                     <div class="col-8">Miscellaneous Fees (Reg + Library):</div>
                                     <div class="col-4 text-end fw-semibold">₱2,300</div>
 
                                     <div class="col-8 border-top pt-2 fw-bold text-uppercase" style="color:var(--dark-green);">Total Assessed:</div>
-                                    <div class="col-4 border-top pt-2 text-end fw-bold text-dark fs-6">₱{{ 
-                                        ((selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseInt(s.lecture_units) + parseInt(s.lab_units), 0) * 650 + 
-                                         (selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseFloat(s.lab_fee), 0) + 2300).toLocaleString('en-US')
-                                    }}</div>
+                                    <div class="col-4 border-top pt-2 text-end fw-bold text-dark fs-6">₱{{ ((selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseInt(s.lecture_units) + parseInt(s.lab_units), 0) * 650 + (selectedStudent.prospectusSubjects || []).reduce((acc, s) => acc + parseFloat(s.lab_fee), 0) + 2300).toLocaleString('en-US') }}</div>
                                 </div>
                             </div>
 
@@ -508,6 +476,7 @@
 
     <script src="../../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../../shared/libs/vue.global.js"></script>
+    <script src="../../shared/js/components/StationSidebar.js?v=1"></script>
     <script src="../assets/js/DataBus.js?v=2.5"></script>
     <script src="assets/js/app.js?v=2.5"></script>
 </body>

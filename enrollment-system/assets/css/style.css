@@ -100,19 +100,19 @@ h1, h2, h3, h4, h5, h6 {
  * ------------------------------------------------------------------------- */
 .wizard-card {
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
-    border: 1px solid var(--gray-border) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #e2e8f0 !important;
     overflow: hidden;
 }
 
 .step-title {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--dark-green);
-    font-size: 1.8rem;
+    font-size: 1.6rem;
 }
 
 .step-description {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
 }
 
 /* =========================================================
@@ -323,48 +323,49 @@ h1, h2, h3, h4, h5, h6 {
  * Tuition evaluated invoice style
  * ------------------------------------------------------------------------- */
 .invoice-container {
-    background-color: #F8F9FA;
-    border: 2px dashed rgba(0, 106, 78, 0.25);
-    border-radius: 16px;
+    background-color: var(--white);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
 }
 
 .invoice-header {
-    border-bottom: 2px solid var(--gray-border);
+    border-bottom: 1px solid #e2e8f0;
     padding-bottom: 12px;
 }
 
 .invoice-title {
     font-family: var(--font-heading);
-    font-weight: 700;
+    font-weight: 800;
     color: var(--dark-green);
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 
 .invoice-meta {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--primary-gold);
     background-color: var(--dark-green);
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: 4px;
 }
 
 .invoice-row {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 500;
     color: var(--text-dark);
 }
 
 .invoice-divider {
-    border-top: 2px dashed var(--text-muted);
-    opacity: 0.35;
+    border-top: 1px solid #e2e8f0;
+    opacity: 0.8;
 }
 
 .total-row {
     font-family: var(--font-heading);
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 800;
 }
 
@@ -373,30 +374,32 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .payment-schedule-box {
-    border: 1px solid var(--gray-border);
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    border-radius: 8px;
 }
 
 /* -------------------------------------------------------------------------
  * Summary panel review styles
  * ------------------------------------------------------------------------- */
 .summary-section {
-    background-color: var(--gray-light);
+    background-color: var(--white);
     padding: 20px;
-    border-radius: 14px;
-    border: 1px solid var(--gray-border);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
 }
 
 .summary-section-title {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--dark-green);
-    font-size: 1.05rem;
-    border-bottom: 2px solid var(--gray-border);
+    font-size: 1rem;
+    border-bottom: 1px solid #e2e8f0;
     padding-bottom: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 14px;
 }
 
 .summary-item {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: var(--text-dark);
 }
 
@@ -592,13 +595,13 @@ h1, h2, h3, h4, h5, h6 {
 .condition-chips-wrap {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 
 .condition-chip {
-    border: 2px solid var(--gray-border);
-    border-radius: 50px;
-    padding: 7px 16px;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    padding: 6px 14px;
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
@@ -612,20 +615,13 @@ h1, h2, h3, h4, h5, h6 {
 .condition-chip:hover {
     border-color: var(--primary-green);
     color: var(--primary-green);
+    background-color: rgba(0, 106, 78, 0.03);
 }
 
 .condition-chip.selected {
     border-color: var(--primary-green);
-    background-color: var(--primary-green);
-    color: var(--white);
-}
-
-/* -------------------------------------------------------------------------
- * Emergency Contact Box
- * ------------------------------------------------------------------------- */
-.emergency-contact-box {
-    background-color: #FFF5F5;
-    border: 2px solid rgba(220, 53, 69, 0.15);
+    background-color: var(--primary-green-light);
+    color: var(--dark-green);
 }
 
 /* -------------------------------------------------------------------------
@@ -727,8 +723,8 @@ h1, h2, h3, h4, h5, h6 {
 .station-content {
     flex: 1;
     background-color: var(--white);
-    border: 2px solid var(--gray-border);
-    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     padding: 16px 20px;
     transition: border-color var(--transition-speed) ease;
 }
@@ -860,6 +856,79 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* -------------------------------------------------------------------------
+ * Comprehensive Mobile & Tablet Responsiveness
+ * ------------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+    .portal-navbar .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .portal-logo {
+        width: 44px;
+        height: 44px;
+    }
+    .portal-brand-main {
+        font-size: 1rem;
+    }
+    .portal-brand-sub {
+        font-size: 0.65rem;
+    }
+    .wizard-card {
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+    .stepper-label {
+        font-size: 0.72rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    main.container {
+        padding-left: 12px;
+        padding-right: 12px;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    .wizard-progress-wrapper {
+        margin-bottom: 1.5rem !important;
+    }
+    .stepper-circle {
+        width: 38px;
+        height: 38px;
+        font-size: 0.88rem;
+    }
+    .wizard-card {
+        padding: 18px 14px;
+        border-radius: 14px;
+    }
+    .wizard-title {
+        font-size: 1.35rem;
+    }
+    .btn-pill {
+        width: 100%;
+        padding: 12px 20px;
+        margin-bottom: 8px;
+    }
+    .d-flex.justify-content-between {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .portal-brand-sub {
+        display: none;
+    }
+    .badge-academic-year {
+        font-size: 0.68rem;
+        padding: 4px 8px !important;
+    }
+    .wizard-card {
+        padding: 14px 10px;
+    }
+}
+
+/* -------------------------------------------------------------------------
  * Print CSS Settings
  * ------------------------------------------------------------------------- */
 @media print {
@@ -894,4 +963,117 @@ h1, h2, h3, h4, h5, h6 {
         margin: 0 auto;
     }
 }
+
+/* -------------------------------------------------------------------------
+ * Document Soft Copy Upload Component
+ * ------------------------------------------------------------------------- */
+.upload-card-custom {
+    border: 1px solid rgba(0, 106, 78, 0.12);
+    border-radius: 16px;
+    background: #ffffff;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+.upload-card-custom:hover {
+    border-color: rgba(0, 106, 78, 0.35);
+    box-shadow: 0 8px 24px rgba(0, 106, 78, 0.08);
+    transform: translateY(-2px);
+}
+.upload-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+.upload-doc-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    line-height: 1.35;
+}
+.upload-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.upload-dropzone:hover {
+    border-color: var(--primary-green);
+    background: rgba(0, 106, 78, 0.03);
+    transform: scale(1.005);
+}
+.upload-dropzone-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 106, 78, 0.08);
+    color: var(--primary-green);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.upload-dropzone:hover .upload-dropzone-icon {
+    transform: translateY(-2px);
+    background: var(--primary-green);
+    color: #ffffff;
+}
+.btn-pill-upload {
+    background-color: var(--primary-green);
+    color: #ffffff !important;
+    border-radius: 50px;
+    padding: 6px 18px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 106, 78, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.upload-dropzone:hover .btn-pill-upload {
+    background-color: var(--primary-green-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 106, 78, 0.35);
+}
+.attached-file-box {
+    background: #f0fdf4;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.file-info-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.file-type-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.file-type-pdf { background: #fee2e2; color: #dc2626; }
+.file-type-img { background: #dbeafe; color: #2563eb; }
+.file-type-doc { background: #f3e8ff; color: #9333ea; }
+.fs-7 { font-size: 0.78rem; }
 

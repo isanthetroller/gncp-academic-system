@@ -438,6 +438,31 @@
                 return text.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
             };
 
+            const activePreviewDoc = ref(null);
+
+            const getDocFile = (item, studentRecord = null) => {
+                const appRecord = studentRecord || selectedApplication.value;
+                if (!appRecord || !appRecord.requirementsData || !appRecord.requirementsData.files) return null;
+                const key = getDocKey(item);
+                return appRecord.requirementsData.files[key] || null;
+            };
+
+            const openDocumentModal = (fileObj) => {
+                activePreviewDoc.value = fileObj;
+            };
+
+            const isImageFile = (pathOrName) => {
+                if (!pathOrName) return false;
+                const ext = pathOrName.split('.').pop().toLowerCase();
+                return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+            };
+
+            const isPdfFile = (pathOrName) => {
+                if (!pathOrName) return false;
+                const ext = pathOrName.split('.').pop().toLowerCase();
+                return ext === 'pdf';
+            };
+
             const isDocVerified = (item) => {
                 if (!selectedApplication.value || !selectedApplication.value.requirementsData) return false;
                 const key = getDocKey(item);
@@ -873,6 +898,12 @@
                 showLogoutConfirm,
                 handleLogout,
                 confirmLogout,
+
+                activePreviewDoc,
+                getDocFile,
+                openDocumentModal,
+                isImageFile,
+                isPdfFile,
 
                 // Academic Catalog States & Methods
                 selectedProgram,

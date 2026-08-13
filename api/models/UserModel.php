@@ -134,8 +134,18 @@ class UserModel {
     }
 
     public function deleteTestUsers($pattern = 'test_%_auto_%') {
-        $stmt = $this->pdo->prepare("DELETE FROM `station_users` WHERE `username` LIKE :pattern");
-        $stmt->execute(['pattern' => $pattern]);
-        return $stmt->rowCount();
+        $stmt1 = $this->pdo->prepare("DELETE FROM `station_users` WHERE `username` LIKE :p1 OR `email` LIKE :p2");
+        $stmt1->execute(['p1' => $pattern, 'p2' => 'test.student.%']);
+        $count1 = $stmt1->rowCount();
+
+        $stmt2 = $this->pdo->prepare("DELETE FROM `pre_enrollments` WHERE `email` LIKE :p2 OR `first_name` LIKE 'Alexander%' OR `first_name` LIKE 'Jasmine%'");
+        $stmt2->execute(['p2' => 'test.student.%']);
+        $count2 = $stmt2->rowCount();
+
+        $stmt3 = $this->pdo->prepare("DELETE FROM `students` WHERE `email` LIKE :p2 OR `temp_reference_no` LIKE 'REF-2026-%'");
+        $stmt3->execute(['p2' => 'test.student.%']);
+        $count3 = $stmt3->rowCount();
+
+        return $count1 + $count2 + $count3;
     }
 }

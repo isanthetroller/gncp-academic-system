@@ -111,7 +111,8 @@
                 seniorHighSchool: '',
                 previousCollege: '',
                 emergencyContactName: '',
-                emergencyContactPhone: ''
+                emergencyContactPhone: '',
+                softCopyDocs: ''
             });
 
             // ── Returning Student Lookup State ────────────────────────────────────────
@@ -200,10 +201,21 @@
 
             fetchActivePrograms();
 
-            const admissionTypes = Model.getAdmissionTypes();
-            const nstpOptions = Model.getNstpOptions();
-            const paymentModes = Model.getPaymentModes();
-            const medicalConditionOptions = Model.getMedicalConditionOptions();
+            const admissionTypes = (Model && typeof Model.getAdmissionTypes === 'function') ? Model.getAdmissionTypes() : [];
+            const nstpOptions = (Model && typeof Model.getNstpOptions === 'function') ? Model.getNstpOptions() : [];
+            const paymentModes = (Model && typeof Model.getPaymentModes === 'function') ? Model.getPaymentModes() : [];
+            const medicalConditionOptions = (Model && typeof Model.getMedicalConditionOptions === 'function') ? Model.getMedicalConditionOptions() : [
+                'Asthma / Respiratory Condition',
+                'Diabetes',
+                'Heart Condition',
+                'Hypertension / High Blood Pressure',
+                'Epilepsy / Seizure Disorder',
+                'Visual Impairment',
+                'Hearing Impairment',
+                'Musculoskeletal / Mobility Condition',
+                'Mental Health Condition',
+                'Other (specify in allergies/notes)'
+            ];
 
 
 
@@ -338,10 +350,86 @@
             const calcDownpayment = computed(() => fees.value.downpayment);
             const calcInstallmentAmount = computed(() => fees.value.installmentAmount);
 
-            // ── Requirement Matrix (Delegated to Model) ───────────────────────────
+            // ── Requirement Matrix & Soft Copy Uploads ────────────────────────────
             const getRequirements = computed(() => {
                 return Model.getRequirements(form.studentType, form.educationPathway);
             });
+
+            const documentFiles = reactive({});
+
+            const getDocKey = (item) => {
+                if (Model && typeof Model.getDocKey === 'function') {
+                    return Model.getDocKey(item);
+                }
+                if (!item) return 'other';
+                const text = item.toLowerCase().trim();
+                if (text.startsWith('form 138') || (text.includes('report card') && !text.includes('old high school'))) return 'reportCard';
+                if (text.startsWith('psa birth certificate')) return 'psa';
+                if (text.startsWith('original certificate of good moral')) return 'goodMoral';
+                return text.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            };
+
+            const requiredDocList = computed(() => {
+                const rawList = Model.getRequirements(form.studentType, form.educationPathway);
+                return rawList.map(item => ({
+                    key: getDocKey(item),
+                    label: item
+                }));
+            });
+
+            const onFileChange = (key, event) => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds the 5MB limit. Please upload a smaller file.');
+                    event.target.value = '';
+                    return;
+                }
+
+                const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!allowed.includes(ext)) {
+                    alert('Invalid file format. Allowed formats: PDF, JPG, JPEG, PNG.');
+                    event.target.value = '';
+                    return;
+                }
+
+                documentFiles[key] = file;
+            };
+
+            const removeDocFile = (key) => {
+                delete documentFiles[key];
+            };
+
+            const formatFileSize = (bytes) => {
+                if (!bytes) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            };
+
+            const triggerFileInput = (inputId) => {
+                const el = document.getElementById(inputId);
+                if (el) el.click();
+            };
+
+            const getFileTypeClass = (fileName) => {
+                if (!fileName) return 'file-type-doc';
+                const ext = fileName.split('.').pop().toLowerCase();
+                if (ext === 'pdf') return 'file-type-pdf';
+                if (['jpg', 'jpeg', 'png'].includes(ext)) return 'file-type-img';
+                return 'file-type-doc';
+            };
+
+            const getFileIcon = (fileName) => {
+                if (!fileName) return 'fa-file-lines';
+                const ext = fileName.split('.').pop().toLowerCase();
+                if (ext === 'pdf') return 'fa-file-pdf';
+                if (['jpg', 'jpeg', 'png'].includes(ext)) return 'fa-file-image';
+                return 'fa-file-lines';
+            };
 
             // ── Step Validation (Delegated to Model) ───────────────────────────────
             const validateCurrentStep = () => {
@@ -364,6 +452,21 @@
                             form.shsTrack = 'OLD_CURRICULUM';
                         }
                     }
+
+                    // Soft Copy Upload Validation Rule:
+                    // If user uploaded at least 1 soft copy, ALL required documents become mandatory.
+                    // If user uploaded 0 soft copies, soft copy uploads remain 100% optional.
+                    const uploadedCount = Object.keys(documentFiles).length;
+                    if (uploadedCount > 0) {
+                        const requiredKeys = requiredDocList.value.map(d => d.key);
+                        const missingKeys = requiredKeys.filter(key => !documentFiles[key]);
+                        if (missingKeys.length > 0) {
+                            errors.softCopyDocs = 'Since you uploaded a soft copy document, please upload all required document soft copies (or remove attached files) to proceed.';
+                            Model.validateStep(currentStep.value, form, errors);
+                            return false;
+                        }
+                    }
+                    errors.softCopyDocs = '';
                 }
                 return Model.validateStep(currentStep.value, form, errors);
             };
@@ -389,7 +492,17 @@
                     payload.phone = '09' + form.phone;
                     payload.emergencyContactPhone = '09' + form.emergencyContactPhone;
 
-                    window.ApiService.submitEnrollment(payload)
+                    // Send via FormData to support file attachments
+                    const formData = new FormData();
+                    formData.append('form_data', JSON.stringify(payload));
+
+                    Object.keys(documentFiles).forEach(key => {
+                        if (documentFiles[key]) {
+                            formData.append('doc_' + key, documentFiles[key]);
+                        }
+                    });
+
+                    window.ApiService.submitEnrollment(formData)
                         .then(res => {
                             isSubmitting.value = false;
                             if (res.success) {
@@ -448,6 +561,14 @@
                 colleges,
                 courses,
                 admissionTypes,
+                documentFiles,
+                requiredDocList,
+                onFileChange,
+                removeDocFile,
+                formatFileSize,
+                getFileIcon,
+                getFileTypeClass,
+                triggerFileInput,
                 nstpOptions,
                 paymentModes,
                 medicalConditionOptions,

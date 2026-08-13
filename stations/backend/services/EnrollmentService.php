@@ -73,17 +73,21 @@ class EnrollmentService {
             PaymentService::validatePaymentEligibility($existingRecord);
         }
 
-        // Check if all steps in the roadmap are completed or skipped
+        // Check if all steps in the roadmap are completed or skipped & validate sequential order
         $allDone = true;
         $roadmapSteps = $updateData['roadmap'] ?? json_decode($existingRecord['roadmap'] ?? '[]', true) ?? [];
         if (empty($roadmapSteps)) {
             $allDone = false;
         } else {
-            foreach ($roadmapSteps as $step) {
-                $statusVal = $step['status'] ?? '';
+            $prevDone = true;
+            foreach ($roadmapSteps as $idx => $step) {
+                $statusVal = strtoupper($step['status'] ?? '');
+                if ($statusVal === 'COMPLETED' && !$prevDone) {
+                    sendResponse(false, null, "Roadmap step '" . ($step['stepId'] ?? $idx) . "' cannot be completed out of order.", 400);
+                }
                 if ($statusVal !== 'COMPLETED' && $statusVal !== 'SKIPPED') {
+                    $prevDone = false;
                     $allDone = false;
-                    break;
                 }
             }
         }
@@ -197,7 +201,7 @@ class EnrollmentService {
 
                 if ($appDetails) {
                     $itData = json_decode($enrollmentJson, true) ?: [];
-                    $promoResult = self::promotePreEnrollmentToStudent($pdo, $appDetails, $refNo, $roadmapJson, $itData);
+                    $promoResult = promotePreEnrollmentToStudent($pdo, $appDetails, $refNo, $roadmapJson, $itData);
 
                     $wasAlreadyEnrolled = ($existingRecord && $existingRecord['status'] === 'ENROLLED');
 
@@ -217,9 +221,26 @@ class EnrollmentService {
                 }
             }
 
+            // Audit Trail: Record workstation mutation in audit_logs table
+            $sessionUser = $_SESSION['gncp_admin_user']['username'] ?? $_SESSION['gncp_station_user']['username'] ?? 'SYSTEM';
+            $sessionRole = $_SESSION['gncp_admin_user']['role'] ?? $_SESSION['gncp_station_user']['role'] ?? 'WORKSTATION';
+            $auditStmt = $pdo->prepare("
+                INSERT INTO `audit_logs` (`reference_number`, `operator_username`, `station_role`, `action_performed`, `previous_state`, `new_state`)
+                VALUES (:ref, :operator, :role, :action, :prev, :new)
+            ");
+            $auditStmt->execute([
+                'ref'      => $refNo,
+                'operator' => $sessionUser,
+                'role'     => $sessionRole,
+                'action'   => 'UPDATE_STUDENT_MILESTONE',
+                'prev'     => json_encode($existingRecord['status'] ?? 'UNKNOWN'),
+                'new'      => json_encode($resData)
+            ]);
+
             // Commit atomic transaction
             $pdo->commit();
             return $resData;
+
 
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -264,60 +285,6 @@ class EnrollmentService {
             'referenceNumber' => $refNo,
             'fileName'        => $finalName,
             'webPath'         => $webPath
-        ];
-    }
-
-    private static function promotePreEnrollmentToStudent(PDO $pdo, array $appDetails, string $refNo, ?string $roadmapJson, array $itData): array {
-        $chk = $pdo->prepare("SELECT * FROM `students` WHERE `temp_reference_no` = :ref");
-        $chk->execute(['ref' => $refNo]);
-        $existingStudent = $chk->fetch(PDO::FETCH_ASSOC);
-
-        if ($existingStudent) {
-            return [
-                'permanentId'        => $existingStudent['id'],
-                'institutionalEmail' => $existingStudent['email'],
-                'password'           => ''
-            ];
-        }
-
-        $year = date('Y');
-        $cntStmt = $pdo->query("SELECT COUNT(*) FROM `students`");
-        $seq = ((int)$cntStmt->fetchColumn()) + 1;
-        $permanentId = sprintf("GNCP-%s-%04d", $year, $seq);
-
-        $firstName = trim($appDetails['first_name'] ?? '');
-        $lastName  = trim($appDetails['last_name'] ?? '');
-        $fullName  = trim(($appDetails['full_name'] ?? '') ?: ($firstName . ' ' . $lastName));
-
-        $cleanFirst = strtolower(preg_replace('/[^a-zA-Z]/', '', $firstName));
-        $cleanLast  = strtolower(preg_replace('/[^a-zA-Z]/', '', $lastName));
-        $instEmail  = sprintf("%s.%s@gncp.edu.ph", $cleanFirst ?: 'student', $cleanLast ?: $seq);
-
-        $tempPassword = "GNCP#" . date('Y') . "!";
-        $hashedPass   = password_hash($tempPassword, PASSWORD_DEFAULT);
-
-        $insertStmt = $pdo->prepare("
-            INSERT INTO `students` (
-                `id`, `name`, `program`, `email`, `password`, `year_level`, `status`, `temp_reference_no`, `created_at`
-            ) VALUES (
-                :id, :name, :program, :email, :password, :year_level, 'Active', :ref, NOW()
-            )
-        ");
-
-        $insertStmt->execute([
-            ':id'         => $permanentId,
-            ':name'       => $fullName ?: 'Student',
-            ':program'    => $appDetails['course_code'] ?? 'BSIT',
-            ':email'      => $instEmail,
-            ':password'   => $hashedPass,
-            ':year_level' => $appDetails['year_level_applied'] ?? '1st Year',
-            ':ref'        => $refNo
-        ]);
-
-        return [
-            'permanentId'        => $permanentId,
-            'institutionalEmail' => $instEmail,
-            'password'           => $tempPassword
         ];
     }
 }
