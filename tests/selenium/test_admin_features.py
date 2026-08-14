@@ -58,9 +58,11 @@ class AdminFeaturesSeleniumTestRunner:
         if not self.driver:
             return None
         filepath = os.path.join(config.SCREENSHOTS_DIR, f"{name}.png")
+        latest_path = os.path.join(config.SCREENSHOTS_DIR, "latest.png")
         try:
             self.driver.save_screenshot(filepath)
-            return filepath
+            self.driver.save_screenshot(latest_path)
+            return f"{name}.png"
         except Exception:
             return None
 

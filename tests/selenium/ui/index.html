@@ -317,7 +317,7 @@
             </div>
             <div class="panel-body">
                 <div class="preview-box">
-                    <img v-if="latestScreenshot" :src="getImageUrl(latestScreenshot)" class="preview-img" @click="openModal(getImageUrl(latestScreenshot))" @error="latestScreenshot = null" alt="Live Frame">
+                    <img v-if="latestScreenshot" :src="getImageUrl(latestScreenshot)" class="preview-img" @click="openModal(getImageUrl(latestScreenshot))" @error="handleFrameError" alt="Live Frame">
                     <div v-else style="text-align:center; color:var(--muted);">
                         <i class="fa-solid fa-camera" style="font-size:2rem; opacity:0.4; margin-bottom:8px; display:block;"></i>
                         <span style="font-size:0.78rem;">No active frame captured</span>
@@ -505,7 +505,13 @@ createApp({
                 this.duration = data.duration || 0;
                 this.logs     = data.logs     || [];
                 this.results  = data.results  || [];
-                if (data.latest_screenshot) { this.latestScreenshot = data.latest_screenshot; this.lastUpdate = Date.now(); }
+                if (data.latest_screenshot) {
+                    this.latestScreenshot = data.latest_screenshot;
+                    this.lastUpdate = Date.now();
+                } else if (this.status === 'RUNNING' || this.logs.length > 0) {
+                    this.latestScreenshot = 'latest.png';
+                    this.lastUpdate = Date.now();
+                }
 
                 // Extract credentials
                 const credLog = this.logs.find(l => l.level === 'SUCCESS' && l.message && l.message.startsWith('CREATED STUDENT'));
@@ -566,6 +572,11 @@ createApp({
             const text = this.logs.map(l => `[${l.timestamp}] [${l.level}] ${l.message}`).join('\n');
             navigator.clipboard.writeText(text);
             alert('Terminal log report copied to clipboard!');
+        },
+        handleFrameError() {
+            setTimeout(() => {
+                this.lastUpdate = Date.now();
+            }, 500);
         },
         getImageUrl(file) {
             if (!file) return '';

@@ -100,8 +100,7 @@ class SeleniumTestRunner:
         try:
             self.driver.save_screenshot(filepath)
             self.driver.save_screenshot(latest_path)
-            rel_path = "screenshots/latest.png"
-            return rel_path
+            return f"{name}.png"
         except Exception as e:
             self.log(f"Failed to capture screenshot {name}: {e}", level="WARN")
             return None
