@@ -43,24 +43,6 @@ class SectionService {
             ];
         }
 
-        if (empty($sections)) {
-            $cohortsRaw = $pdo->query("
-                SELECT DISTINCT program, year_level, SUBSTRING_INDEX(code, '-', -1) as cohort 
-                FROM `subject_sections`
-                ORDER BY program, year_level, cohort ASC
-            ")->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($cohortsRaw as $c) {
-                $sections[] = [
-                    'id' => 0,
-                    'code' => $c['cohort'],
-                    'program' => $c['program'],
-                    'yearLevel' => $c['year_level'],
-                    'capacity' => 40,
-                    'adviser' => 'Unassigned'
-                ];
-            }
-        }
-
         return [
             'sections' => $sections,
             'subjectSections' => $subjectSections

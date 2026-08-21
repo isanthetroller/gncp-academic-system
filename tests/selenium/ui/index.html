@@ -244,6 +244,7 @@
                 <button :class="{ active: mode === 'all' }" @click="mode = 'all'">Full Pipeline Suite</button>
                 <button :class="{ active: mode === 'pipeline' }" @click="mode = 'pipeline'">Enrollment Flow Only</button>
                 <button :class="{ active: mode === 'admin' }" @click="mode = 'admin'">Admin Features Suite</button>
+                <button :class="{ active: mode === 'paymongo' }" @click="mode = 'paymongo'">PayMongo Gateway Suite</button>
             </div>
 
             <label class="toggle-wrap" title="Toggle between background headless execution and visible Chrome browser">
@@ -440,20 +441,6 @@ createApp({
             logFilter: 'ALL',
             logSearch: '',
             expandedSteps: {},
-            allSteps: [
-                { num: '0',  key: '0. Cleanup',                           label: '0. Purge Stale Test Data',        sub: 'Database Purge & Reset',       icon: 'fa-database' },
-                { num: '1',  key: '1. Admin Section Creation',            label: '1. Admin Section Creation',       sub: 'Course & Section Allocation',  icon: 'fa-layer-group' },
-                { num: '2',  key: '2. Student Pre-Registration',          label: '2. Online Application Form',      sub: 'Applicant Pre-Registration',   icon: 'fa-user-pen' },
-                { num: '3',  key: '3. Registrar Verification',            label: '3. Registrar Document Check',     sub: 'Document Approval State',      icon: 'fa-clipboard-check' },
-                { num: '4',  key: '4. Academic Advising',                 label: '4. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',  icon: 'fa-graduation-cap' },
-                { num: '5',  key: '5. Medical Clearance',                 label: '5. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',   icon: 'fa-stethoscope' },
-                { num: '6',  key: '6. Cashier Payment',                   label: '6. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',    icon: 'fa-wallet' },
-                { num: '7',  key: '7. IT Center Promotion',               label: '7. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',     icon: 'fa-id-card' },
-                { num: '8',  key: '8. Student Portal Login',              label: '8. Student Portal Live Login',    sub: 'Portal Credential Verification', icon: 'fa-desktop' },
-                { num: '9',  key: '9. Admin Student Accounts Check',      label: '9. Admin Directory Audit',        sub: 'Admin Directory Verification', icon: 'fa-shield-halved' },
-                { num: '10', key: '10. Profile UI & Audit Logs',          label: '10. Staff Profile & Log Audit',   sub: 'Profile UI Audit Verification', icon: 'fa-user-gear' },
-                { num: '11', key: '11. Super Admin Sign Out',             label: '11. Interactive Logout Audit',    sub: 'Session Destruction & Redirect', icon: 'fa-right-from-bracket' }
-            ],
             galleryThumbs: [
                 { file: 'step01_registration.png', label: '1. Pre-Registration' },
                 { file: 'step02_registrar.png',    label: '2. Registrar' },
@@ -468,6 +455,40 @@ createApp({
         };
     },
     computed: {
+        allSteps() {
+            if (this.mode === 'paymongo') {
+                return [
+                    { num: '1', key: '1. PayMongo Configuration',           label: '1. Central Configuration Check',   sub: 'Credentials & Currency Setting', icon: 'fa-gear' },
+                    { num: '2', key: '2. Dynamic QR & Centavos',            label: '2. Dynamic QR & Centavo Math',    sub: 'Session Creation & Centavos',    icon: 'fa-qrcode' },
+                    { num: '3', key: '3. Rule-002 Eligibility',             label: '3. Rule-002 Payment Safeguards',  sub: 'Unverified Applicant Protection', icon: 'fa-shield-halved' },
+                    { num: '4', key: '4. Partial Downpayment Settlement',   label: '4. GCash / Maya Simulation',      sub: 'Downpayment & OR Recording',     icon: 'fa-mobile-screen-button' },
+                    { num: '5', key: '5. Full Balance Settlement',          label: '5. Full Balance Settlement',      sub: 'Zero Remaining Balance State',   icon: 'fa-money-bill-transfer' },
+                    { num: '6', key: '6. ACID Transaction & Promotion',     label: '6. Transaction Ledger Audit',     sub: 'Audit Trail & IT Unlocking',     icon: 'fa-database' }
+                ];
+            }
+            if (this.mode === 'admin') {
+                return [
+                    { num: '1', key: 'Feature 1: Section Creation UI',       label: '1. Admin Section Creation UI',     sub: 'Course & Section DB Creation',   icon: 'fa-layer-group' },
+                    { num: '2', key: 'Feature 2: Fee Configuration UI',     label: '2. Tuition & Fee Rate Config',    sub: 'Real-time Fee Schedule Rates',   icon: 'fa-receipt' },
+                    { num: '3', key: 'Feature 3: Account Profile Edit UI',  label: '3. Admin Account Profile Update', sub: 'Staff Details & Phone/Email',    icon: 'fa-user-pen' },
+                    { num: '4', key: 'Feature 4: Interactive Super Admin Logout', label: '4. Interactive Modal Logout', sub: 'Session Invalidation & Redirect', icon: 'fa-right-from-bracket' }
+                ];
+            }
+            return [
+                { num: '0',  key: '0. Cleanup',                           label: '0. Purge Stale Test Data',        sub: 'Database Purge & Reset',       icon: 'fa-database' },
+                { num: '1',  key: '1. Admin Section Creation',            label: '1. Admin Section Creation',       sub: 'Course & Section Allocation',  icon: 'fa-layer-group' },
+                { num: '2',  key: '2. Student Pre-Registration',          label: '2. Online Application Form',      sub: 'Applicant Pre-Registration',   icon: 'fa-user-pen' },
+                { num: '3',  key: '3. Registrar Verification',            label: '3. Registrar Document Check',     sub: 'Document Approval State',      icon: 'fa-clipboard-check' },
+                { num: '4',  key: '4. Academic Advising',                 label: '4. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',  icon: 'fa-graduation-cap' },
+                { num: '5',  key: '5. Medical Clearance',                 label: '5. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',   icon: 'fa-stethoscope' },
+                { num: '6',  key: '6. Cashier Payment',                   label: '6. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',    icon: 'fa-wallet' },
+                { num: '7',  key: '7. IT Center Promotion',               label: '7. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',     icon: 'fa-id-card' },
+                { num: '8',  key: '8. Student Portal Login',              label: '8. Student Portal Live Login',    sub: 'Portal Credential Verification', icon: 'fa-desktop' },
+                { num: '9',  key: '9. Admin Student Accounts Check',      label: '9. Admin Directory Audit',        sub: 'Admin Directory Verification', icon: 'fa-shield-halved' },
+                { num: '10', key: '10. Profile UI & Audit Logs',          label: '10. Staff Profile & Log Audit',   sub: 'Profile UI Audit Verification', icon: 'fa-user-gear' },
+                { num: '11', key: '11. Super Admin Sign Out',             label: '11. Interactive Logout Audit',    sub: 'Session Destruction & Redirect', icon: 'fa-right-from-bracket' }
+            ];
+        },
         passedCount() { return this.results.filter(r => r.status === 'PASSED').length; },
         failedCount()  { return this.results.filter(r => r.status === 'FAILED').length; },
         statusColorCode() {
@@ -558,10 +579,12 @@ createApp({
             }
         },
         findResult(key) {
-            const k = (key || '').toLowerCase();
+            const rawK = (key || '').toLowerCase();
+            const cleanK = rawK.replace(/^(feature\s*\d+:|\d+\.)\s*/, '').trim();
             return this.results.find(r => {
-                const s = (r.step || r.feature || '').toLowerCase();
-                return s === k || s.includes(k) || k.includes(s);
+                const rawS = (r.step || r.feature || r.name || '').toLowerCase();
+                const cleanS = rawS.replace(/^(feature\s*\d+:|\d+\.)\s*/, '').trim();
+                return rawS === rawK || rawS.includes(rawK) || rawK.includes(rawS) || cleanS === cleanK || cleanS.includes(cleanK) || cleanK.includes(cleanS);
             });
         },
         getStepClass(key) {
