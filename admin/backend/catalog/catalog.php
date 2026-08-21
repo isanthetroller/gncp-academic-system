@@ -193,7 +193,7 @@ if ($action === 'save_program') {
     }
     $stmt->execute($params);
 
-    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON c.subject=s.title ORDER BY c.id DESC")->fetchAll();
+    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON (c.subject=s.title OR c.subject=s.code) ORDER BY c.id DESC")->fetchAll();
     $out  = [];
     foreach ($rows as $r) {
         $out[] = [
@@ -241,7 +241,7 @@ if ($action === 'save_program') {
     }
 
     $pdo->prepare("DELETE FROM `curriculum` WHERE `id`=:id")->execute(['id'=>(int)$id]);
-    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON c.subject=s.title ORDER BY c.id DESC")->fetchAll();
+    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON (c.subject=s.title OR c.subject=s.code) ORDER BY c.id DESC")->fetchAll();
     $out  = [];
     foreach ($rows as $r) {
         $out[] = [
@@ -260,6 +260,95 @@ if ($action === 'save_program') {
         ];
     }
     sendResponse(true, $out);
+
+} elseif ($action === 'clone_curriculum_version') {
+    $payload = json_decode(file_get_contents('php://input'), true);
+    $prog = trim($payload['program'] ?? '');
+    $fromV = trim($payload['fromVersion'] ?? '');
+    $toV = trim($payload['toVersion'] ?? '');
+
+    if (empty($prog) || empty($fromV) || empty($toV)) {
+        sendResponse(false, null, 'Program, Source Version, and Target Version are required.', 400);
+    }
+    if (strcasecmp($fromV, $toV) === 0) {
+        sendResponse(false, null, 'Source Version and Target Version cannot be identical.', 400);
+    }
+
+    $sourceRows = $pdo->prepare("SELECT * FROM `curriculum` WHERE `program` = :prog AND `curriculum_version` = :from_v");
+    $sourceRows->execute(['prog' => $prog, 'from_v' => $fromV]);
+    $entries = $sourceRows->fetchAll(PDO::FETCH_ASSOC);
+
+    if (empty($entries)) {
+        sendResponse(false, null, "No curriculum mappings found in source version '{$fromV}' for program '{$prog}'.", 400);
+    }
+
+    // Remove existing if any in target version to avoid duplicates
+    $del = $pdo->prepare("DELETE FROM `curriculum` WHERE `program` = :prog AND `curriculum_version` = :to_v");
+    $del->execute(['prog' => $prog, 'to_v' => $toV]);
+
+    $ins = $pdo->prepare("INSERT INTO `curriculum` (`program`, `subject`, `year_level`, `semester`, `elective`, `curriculum_version`) VALUES (:prog, :sub, :yl, :sem, :el, :curr_v)");
+    foreach ($entries as $e) {
+        $ins->execute([
+            'prog'   => $prog,
+            'sub'    => $e['subject'],
+            'yl'     => $e['year_level'],
+            'sem'    => $e['semester'],
+            'el'     => (int)$e['elective'],
+            'curr_v' => $toV
+        ]);
+    }
+
+    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON (c.subject=s.title OR c.subject=s.code) ORDER BY c.id DESC")->fetchAll();
+    $out  = [];
+    foreach ($rows as $r) {
+        $out[] = [
+            'id'           => (int)$r['id'],
+            'program'      => $r['program'],
+            'subject'      => $r['subject'],
+            'subjectCode'  => $r['subject_code'] ?? '',
+            'lectureUnits' => (int)($r['lecture_units'] ?? 0),
+            'labUnits'     => (int)($r['lab_units'] ?? 0),
+            'labFee'       => (float)($r['lab_fee'] ?? 0),
+            'prerequisites'=> $r['prerequisites'] ?? 'None',
+            'yearLevel'    => $r['year_level'],
+            'semester'     => $r['semester'],
+            'elective'     => (bool)$r['elective'],
+            'curriculumVersion' => $r['curriculum_version'] ?? '2022 Curriculum'
+        ];
+    }
+    sendResponse(true, $out, "Successfully cloned {$fromV} to {$toV} for {$prog} (" . count($entries) . " subjects mapped).");
+
+} elseif ($action === 'delete_curriculum_version') {
+    $payload = json_decode(file_get_contents('php://input'), true);
+    $prog = trim($payload['program'] ?? '');
+    $version = trim($payload['version'] ?? '');
+
+    if (empty($prog) || empty($version)) {
+        sendResponse(false, null, 'Program and Curriculum Version are required.', 400);
+    }
+
+    $del = $pdo->prepare("DELETE FROM `curriculum` WHERE `program` = :prog AND `curriculum_version` = :ver");
+    $del->execute(['prog' => $prog, 'ver' => $version]);
+
+    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON (c.subject=s.title OR c.subject=s.code) ORDER BY c.id DESC")->fetchAll();
+    $out  = [];
+    foreach ($rows as $r) {
+        $out[] = [
+            'id'           => (int)$r['id'],
+            'program'      => $r['program'],
+            'subject'      => $r['subject'],
+            'subjectCode'  => $r['subject_code'] ?? '',
+            'lectureUnits' => (int)($r['lecture_units'] ?? 0),
+            'labUnits'     => (int)($r['lab_units'] ?? 0),
+            'labFee'       => (float)($r['lab_fee'] ?? 0),
+            'prerequisites'=> $r['prerequisites'] ?? 'None',
+            'yearLevel'    => $r['year_level'],
+            'semester'     => $r['semester'],
+            'elective'     => (bool)$r['elective'],
+            'curriculumVersion' => $r['curriculum_version'] ?? '2022 Curriculum'
+        ];
+    }
+    sendResponse(true, $out, "Curriculum version '{$version}' deleted for program '{$prog}'.");
 
 } elseif ($action === 'save_department') {
     sendResponse(false, null, 'Departments are locked and cannot be added or modified.', 403);
@@ -338,7 +427,7 @@ if ($action === 'save_program') {
     }
 
     // Return updated data
-    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON c.subject=s.title ORDER BY c.id DESC")->fetchAll();
+    $rows = $pdo->query("SELECT c.*,s.code as subject_code,s.lecture_units,s.lab_units,s.lab_fee,s.prerequisites FROM `curriculum` c LEFT JOIN `subjects` s ON (c.subject=s.title OR c.subject=s.code) ORDER BY c.id DESC")->fetchAll();
     $out = [];
     foreach ($rows as $r) {
         $out[] = [

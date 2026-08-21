@@ -120,9 +120,19 @@ const app = createApp({
         const filterSectDays = ref('');
         
         // Views & Collapsibles
-        const currView = ref('table'); // table | grouped
+        const selectedCurrDept = ref('');
+        const selectedCurrProgram = ref('');
+        const selectedCurrVersion = ref('2022 Curriculum');
+        const currView = ref('prospectus'); // prospectus | grouped | table
         const sectView = ref('table'); // table | cards
         const collapsedGroups = ref([]);
+
+        // Curriculum Version Clone State
+        const cloneCurrForm = reactive({
+            program: '',
+            fromVersion: '',
+            toVersion: ''
+        });
 
         // Dashboard Stats State
         const dashboardStats = ref(null);
@@ -761,6 +771,131 @@ const app = createApp({
                 collapsedGroups.value.push(progName);
             }
         };
+
+        // ── Hierarchical Curriculum Architecture ──
+        const curriculumDepartments = computed(() => {
+            if (departments.value.length > 0) return departments.value;
+            const depts = [...new Set(programs.value.map(p => p.department).filter(Boolean))].sort();
+            return depts.map(d => ({ name: d, code: d }));
+        });
+
+        const curriculumProgramsForDept = computed(() => {
+            let list = programs.value;
+            if (selectedCurrDept.value) {
+                list = list.filter(p => p.department === selectedCurrDept.value);
+            }
+            return list;
+        });
+
+        const activeCurrProgramObj = computed(() => {
+            return programs.value.find(p => p.name === selectedCurrProgram.value || p.code === selectedCurrProgram.value) || null;
+        });
+
+        const curriculumVersionsForProgram = computed(() => {
+            if (!selectedCurrProgram.value) return ['2022 Curriculum'];
+            const matching = curriculum.value.filter(c => c.program === selectedCurrProgram.value);
+            const versions = [...new Set(matching.map(c => c.curriculumVersion).filter(Boolean))].sort();
+            return versions.length > 0 ? versions : ['2022 Curriculum'];
+        });
+
+        // Auto-select defaults
+        watch(programs, (newProgs) => {
+            if (newProgs.length > 0 && !selectedCurrProgram.value) {
+                selectedCurrProgram.value = newProgs[0].name;
+            }
+        }, { immediate: true });
+
+        watch(selectedCurrDept, (newDept) => {
+            if (newDept) {
+                const available = programs.value.filter(p => p.department === newDept);
+                if (available.length > 0 && !available.some(p => p.name === selectedCurrProgram.value)) {
+                    selectedCurrProgram.value = available[0].name;
+                }
+            }
+        });
+
+        watch([selectedCurrProgram, curriculum], () => {
+            const versions = curriculumVersionsForProgram.value;
+            if (!selectedCurrVersion.value || !versions.includes(selectedCurrVersion.value)) {
+                selectedCurrVersion.value = versions[0] || '2022 Curriculum';
+            }
+        }, { immediate: true });
+
+        // Structured 4-Year Matrix (8 Semesters) for Selected Program & Version
+        const curriculumMatrix = computed(() => {
+            if (!selectedCurrProgram.value) return [];
+            const progName = selectedCurrProgram.value;
+            const ver = selectedCurrVersion.value || '2022 Curriculum';
+            
+            const list = curriculum.value.filter(c => c.program === progName && (c.curriculumVersion === ver || (!c.curriculumVersion && ver === '2022 Curriculum')));
+            
+            const yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+            const standardSemesters = ['1st Semester', '2nd Semester'];
+
+            return yearLevels.map(yl => {
+                const yearEntries = list.filter(c => c.yearLevel === yl);
+                const sems = standardSemesters.map(sem => {
+                    const semEntries = yearEntries.filter(c => c.semester === sem);
+                    const totalLec = semEntries.reduce((sum, e) => sum + (e.lectureUnits || 0), 0);
+                    const totalLab = semEntries.reduce((sum, e) => sum + (e.labUnits || 0), 0);
+                    const totalUnits = totalLec + totalLab;
+                    const totalLabFee = semEntries.reduce((sum, e) => sum + (e.labFee || 0), 0);
+                    return {
+                        semester: sem,
+                        entries: semEntries,
+                        totalLec,
+                        totalLab,
+                        totalUnits,
+                        totalLabFee
+                    };
+                });
+
+                // Check for summer entries
+                const summerEntries = yearEntries.filter(c => c.semester === 'Summer');
+                if (summerEntries.length > 0) {
+                    const totalLec = summerEntries.reduce((sum, e) => sum + (e.lectureUnits || 0), 0);
+                    const totalLab = summerEntries.reduce((sum, e) => sum + (e.labUnits || 0), 0);
+                    sems.push({
+                        semester: 'Summer',
+                        entries: summerEntries,
+                        totalLec,
+                        totalLab,
+                        totalUnits: totalLec + totalLab,
+                        totalLabFee: summerEntries.reduce((sum, e) => sum + (e.labFee || 0), 0)
+                    });
+                }
+
+                const totalYearUnits = sems.reduce((sum, s) => sum + s.totalUnits, 0);
+                const totalYearSubjects = yearEntries.length;
+
+                return {
+                    yearLevel: yl,
+                    semesters: sems,
+                    totalYearUnits,
+                    totalYearSubjects,
+                    entries: yearEntries
+                };
+            });
+        });
+
+        const prospectusStats = computed(() => {
+            const matrix = curriculumMatrix.value;
+            let totalSubjects = 0;
+            let totalUnits = 0;
+            let totalLec = 0;
+            let totalLab = 0;
+            let totalLabFees = 0;
+            matrix.forEach(y => {
+                y.semesters.forEach(s => {
+                    totalSubjects += s.entries.length;
+                    totalUnits += s.totalUnits;
+                    totalLec += s.totalLec;
+                    totalLab += s.totalLab;
+                    totalLabFees += s.totalLabFee;
+                });
+            });
+            return { totalSubjects, totalUnits, totalLec, totalLab, totalLabFees };
+        });
 
         const filteredPeriods = computed(() => {
             let res = periods.value.filter(p => {
@@ -1596,6 +1731,97 @@ const app = createApp({
         const deleteSubject  = id => crudDel('delete_subject',  id,           subjects,   'subject');
         const saveCurriculum = () => crudSave('save_curriculum','curriculum', curriculum, {});
         const deleteCurriculum=id => crudDel('delete_curriculum',id,          curriculum, 'entry');
+
+        const openAddCurriculumForSemester = (yearLevel, semester) => {
+            Object.assign(form, {
+                id: null,
+                program: selectedCurrProgram.value,
+                curriculumVersion: selectedCurrVersion.value || '2022 Curriculum',
+                subject: '',
+                yearLevel: yearLevel || '1st Year',
+                semester: semester || '1st Semester',
+                elective: false
+            });
+            modal.value = 'curriculum';
+        };
+
+        const openCloneCurriculumModal = () => {
+            cloneCurrForm.program = selectedCurrProgram.value;
+            cloneCurrForm.fromVersion = selectedCurrVersion.value || '2022 Curriculum';
+            cloneCurrForm.toVersion = '';
+            modal.value = 'clone-curriculum';
+        };
+
+        const submitCloneCurriculum = async () => {
+            if (!cloneCurrForm.program || !cloneCurrForm.fromVersion || !cloneCurrForm.toVersion) {
+                Swal.fire('Incomplete Form', 'Please specify program, source version, and target version.', 'warning');
+                return;
+            }
+            if (cloneCurrForm.fromVersion.trim().toLowerCase() === cloneCurrForm.toVersion.trim().toLowerCase()) {
+                Swal.fire('Invalid Name', 'Target curriculum version cannot have the same name as source version.', 'warning');
+                return;
+            }
+            try {
+                const res = await post('clone_curriculum_version', cloneCurrForm);
+                if (res && res.success) {
+                    curriculum.value = res.data;
+                    selectedCurrVersion.value = cloneCurrForm.toVersion.trim();
+                    closeModal();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Curriculum Cloned!',
+                        text: res.message || res.error || `Successfully created ${cloneCurrForm.toVersion} based on ${cloneCurrForm.fromVersion}.`,
+                        confirmButtonColor: '#006A4E'
+                    });
+                } else {
+                    Swal.fire('Clone Failed', res.message || res.error || 'Could not clone curriculum version.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'An error occurred while cloning curriculum.', 'error');
+            }
+        };
+
+        const deleteCurrentCurriculumVersion = async () => {
+            const prog = selectedCurrProgram.value;
+            const ver = selectedCurrVersion.value;
+            if (!prog || !ver) return;
+            const count = curriculum.value.filter(c => c.program === prog && c.curriculumVersion === ver).length;
+            const result = await Swal.fire({
+                title: `Delete ${ver}?`,
+                html: `<p>Are you sure you want to delete <strong>${ver}</strong> for <strong>${prog}</strong>?</p><p class="text-danger small">This will delete all <strong>${count}</strong> subject mapping(s) in this version.</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete version'
+            });
+            if (!result.isConfirmed) return;
+
+            try {
+                const res = await post('delete_curriculum_version', { program: prog, version: ver });
+                if (res && res.success) {
+                    curriculum.value = res.data;
+                    selectedCurrVersion.value = curriculumVersionsForProgram.value[0] || '2022 Curriculum';
+                    Swal.fire({ icon: 'success', title: 'Version Deleted', text: res.message || res.error || 'Version deleted successfully.', confirmButtonColor: '#006A4E' });
+                } else {
+                    Swal.fire('Delete Failed', res.message || res.error, 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Failed to delete curriculum version.', 'error');
+            }
+        };
+
+        const quickToggleElective = (currEntry) => {
+            const updated = { ...currEntry, elective: !currEntry.elective };
+            post('save_curriculum', { curriculum: updated }).then(res => {
+                if (res && res.success) {
+                    curriculum.value = res.data;
+                    notify(true, `Subject marked as ${updated.elective ? 'Elective' : 'Core'}.`);
+                }
+            });
+        };
         const savePeriod     = () => crudSave('save_academic_period','period',periods,    {});
         const deletePeriod = async (id) => {
             const period = periods.value.find(p => p.id === id);
@@ -2158,6 +2384,10 @@ const app = createApp({
             filterSectDays,
             // Views & Collapsibles
             currView, sectView, collapsedGroups,
+            selectedCurrDept, selectedCurrProgram, selectedCurrVersion, cloneCurrForm,
+            curriculumDepartments, curriculumProgramsForDept, activeCurrProgramObj, curriculumVersionsForProgram,
+            curriculumMatrix, prospectusStats,
+            openAddCurriculumForSemester, openCloneCurriculumModal, submitCloneCurriculum, deleteCurrentCurriculumVersion, quickToggleElective,
             uniqueProgramDepts, uniqueSubjectDepts, uniqueCurriculumVersions, programStats,
             curriculumGrouped, toggleCurrGroup,
             getPeriodName, getSectionCohortCode, onSectionSelect, onSubjectSelect,

@@ -53,4 +53,30 @@ class CatalogAdminController {
         $subj['labUnits'] = $lab;
         return ['success' => true, 'data' => $this->courseModel->saveSubject($subj)];
     }
+
+    public function saveCurriculum(array $payload): array {
+        $curr = $payload['curriculum'] ?? [];
+        if (empty($curr['program']) || empty($curr['subject'])) {
+            return ['success' => false, 'message' => 'Program and Subject are required for curriculum mapping.', 'code' => 400];
+        }
+        return ['success' => true, 'data' => $this->courseModel->saveCurriculum($curr)];
+    }
+
+    public function deleteCurriculum(array $payload): array {
+        $id = $payload['id'] ?? null;
+        if (!$id) {
+            return ['success' => false, 'message' => 'Curriculum ID is required.', 'code' => 400];
+        }
+        return ['success' => true, 'data' => $this->courseModel->deleteCurriculum($id)];
+    }
+
+    public function cloneCurriculumVersion(array $payload): array {
+        $prog = trim($payload['program'] ?? '');
+        $fromV = trim($payload['fromVersion'] ?? '');
+        $toV = trim($payload['toVersion'] ?? '');
+        if (empty($prog) || empty($fromV) || empty($toV)) {
+            return ['success' => false, 'message' => 'Program, Source Version, and Target Version are required.', 'code' => 400];
+        }
+        return ['success' => true, 'data' => $this->courseModel->cloneCurriculumVersion($prog, $fromV, $toV)];
+    }
 }

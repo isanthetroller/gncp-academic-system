@@ -219,7 +219,7 @@ try {
         // Curriculum
         $currRaw  = $pdo->query(
             "SELECT c.*, s.code as subject_code, s.lecture_units, s.lab_units, s.lab_fee, s.prerequisites
-             FROM `curriculum` c LEFT JOIN `subjects` s ON c.subject = s.title ORDER BY c.id DESC"
+             FROM `curriculum` c LEFT JOIN `subjects` s ON (c.subject = s.title OR c.subject = s.code) ORDER BY c.id DESC"
         )->fetchAll();
         $curriculum = [];
         foreach ($currRaw as $r) {
