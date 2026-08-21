@@ -352,7 +352,7 @@ window.app = createApp({
         };
 
         const onPaymentTypeChange = () => {
-            if (selectedStudent.value?.payment?.paymentType === 'PayMongo') {
+            if (selectedStudent.value?.payment?.paymentType === 'GCash') {
                 fetchPayMongoSession();
             } else {
                 paymongoSession.value = null;
@@ -360,7 +360,7 @@ window.app = createApp({
         };
 
         const onAmountChanged = () => {
-            if (selectedStudent.value?.payment?.paymentType === 'PayMongo') {
+            if (selectedStudent.value?.payment?.paymentType === 'GCash') {
                 fetchPayMongoSession();
             }
         };
@@ -373,7 +373,7 @@ window.app = createApp({
             } else if (paymentScheme.value === 'DOWNPAYMENT') {
                 payAmountInput.value = balance >= 3000 ? 3000 : balance;
             }
-            if (selectedStudent.value?.payment?.paymentType === 'PayMongo') {
+            if (selectedStudent.value?.payment?.paymentType === 'GCash') {
                 fetchPayMongoSession();
             }
         };
@@ -525,7 +525,7 @@ window.app = createApp({
             payAmountInput.value = currentBal; // Default to full outstanding balance
             cashTendered.value = 0;
             paymongoSession.value = null;
-            if (student.payment.paymentType === 'PayMongo') {
+            if (student.payment.paymentType === 'GCash') {
                 fetchPayMongoSession();
             }
             setTimeout(() => {
@@ -628,11 +628,15 @@ window.app = createApp({
             const newStatus = isFull ? 'PAID' : 'PARTIAL';
 
             // Generate a FRESH unique transaction reference for each individual payment
-            const transactionRef = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+            const isGCash = student.payment.paymentType === 'GCash';
+            const paymentType = isGCash ? 'GCash (PayMongo)' : 'Cash';
+            const transactionRef = (isGCash && paymongoSession.value?.transactionRef)
+                ? paymongoSession.value.transactionRef
+                : (isGCash ? 'GCASH-' + Math.floor(100000 + Math.random() * 900000) : 'TXN-' + Math.floor(100000 + Math.random() * 900000));
             student.payment.transactionRef = transactionRef;
+            student.payment.paymentType = paymentType;
 
-            const paymentType = student.payment.paymentType || 'Cash';
-            const notes = student.payment.cashierNotes || '';
+            const notes = student.payment.cashierNotes || (isGCash ? 'GCash QR Ph online transfer' : 'Over-the-counter cash payment');
             const cashierName = currentUser.value ? currentUser.value.name : 'Cashier Officer';
 
             // 1. Update the reactive local state directly for real-time modal update

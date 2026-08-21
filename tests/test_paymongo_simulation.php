@@ -34,7 +34,7 @@ echo "[Scenario 1: Centralized Configuration]\n";
 $config = require __DIR__ . '/../shared/backend/config/paymongo.php';
 assertCondition("Currency is configured as PHP", ($config['currency'] ?? '') === 'PHP');
 assertCondition("Simulation mode is enabled", !empty($config['simulation_mode']));
-assertCondition("Payment methods include gcash and paymaya", in_array('gcash', $config['payment_method_types'] ?? []) && in_array('paymaya', $config['payment_method_types'] ?? []));
+assertCondition("Payment methods include gcash and qrph", in_array('gcash', $config['payment_method_types'] ?? []) && in_array('qrph', $config['payment_method_types'] ?? []));
 
 // --- Scenario 2: Checkout Session Generation ---
 echo "\n[Scenario 2: Checkout Session Generation & Centavo Arithmetic]\n";

@@ -22,11 +22,7 @@ return [
     'currency'         => 'PHP',
     'payment_method_types' => [
         'gcash',
-        'paymaya',
-        'card',
-        'qrph',
-        'grab_pay',
-        'dob'
+        'qrph'
     ],
 
     // Merchant & Institutional Profile
