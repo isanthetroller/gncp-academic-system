@@ -382,7 +382,16 @@
                 if (!file) return;
 
                 if (file.size > 5 * 1024 * 1024) {
-                    alert('File size exceeds the 5MB limit. Please upload a smaller file.');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'File Too Large',
+                            text: 'The selected document exceeds the 5MB size limit. Please upload a smaller file.',
+                            icon: 'warning',
+                            confirmButtonColor: '#006A4E'
+                        });
+                    } else {
+                        alert('File size exceeds the 5MB limit. Please upload a smaller file.');
+                    }
                     event.target.value = '';
                     return;
                 }
@@ -390,7 +399,16 @@
                 const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (!allowed.includes(ext)) {
-                    alert('Invalid file format. Allowed formats: PDF, JPG, JPEG, PNG.');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Invalid File Format',
+                            text: 'Only PDF, JPG, JPEG, and PNG document files are accepted for verification.',
+                            icon: 'warning',
+                            confirmButtonColor: '#006A4E'
+                        });
+                    } else {
+                        alert('Invalid file format. Allowed formats: PDF, JPG, JPEG, PNG.');
+                    }
                     event.target.value = '';
                     return;
                 }

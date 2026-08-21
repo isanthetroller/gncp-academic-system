@@ -136,6 +136,9 @@ class QueueService {
                 if (!empty($sr['requirements_data']) && $sr['requirements_data'] !== '{}') {
                     $row['requirements_data'] = $sr['requirements_data'];
                 }
+                if (!empty($sr['helpdesk_data']) && $sr['helpdesk_data'] !== '{}') {
+                    $row['helpdesk_data'] = $sr['helpdesk_data'];
+                }
                 if (!empty($sr['roadmap']) && $sr['roadmap'] !== '[]') {
                     $row['roadmap'] = $sr['roadmap'];
                 }

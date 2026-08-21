@@ -35,13 +35,36 @@ window.app = createApp({
             password: ''
         });
 
+        const getHelpdeskStepStatus = (s) => {
+            if (!s) return 'PENDING';
+            const help = s.helpdesk || {};
+            if (help.status === 'COMPLETED' || help.status === 'ADVISED' || help.status === 'CLEARED') {
+                return 'COMPLETED';
+            }
+            if (help.status === 'FLAGGED') {
+                return 'FLAGGED';
+            }
+            if (s.roadmap && Array.isArray(s.roadmap)) {
+                const step = s.roadmap.find(r => r.stepId === 'advising_assessment' || r.name === 'Academic Advising' || r.id === 3);
+                if (step) {
+                    if (step.status === 'COMPLETED') return 'COMPLETED';
+                    if (step.status === 'FLAGGED') return 'FLAGGED';
+                    if (step.status === 'IN_PROGRESS') return 'PENDING';
+                }
+            }
+            if (['ADVISED', 'MEDICAL_CLEARED', 'PAID', 'ENROLLED', 'APPROVED'].includes(String(s.status).toUpperCase())) {
+                return 'COMPLETED';
+            }
+            return help.status || 'PENDING';
+        };
+
         const loadQueue = () => {
             const queue = StationDataBus.getQueue();
             const result = [];
             for (let i = 0; i < queue.length; i++) {
                 const s = queue[i];
                 // Enforce sequential station workflow
-                const step = s.roadmap ? s.roadmap.find(r => r.stepId === 'advising_assessment') : null;
+                const step = s.roadmap ? s.roadmap.find(r => r.stepId === 'advising_assessment' || r.name === 'Academic Advising' || r.id === 3) : null;
                 if (!step || step.status === 'PENDING') {
                     continue;
                 }
@@ -57,9 +80,9 @@ window.app = createApp({
                     payment: s.payment,
                     form: s.form,
                     // Flatten helpdesk specific properties safely
-                    nstp: help.nstp,
-                    tlcNotes: help.tlcNotes,
-                    status: help.status || 'PENDING',
+                    nstp: help.nstp || s.nstp || 'ROTC',
+                    tlcNotes: help.tlcNotes || '',
+                    status: getHelpdeskStepStatus(s),
                     prospectusSubjects: s.prospectusSubjects || [],
                     availableSections: s.availableSections || []
                 };
@@ -86,24 +109,30 @@ window.app = createApp({
         };
 
         const checkSession = () => {
-            const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
+            const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user') || localStorage.getItem('gncp_station_user') || localStorage.getItem('gncp_admin_user');
             if (stored) {
-                const user = JSON.parse(stored);
-                if (user.role === 'HELPDESK' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR') {
-                    currentUser.value = user;
-                    fetchCurrentProfile();
-                    if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
-                        window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                try {
+                    const user = JSON.parse(stored);
+                    if (user && (user.role === 'HELPDESK' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR')) {
+                        currentUser.value = user;
+                        fetchCurrentProfile();
+                        if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                            window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                                loadQueue();
+                            });
+                        } else {
                             loadQueue();
-                        });
-                    } else {
-                        loadQueue();
+                        }
+                        return;
                     }
-                    return;
+                } catch (e) {
+                    console.error('[Helpdesk] Session parse error:', e);
                 }
             }
             sessionStorage.removeItem('gncp_station_user');
             sessionStorage.removeItem('gncp_admin_user');
+            localStorage.removeItem('gncp_station_user');
+            localStorage.removeItem('gncp_admin_user');
             window.location.href = '../../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         };
 
@@ -125,21 +154,14 @@ window.app = createApp({
         const handleLogout = () => {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Confirm Logout',
+                    title: 'Are you sure?',
                     text: 'Are you sure you want to log out of the TLC Helpdesk Workstation?',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#dc2626',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    customClass: {
-                        popup: 'gncp-swal-card',
-                        title: 'gncp-swal-title',
-                        confirmButton: 'gncp-swal-confirm-btn',
-                        cancelButton: 'gncp-swal-cancel-btn'
-                    }
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, log out',
+                    cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         confirmLogout();
@@ -290,15 +312,19 @@ window.app = createApp({
 
         const persistStudentUpdate = (student) => {
             StationDataBus.updateStudent(student.referenceNumber, (s) => {
+                if (!s.helpdesk || typeof s.helpdesk !== 'object') {
+                    s.helpdesk = {};
+                }
                 s.helpdesk.status = student.status;
                 s.helpdesk.nstp   = student.nstp;
                 s.helpdesk.tlcNotes = student.tlcNotes;
 
                 // Sync global roadmap advising step
-                const currentStepIdx = (s.roadmap && Array.isArray(s.roadmap)) ? s.roadmap.findIndex(r => r.stepId === 'advising_assessment') : -1;
+                const currentStepIdx = (s.roadmap && Array.isArray(s.roadmap)) ? s.roadmap.findIndex(r => r.stepId === 'advising_assessment' || r.name === 'Academic Advising' || r.id === 3) : -1;
                 if (currentStepIdx !== -1) {
                     if (student.status === 'COMPLETED') {
                         s.roadmap[currentStepIdx].status = 'COMPLETED';
+                        s.status = 'ADVISED';
 
                         // Compute dynamic tuition assessment based on prospectus subjects
                         const subjects = student.prospectusSubjects || [];
@@ -316,6 +342,9 @@ window.app = createApp({
                         const totalAssessment = tuition + totalLabFee + misc;
 
                         // Update payment ledger dynamically
+                        if (!s.payment || typeof s.payment !== 'object') {
+                            s.payment = {};
+                        }
                         s.payment.totalFee = totalAssessment;
                         s.payment.balance = totalAssessment;
                         s.payment.amountPaid = 0;
@@ -335,7 +364,7 @@ window.app = createApp({
                         s.roadmap[currentStepIdx].status = 'IN_PROGRESS';
                     }
                 }
-            }, ['helpdesk', 'payment', 'roadmap']); // Delta: only send helpdesk + payment + roadmap fields
+            }, ['helpdesk', 'payment', 'roadmap', 'status']);
             loadQueue();
         };
 

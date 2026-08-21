@@ -65,7 +65,7 @@ STATE = {
 current_runner = None
 runner_thread = None
 
-def run_test_thread(headless=True, mode="all"):
+def run_test_thread(headless=True, mode="all", stop_after="all"):
     global STATE, current_runner
     STATE["status"] = "RUNNING"
     STATE["logs"] = []
@@ -87,15 +87,15 @@ def run_test_thread(headless=True, mode="all"):
         SeleniumTestRunner = tr_module.SeleniumTestRunner
         AdminFeaturesSeleniumTestRunner = taf_module.AdminFeaturesSeleniumTestRunner
 
-        # 1. Run 7-Step Enrollment Pipeline Suite
+        # 1. Run Sequential Enrollment Pipeline Suite
         if mode in ["all", "pipeline"]:
-            runner = SeleniumTestRunner(headless=headless, callback=on_log)
+            runner = SeleniumTestRunner(headless=headless, callback=on_log, stop_after=stop_after)
             current_runner = runner
             pipeline_success = runner.run_full_pipeline()
             STATE["results"].extend(runner.results)
 
-        # 2. Run Admin & System Features Suite
-        if mode in ["all", "admin"]:
+        # 2. Run Admin & System Features Suite (only if stop_after is "all" or specific admin suite requested)
+        if mode in ["all", "admin"] and (stop_after in ["all", "admin", "none", "", None]):
             admin_runner = AdminFeaturesSeleniumTestRunner(headless=headless, callback=on_log)
             current_runner = admin_runner
             try:
@@ -106,9 +106,9 @@ def run_test_thread(headless=True, mode="all"):
                 admin_success = False
                 on_log({"timestamp": time.strftime("%H:%M:%S"), "level": "ERROR", "message": f"Admin Features Suite Failed: {str(e)}"})
 
-        # 3. Run PayMongo Payment Gateway Simulation Suite
+        # 3. Run PayMongo Payment Gateway Simulation Suite (only if stop_after is "all" or paymongo mode)
         paymongo_success = True
-        if mode in ["all", "paymongo"]:
+        if mode in ["all", "paymongo"] and (stop_after in ["all", "paymongo", "none", "", None]):
             import subprocess
             on_log({"timestamp": time.strftime("%H:%M:%S"), "level": "INFO", "message": "Executing PayMongo Automated Gateway & Centavo Test Matrix..."})
             php_path = r"C:\xampp\php\php.exe" if os.path.exists(r"C:\xampp\php\php.exe") else "php"
@@ -141,7 +141,7 @@ def run_test_thread(headless=True, mode="all"):
                 current_runner.driver.quit()
             except Exception:
                 pass
-        current_runner = None
+            current_runner = None
 
 @app.get("/api/status")
 def get_status():
@@ -165,11 +165,12 @@ def start_test(payload: dict = None, background_tasks: BackgroundTasks = None):
         STATE["status"] = "RUNNING"
         headless = payload.get("headless", True) if payload else True
         mode = payload.get("mode", "all") if payload else "all"
-        runner_thread = threading.Thread(target=run_test_thread, args=(headless, mode))
+        stop_after = payload.get("stop_after", "all") if payload else "all"
+        runner_thread = threading.Thread(target=run_test_thread, args=(headless, mode, stop_after))
         runner_thread.daemon = True
         runner_thread.start()
 
-    return {"success": True, "message": "Selenium Test Pipeline execution started."}
+    return {"success": True, "message": f"Selenium Test Pipeline execution started (Target stop: {stop_after})."}
 
 @app.post("/api/stop-test")
 def stop_test():

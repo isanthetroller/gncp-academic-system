@@ -85,8 +85,25 @@ class AnnouncementService {
         $authorName     = !empty($payload['author_name']) ? trim($payload['author_name']) : (!empty($admin['name']) ? $admin['name'] : ($admin['username'] ?? 'Office of Academic Affairs'));
         $authorId       = $admin['id'] ?? null;
 
-        if (empty($title) || empty($content)) {
-            return ['success' => false, 'message' => 'Announcement title and content body are required.', 'code' => 400];
+        $textOnly = trim(strip_tags(str_replace('&nbsp;', ' ', $content)));
+        if (mb_strlen($title) < 3) {
+            return ['success' => false, 'message' => 'Announcement title must be at least 3 characters long.', 'code' => 400];
+        }
+        if (mb_strlen($title) > 150) {
+            return ['success' => false, 'message' => 'Announcement title cannot exceed 150 characters.', 'code' => 400];
+        }
+        if (empty($textOnly) && empty($imageUrl)) {
+            return ['success' => false, 'message' => 'Announcement content body or attached banner image is required.', 'code' => 400];
+        }
+
+        $allowedCategories = ['GENERAL', 'ACADEMIC', 'FINANCIAL', 'EVENT', 'URGENT', 'FACILITIES'];
+        if (!in_array($category, $allowedCategories, true)) {
+            $category = 'GENERAL';
+        }
+
+        $allowedAudiences = ['ALL', 'STUDENTS', 'OPERATORS', 'FRESHMEN'];
+        if (!in_array($targetAudience, $allowedAudiences, true)) {
+            $targetAudience = 'ALL';
         }
 
         try {

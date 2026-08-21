@@ -18,8 +18,27 @@ class UserAdminController {
 
     public function saveUser(array $payload): array {
         $userData = $payload['user'] ?? [];
+        $userData['username'] = strtolower(trim($userData['username'] ?? ''));
+        $userData['name'] = trim($userData['name'] ?? '');
+        $userData['role'] = strtoupper(trim($userData['role'] ?? ''));
+        $userData['email'] = trim($userData['email'] ?? '');
+        $userData['status'] = strtoupper(trim($userData['status'] ?? 'ACTIVE')) ?: 'ACTIVE';
+
         if (empty($userData['username']) || empty($userData['name']) || empty($userData['role'])) {
-            return ['success' => false, 'message' => 'Username, name, and role are required.', 'code' => 400];
+            return ['success' => false, 'message' => 'Username, name, and station role are required.', 'code' => 400];
+        }
+
+        if (!preg_match('/^[a-z0-9_.-]{3,30}$/', $userData['username'])) {
+            return ['success' => false, 'message' => 'Username must be 3-30 characters long and contain only lowercase letters, numbers, hyphens, or underscores.', 'code' => 400];
+        }
+
+        if (!empty($userData['email']) && !filter_var($userData['email'], FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Invalid email address format provided.', 'code' => 400];
+        }
+
+        $allowedRoles = ['REGISTRAR', 'HELPDESK', 'MEDICAL', 'CASHIER', 'IT_CENTER', 'ADMIN'];
+        if (!in_array($userData['role'], $allowedRoles, true)) {
+            return ['success' => false, 'message' => 'Invalid station role selected.', 'code' => 400];
         }
 
         // Auto-generate temp password if not explicitly supplied

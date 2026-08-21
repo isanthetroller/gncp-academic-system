@@ -9,7 +9,7 @@
     <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="../shared/libs/login.css">
-    <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css?v=5">
+    <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css?v=20260822_swal">
     <link rel="stylesheet" href="assets/css/sidebar.css?v=11">
     <script src="../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../shared/libs/vue.global.js"></script>
@@ -643,19 +643,19 @@
         .bulletin-tag-URGENT { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .bulletin-tag-GENERAL { background: #f9fafb; color: #374151; border: 1px solid #e5e7eb; }
 
-        /* ── HARMONIOUS GNCP LIGHT-THEME COURSE ANALYTICS & SPLINE CHART ── */
+        /* ── MODERN GNCP EXECUTIVE REGISTRATION ANALYTICS ── */
         .chart-card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
         .chart-title-text {
             font-family: var(--font-head, 'Outfit', sans-serif);
-            font-size: 0.95rem;
+            font-size: 0.98rem;
             font-weight: 800;
             color: var(--text, #111827);
             display: flex;
@@ -677,15 +677,15 @@
             background: transparent;
             border: none;
             color: #64748b;
-            font-size: 0.72rem;
+            font-size: 0.73rem;
             font-weight: 700;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s ease;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
         .btn-chart-toggle:hover {
@@ -699,14 +699,54 @@
             border: 1px solid rgba(0, 106, 78, 0.18);
         }
 
+        /* Top Executive Summary Strip */
+        .chart-summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .chart-summary-chip {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 7px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chip-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chip-val {
+            font-size: 0.94rem;
+            font-weight: 800;
+            color: var(--text, #0f172a);
+        }
+
+        .chip-val small {
+            font-size: 0.70rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
         .chart-svg-container {
             position: relative;
             width: 100%;
-            height: 220px;
+            height: 230px;
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            /* overflow: visible allows tooltip to float outside SVG bounds */
             overflow: visible;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
         }
@@ -716,7 +756,6 @@
             height: 100%;
             display: block;
             border-radius: 12px;
-            /* Clip SVG paths to canvas — tooltip lives in HTML layer above */
             overflow: hidden;
         }
 
@@ -725,8 +764,8 @@
             pointer-events: none;
             background: #ffffff;
             border: 1px solid rgba(0, 106, 78, 0.25);
-            border-left: 3.5px solid var(--primary, #006A4E);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+            border-left: 4px solid var(--primary, #006A4E);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.15);
             border-radius: 8px;
             padding: 8px 12px;
             z-index: 100;
@@ -735,10 +774,10 @@
         }
 
         .chart-tooltip-prog {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             font-weight: 800;
             color: var(--primary, #006A4E);
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -749,7 +788,65 @@
             color: #475569;
             display: flex;
             justify-content: space-between;
-            gap: 12px;
+            gap: 14px;
+            margin-top: 1px;
+        }
+
+        /* Admissions Pipeline Funnel Styles */
+        .pipeline-funnel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 4px 0;
+        }
+
+        .funnel-stage-row {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            transition: all 0.2s ease;
+        }
+
+        .funnel-stage-row:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .funnel-stage-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+        }
+
+        .funnel-stage-title {
+            font-weight: 700;
+            color: var(--text, #0f172a);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .funnel-stage-stats {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .funnel-bar-track {
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .funnel-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .chart-legend-bar {
@@ -761,7 +858,7 @@
             font-size: 0.74rem;
             color: #64748b;
             padding-top: 12px;
-            margin-top: 4px;
+            margin-top: 6px;
             border-top: 1px solid #f1f5f9;
         }
 
@@ -775,17 +872,17 @@
         .legend-dot-primary {
             width: 10px;
             height: 10px;
-            border-radius: 50%;
+            border-radius: 3px;
             background: #006A4E;
-            box-shadow: 0 0 6px rgba(0, 106, 78, 0.4);
+            box-shadow: 0 0 4px rgba(0, 106, 78, 0.3);
         }
 
         .legend-dot-gold {
             width: 10px;
             height: 10px;
-            border-radius: 50%;
+            border-radius: 3px;
             background: #d4af37;
-            box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
         }
 
         .chart-pills-row {
@@ -1175,216 +1272,243 @@
                             </div>
                         </div>
 
-                        <!-- Right Panel: Registrations Trend & Course Distribution -->
+                        <!-- Right Panel: Modern Registrations & Intake Analytics -->
                         <div class="card">
                             <div class="chart-card-header">
                                 <div class="chart-title-text">
-                                    <i class="fa-solid fa-chart-line" style="color:var(--primary, #006A4E);"></i>
-                                    Registrations Analytics
+                                    <i class="fa-solid fa-chart-column" style="color:var(--primary, #006A4E);"></i>
+                                    Registrations & Intake Analytics
                                 </div>
                                 <div class="chart-view-toggle">
+                                    <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'spline' }" @click="chartViewMode = 'spline'">
+                                        <i class="fa-solid fa-chart-column"></i> By Course
+                                    </button>
                                     <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'timeline' }" @click="chartViewMode = 'timeline'">
                                         <i class="fa-solid fa-chart-area"></i> 30-Day Trend
                                     </button>
-                                    <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'spline' }" @click="chartViewMode = 'spline'">
-                                        <i class="fa-solid fa-bezier-curve"></i> By Course
-                                    </button>
                                     <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'bars' }" @click="chartViewMode = 'bars'">
-                                        <i class="fa-solid fa-chart-simple"></i> Breakdown
+                                        <i class="fa-solid fa-filter-circle-dollar"></i> Breakdown
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- 30-Day Timeline Spline View (Light-Theme Executive Curve) -->
-                            <div v-if="chartViewMode === 'timeline'" class="chart-svg-container" @mouseleave="hoveredTimelinePoint = null">
-                                <svg :viewBox="`0 0 ${timelineGraphMetrics.width} ${timelineGraphMetrics.height}`" preserveAspectRatio="none" style="width: 100%; height: 100%;">
-                                    <defs>
-                                        <filter id="emeraldGlow" x="-20%" y="-20%" width="140%" height="140%">
-                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#006A4E" flood-opacity="0.25"/>
-                                        </filter>
-                                        <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
-                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#d4af37" flood-opacity="0.3"/>
-                                        </filter>
-                                        <linearGradient id="emeraldAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#006A4E" stop-opacity="0.14"/>
-                                            <stop offset="100%" stop-color="#006A4E" stop-opacity="0.0"/>
-                                        </linearGradient>
-                                        <linearGradient id="goldAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#d4af37" stop-opacity="0.16"/>
-                                            <stop offset="100%" stop-color="#d4af37" stop-opacity="0.0"/>
-                                        </linearGradient>
-                                    </defs>
-
-                                    <!-- Gridlines -->
-                                    <g class="chart-grid">
-                                        <line v-for="level in [0.25, 0.5, 0.75, 1.0]" :key="level"
-                                              :x1="timelineGraphMetrics.padXLeft" :y1="timelineGraphMetrics.bottomY - (level * (timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)))"
-                                              :x2="timelineGraphMetrics.width - timelineGraphMetrics.padXRight" :y2="timelineGraphMetrics.bottomY - (level * (timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)))"
-                                              stroke="#f1f5f9" stroke-dasharray="4 4" stroke-width="1" />
-                                        
-                                        <!-- Y-Axis Ticks Left (Cumulative / Total) -->
-                                        <text :x="timelineGraphMetrics.padXLeft - 8" :y="timelineGraphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">0</text>
-                                        <text :x="timelineGraphMetrics.padXLeft - 8" :y="timelineGraphMetrics.bottomY - ((timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ Math.round(timelineGraphMetrics.maxVal / 2) }}</text>
-                                        <text :x="timelineGraphMetrics.padXLeft - 8" :y="timelineGraphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ timelineGraphMetrics.maxVal }}</text>
-
-                                        <!-- Y-Axis Ticks Right (Daily Volume) -->
-                                        <text :x="timelineGraphMetrics.width - timelineGraphMetrics.padXRight + 8" :y="timelineGraphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">0</text>
-                                        <text :x="timelineGraphMetrics.width - timelineGraphMetrics.padXRight + 8" :y="timelineGraphMetrics.bottomY - ((timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">{{ Math.round(timelineGraphMetrics.maxDaily / 2) }}</text>
-                                        <text :x="timelineGraphMetrics.width - timelineGraphMetrics.padXRight + 8" :y="timelineGraphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">{{ timelineGraphMetrics.maxDaily }}</text>
-                                    </g>
-
-                                    <!-- Bottom Base Axis -->
-                                    <line :x1="timelineGraphMetrics.padXLeft" :y1="timelineGraphMetrics.bottomY" :x2="timelineGraphMetrics.width - timelineGraphMetrics.padXRight" :y2="timelineGraphMetrics.bottomY" stroke="#e2e8f0" stroke-width="1.5" />
-
-                                    <!-- Gold Flowing Spline Wave (Daily Velocity) -->
-                                    <path v-if="timelineGraphMetrics.dailyArea" :d="timelineGraphMetrics.dailyArea" fill="url(#goldAreaGrad)" />
-                                    <path v-if="timelineGraphMetrics.dailySpline" :d="timelineGraphMetrics.dailySpline" fill="none" stroke="#d4af37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#goldGlow)" />
-
-                                    <!-- Emerald Smooth Spline Curve (Total Cumulative) -->
-                                    <path v-if="timelineGraphMetrics.cumArea" :d="timelineGraphMetrics.cumArea" fill="url(#emeraldAreaGrad)" />
-                                    <path v-if="timelineGraphMetrics.cumSpline" :d="timelineGraphMetrics.cumSpline" fill="none" stroke="#006A4E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#emeraldGlow)" />
-
-                                    <!-- X-Axis Labels (Days 1 to 30) -->
-                                    <g v-for="(p, i) in timelineGraphMetrics.pointsCum" :key="'tlabel-' + i">
-                                        <text v-if="i === 0 || (i + 1) % 2 === 1 || i === timelineGraphMetrics.pointsCum.length - 1" :x="p.x" :y="timelineGraphMetrics.bottomY + 14" fill="#64748b" font-size="8" font-weight="600" text-anchor="middle" font-family="'Outfit', sans-serif">
-                                            {{ p.data.day }}
-                                        </text>
-                                    </g>
-
-                                    <!-- Hover Crosshair Line -->
-                                    <line v-if="hoveredTimelinePoint" :x1="hoveredTimelinePoint.x" :y1="timelineGraphMetrics.padY - 8" :x2="hoveredTimelinePoint.x" :y2="timelineGraphMetrics.bottomY" stroke="rgba(0,106,78,0.4)" stroke-width="1.5" stroke-dasharray="3 3" />
-
-                                    <!-- Interactive Data Points & Hitboxes -->
-                                    <g v-for="(p, i) in timelineGraphMetrics.pointsCum" :key="'tpt-' + i" @mouseenter="hoveredTimelinePoint = p">
-                                        <!-- Gold Dot (Daily) -->
-                                        <circle :cx="timelineGraphMetrics.pointsDaily[i].x" :cy="timelineGraphMetrics.pointsDaily[i].y" r="2.8" fill="#ffffff" stroke="#d4af37" stroke-width="1.8" />
-                                        
-                                        <!-- Emerald Dot (Cumulative) -->
-                                        <circle :cx="p.x" :cy="p.y" :r="hoveredTimelinePoint && hoveredTimelinePoint.data.day === p.data.day ? 5.5 : 3.5" fill="#ffffff" stroke="#006A4E" stroke-width="2.2" style="transition: r 0.15s ease;" />
-                                        
-                                        <!-- Red Peak Marker (✕) at key intervals like in reference image -->
-                                        <text v-if="i === 2 || i === 12 || i === 22" :x="p.x" :y="timelineGraphMetrics.pointsDaily[i].y - 8" fill="#dc2626" font-size="9" font-weight="900" text-anchor="middle" font-family="'Outfit', sans-serif">✕</text>
-
-                                        <!-- Invisible Hitbox -->
-                                        <rect :x="p.x - 10" :y="0" width="20" :height="timelineGraphMetrics.height" fill="transparent" style="cursor: pointer;" />
-                                    </g>
-                                </svg>
-
-                                <!-- Floating Tooltip (Boundary Aware) -->
-                                <div v-if="hoveredTimelinePoint" class="chart-tooltip-floating" :style="getTooltipStyle(hoveredTimelinePoint, timelineGraphMetrics)">
-                                    <div class="chart-tooltip-prog">
-                                        <i class="fa-solid fa-calendar-day"></i>
-                                        <span>Day {{ hoveredTimelinePoint.data.day }} &bull; {{ hoveredTimelinePoint.data.date }}</span>
-                                    </div>
-                                    <div class="chart-tooltip-stat">
-                                        <span>Total Cumulative:</span>
-                                        <strong style="color:var(--primary, #006A4E)">{{ hoveredTimelinePoint.data.cumulative }} students</strong>
-                                    </div>
-                                    <div class="chart-tooltip-stat">
-                                        <span>Daily Velocity:</span>
-                                        <strong style="color:#d97706">+{{ hoveredTimelinePoint.data.daily }} registrations</strong>
-                                    </div>
+                            <!-- Executive Summary Strip -->
+                            <div class="chart-summary-strip">
+                                <div class="chart-summary-chip">
+                                    <span class="chip-label"><i class="fa-solid fa-crown" style="color:var(--gold, #d4af37);"></i> Top Program</span>
+                                    <strong class="chip-val">{{ topProgramSummary.code }} <small>({{ topProgramSummary.count }} apps)</small></strong>
+                                </div>
+                                <div class="chart-summary-chip">
+                                    <span class="chip-label"><i class="fa-solid fa-graduation-cap" style="color:var(--primary, #006A4E);"></i> Conversion Rate</span>
+                                    <strong class="chip-val">{{ totalEnrolledRate }}% <small>({{ totalEnrolledCount }}/{{ totalRegistrationsCount }})</small></strong>
+                                </div>
+                                <div class="chart-summary-chip">
+                                    <span class="chip-label"><i class="fa-solid fa-users" style="color:#0284c7;"></i> Total Intake</span>
+                                    <strong class="chip-val">{{ totalRegistrationsCount }} <small>Registered</small></strong>
                                 </div>
                             </div>
 
-                            <!-- Course Spline View (Harmonious GNCP Light Theme) -->
-                            <div v-else-if="chartViewMode === 'spline'" class="chart-svg-container" @mouseleave="hoveredChartPoint = null">
+                            <!-- View 1: By Course Grouped Column Chart -->
+                            <div v-if="chartViewMode === 'spline'" class="chart-svg-container" @mouseleave="hoveredChartPoint = null">
                                 <svg :viewBox="`0 0 ${graphMetrics.width} ${graphMetrics.height}`" preserveAspectRatio="none" style="width: 100%; height: 100%;">
                                     <defs>
-                                        <filter id="emeraldGlow2" x="-20%" y="-20%" width="140%" height="140%">
-                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#006A4E" flood-opacity="0.25"/>
-                                        </filter>
-                                        <filter id="goldGlow2" x="-20%" y="-20%" width="140%" height="140%">
-                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#d4af37" flood-opacity="0.3"/>
-                                        </filter>
-                                        <linearGradient id="emeraldGradient2" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#006A4E" stop-opacity="0.14"/>
-                                            <stop offset="100%" stop-color="#006A4E" stop-opacity="0.0"/>
+                                        <linearGradient id="emeraldBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#059669"/>
+                                            <stop offset="100%" stop-color="#006A4E"/>
                                         </linearGradient>
-                                        <linearGradient id="goldGradient2" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#d4af37" stop-opacity="0.16"/>
-                                            <stop offset="100%" stop-color="#d4af37" stop-opacity="0.0"/>
+                                        <linearGradient id="goldBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#f59e0b"/>
+                                            <stop offset="100%" stop-color="#d4af37"/>
                                         </linearGradient>
+                                        <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.12"/>
+                                        </filter>
                                     </defs>
 
-                                    <!-- Gridlines -->
+                                    <!-- Gridlines & Y-Axis Integer Ticks -->
                                     <g class="chart-grid">
-                                        <line v-for="level in [0.25, 0.5, 0.75, 1.0]" :key="level"
-                                              :x1="graphMetrics.padXLeft" :y1="graphMetrics.bottomY - (level * (graphMetrics.height - (graphMetrics.padY * 2)))"
-                                              :x2="graphMetrics.width - graphMetrics.padXRight" :y2="graphMetrics.bottomY - (level * (graphMetrics.height - (graphMetrics.padY * 2)))"
-                                              stroke="#f1f5f9" stroke-dasharray="4 4" stroke-width="1" />
-                                        
-                                        <!-- Left & Right Ticks -->
-                                        <text :x="graphMetrics.padXLeft - 8" :y="graphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">0</text>
-                                        <text :x="graphMetrics.padXLeft - 8" :y="graphMetrics.bottomY - ((graphMetrics.height - (graphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ Math.round(graphMetrics.maxVal / 2) }}</text>
-                                        <text :x="graphMetrics.padXLeft - 8" :y="graphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ graphMetrics.maxVal }}</text>
-
-                                        <text :x="graphMetrics.width - graphMetrics.padXRight + 8" :y="graphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">0%</text>
-                                        <text :x="graphMetrics.width - graphMetrics.padXRight + 8" :y="graphMetrics.bottomY - ((graphMetrics.height - (graphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">50%</text>
-                                        <text :x="graphMetrics.width - graphMetrics.padXRight + 8" :y="graphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">100%</text>
+                                        <g v-for="tick in graphMetrics.gridTicks" :key="'gtick-' + tick.val">
+                                            <line :x1="graphMetrics.padXLeft" :y1="tick.y"
+                                                  :x2="graphMetrics.width - graphMetrics.padXRight" :y2="tick.y"
+                                                  stroke="#f1f5f9" stroke-dasharray="4 4" stroke-width="1" />
+                                            <text :x="graphMetrics.padXLeft - 10" :y="tick.y + 3.5" fill="#94a3b8" font-size="9" font-weight="600" text-anchor="end" font-family="'Outfit', sans-serif">
+                                                {{ tick.val }}
+                                            </text>
+                                        </g>
                                     </g>
 
                                     <!-- Bottom Base Axis -->
-                                    <line :x1="graphMetrics.padXLeft" :y1="graphMetrics.bottomY" :x2="graphMetrics.width - graphMetrics.padXRight" :y2="graphMetrics.bottomY" stroke="#e2e8f0" stroke-width="1.5" />
+                                    <line :x1="graphMetrics.padXLeft" :y1="graphMetrics.bottomY" :x2="graphMetrics.width - graphMetrics.padXRight" :y2="graphMetrics.bottomY" stroke="#cbd5e1" stroke-width="1.5" />
 
-                                    <!-- Gold Area & Spline Wave (Enrolled) -->
-                                    <path v-if="graphMetrics.enrolledArea" :d="graphMetrics.enrolledArea" fill="url(#goldGradient2)" />
-                                    <path v-if="graphMetrics.enrolledSpline" :d="graphMetrics.enrolledSpline" fill="none" stroke="#d4af37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#goldGlow2)" />
+                                    <!-- Invisible baseline paths for backwards compatibility -->
+                                    <path v-if="graphMetrics.totalSpline" :d="graphMetrics.totalSpline" fill="none" stroke="transparent" stroke-width="0.1" />
+                                    <path v-if="graphMetrics.enrolledSpline" :d="graphMetrics.enrolledSpline" fill="none" stroke="transparent" stroke-width="0.1" />
 
-                                    <!-- Emerald Area & Spline Wave (Total Registrations) -->
-                                    <path v-if="graphMetrics.totalArea" :d="graphMetrics.totalArea" fill="url(#emeraldGradient2)" />
-                                    <path v-if="graphMetrics.totalSpline" :d="graphMetrics.totalSpline" fill="none" stroke="#006A4E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#emeraldGlow2)" />
+                                    <!-- Program Column Groups -->
+                                    <g v-for="(col, i) in graphMetrics.columns" :key="'col-' + col.data.code">
+                                        <!-- Column Background Column Glow on Hover -->
+                                        <rect v-if="hoveredChartPoint && hoveredChartPoint.data.code === col.data.code"
+                                              :x="col.hitbox.x" :y="col.hitbox.y" :width="col.hitbox.width" :height="col.hitbox.height"
+                                              fill="rgba(0,106,78,0.04)" rx="6" />
 
-                                    <!-- Course Labels -->
-                                    <g v-for="(p, i) in graphMetrics.pointsTotal" :key="'label-' + p.data.code">
-                                        <text :x="p.x" :y="graphMetrics.bottomY + 16" fill="#475569" font-size="9.5" font-weight="700" text-anchor="middle" font-family="'Outfit', sans-serif">
-                                            {{ p.data.code }}
+                                        <!-- Total Registrations Bar (Emerald) -->
+                                        <rect :x="col.totalBar.x" :y="col.totalBar.y"
+                                              :width="col.totalBar.width" :height="col.totalBar.height"
+                                              fill="url(#emeraldBarGrad)" rx="3" ry="3"
+                                              filter="url(#barShadow)"
+                                              style="transition: all 0.2s ease;" />
+
+                                        <!-- Enrolled Students Bar (Gold) -->
+                                        <rect :x="col.enrolledBar.x" :y="col.enrolledBar.y"
+                                              :width="col.enrolledBar.width" :height="col.enrolledBar.height"
+                                              fill="url(#goldBarGrad)" rx="3" ry="3"
+                                              filter="url(#barShadow)"
+                                              style="transition: all 0.2s ease;" />
+
+                                        <!-- Top Number Label for Total Bar -->
+                                        <text v-if="col.totalBar.val > 0"
+                                              :x="col.totalBar.x + (col.totalBar.width / 2)" :y="col.totalBar.y - 4"
+                                              fill="#006A4E" font-size="8.5" font-weight="800" text-anchor="middle" font-family="'Outfit', sans-serif">
+                                            {{ col.totalBar.val }}
                                         </text>
-                                    </g>
 
-                                    <!-- Hover Crosshair -->
-                                    <line v-if="hoveredChartPoint" :x1="hoveredChartPoint.x" :y1="graphMetrics.padY - 8" :x2="hoveredChartPoint.x" :y2="graphMetrics.bottomY" stroke="rgba(0,106,78,0.4)" stroke-width="1.5" stroke-dasharray="3 3" />
+                                        <!-- Top Number Label for Enrolled Bar -->
+                                        <text v-if="col.enrolledBar.val > 0"
+                                              :x="col.enrolledBar.x + (col.enrolledBar.width / 2)" :y="col.enrolledBar.y - 4"
+                                              fill="#d97706" font-size="8.5" font-weight="800" text-anchor="middle" font-family="'Outfit', sans-serif">
+                                            {{ col.enrolledBar.val }}
+                                        </text>
 
-                                    <!-- Data Nodes -->
-                                    <g v-for="(p, i) in graphMetrics.pointsTotal" :key="'pt-' + p.data.code" @mouseenter="setHoveredPoint(p, i)">
-                                        <!-- Enrolled Dot (Gold with white center) -->
-                                        <circle :cx="graphMetrics.pointsEnrolled[i].x" :cy="graphMetrics.pointsEnrolled[i].y" r="3.5" fill="#ffffff" stroke="#d4af37" stroke-width="2" />
-                                        
-                                        <!-- Total Dot (Emerald with white center) -->
-                                        <circle :cx="p.x" :cy="p.y" :r="hoveredChartPoint && hoveredChartPoint.data.code === p.data.code ? 6 : 4.5" fill="#ffffff" stroke="#006A4E" stroke-width="2.5" style="transition: r 0.15s ease;" />
-                                        
-                                        <!-- Peak Red Tag (✕) -->
-                                        <text v-if="p.data.count === graphMetrics.maxVal && p.data.count > 0" :x="p.x" :y="p.y - 10" fill="#dc2626" font-size="9" font-weight="800" text-anchor="middle" font-family="'Outfit', sans-serif">✕</text>
-                                        <rect :x="p.x - 22" :y="0" width="44" :height="graphMetrics.height" fill="transparent" style="cursor: pointer;" />
+                                        <!-- Zero Marker on Baseline -->
+                                        <circle v-if="col.totalBar.val === 0"
+                                                :cx="col.centerX" :cy="graphMetrics.bottomY" r="2.5" fill="#cbd5e1" />
+
+                                        <!-- X-Axis Program Label -->
+                                        <text :x="col.centerX" :y="graphMetrics.bottomY + 16"
+                                              :fill="hoveredChartPoint && hoveredChartPoint.data.code === col.data.code ? '#006A4E' : '#475569'"
+                                              :font-weight="hoveredChartPoint && hoveredChartPoint.data.code === col.data.code ? '800' : '700'"
+                                              font-size="9.5" text-anchor="middle" font-family="'Outfit', sans-serif">
+                                            {{ col.data.code }}
+                                        </text>
+
+                                        <!-- Interactive Hitbox -->
+                                        <rect :x="col.hitbox.x" :y="col.hitbox.y"
+                                              :width="col.hitbox.width" :height="col.hitbox.height"
+                                              fill="transparent" style="cursor: pointer;"
+                                              @mouseenter="setHoveredPoint({ x: col.centerX, y: col.totalBar.y, data: col.data }, i)" />
                                     </g>
                                 </svg>
 
-                                <!-- Floating Tooltip (Boundary Aware) -->
+                                <!-- Floating Tooltip -->
                                 <div v-if="hoveredChartPoint" class="chart-tooltip-floating" :style="getTooltipStyle(hoveredChartPoint, graphMetrics)">
                                     <div class="chart-tooltip-prog">
                                         <i class="fa-solid fa-graduation-cap"></i>
-                                        <span>{{ hoveredChartPoint.data.code }}</span>
+                                        <span>{{ hoveredChartPoint.data.code }} &bull; {{ hoveredChartPoint.data.name }}</span>
                                     </div>
                                     <div class="chart-tooltip-stat">
                                         <span>Total Applicants:</span>
-                                        <strong style="color:var(--primary, #006A4E)">{{ hoveredChartPoint.data.count }} ({{ hoveredChartPoint.data.pct }}%)</strong>
+                                        <strong style="color:var(--primary, #006A4E)">{{ hoveredChartPoint.data.count }} students ({{ hoveredChartPoint.data.pct }}%)</strong>
                                     </div>
                                     <div class="chart-tooltip-stat">
-                                        <span>Enrolled:</span>
-                                        <strong style="color:#d97706">{{ hoveredChartPoint.data.enrolled }} students</strong>
+                                        <span>Officially Enrolled:</span>
+                                        <strong style="color:#d97706">{{ hoveredChartPoint.data.enrolled }} students ({{ hoveredChartPoint.data.conversionRate }}% conversion)</strong>
+                                    </div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>In-Progress / Staging:</span>
+                                        <strong style="color:#0284c7">{{ hoveredChartPoint.data.pending }} applicant(s)</strong>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Modern Stacked Progress Bars View -->
-                            <div v-else class="prog-dist-list" style="padding: 6px 0;">
-                                <div v-for="pd in courseAnalytics" :key="'bar-' + pd.code" class="prog-item" style="margin-bottom: 10px;">
-                                    <div class="prog-header" style="color: var(--text); font-size: 0.82rem; margin-bottom: 4px;">
-                                        <span style="font-weight: 700;">{{ pd.code }} &bull; <small style="color: var(--text-muted)">{{ pd.name }}</small></span>
-                                        <span style="color: var(--primary); font-weight: 800;">{{ pd.count }} applicant(s) ({{ pd.pct }}%)</span>
+                            <!-- View 2: 30-Day Trend Timeline -->
+                            <div v-else-if="chartViewMode === 'timeline'" class="chart-svg-container" @mouseleave="hoveredTimelinePoint = null">
+                                <svg :viewBox="`0 0 ${timelineGraphMetrics.width} ${timelineGraphMetrics.height}`" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+                                    <defs>
+                                        <linearGradient id="timeAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#006A4E" stop-opacity="0.18"/>
+                                            <stop offset="100%" stop-color="#006A4E" stop-opacity="0.01"/>
+                                        </linearGradient>
+                                        <linearGradient id="timeDailyBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#f59e0b"/>
+                                            <stop offset="100%" stop-color="#d4af37"/>
+                                        </linearGradient>
+                                    </defs>
+
+                                    <!-- Gridlines & Y-Axis Ticks -->
+                                    <g class="chart-grid">
+                                        <g v-for="tick in timelineGraphMetrics.gridTicks" :key="'ttick-' + tick.val">
+                                            <line :x1="timelineGraphMetrics.padXLeft" :y1="tick.y"
+                                                  :x2="timelineGraphMetrics.width - timelineGraphMetrics.padXRight" :y2="tick.y"
+                                                  stroke="#f1f5f9" stroke-dasharray="4 4" stroke-width="1" />
+                                            <text :x="timelineGraphMetrics.padXLeft - 10" :y="tick.y + 3.5" fill="#94a3b8" font-size="9" font-weight="600" text-anchor="end" font-family="'Outfit', sans-serif">
+                                                {{ tick.val }}
+                                            </text>
+                                        </g>
+                                    </g>
+
+                                    <!-- Bottom Base Axis -->
+                                    <line :x1="timelineGraphMetrics.padXLeft" :y1="timelineGraphMetrics.bottomY" :x2="timelineGraphMetrics.width - timelineGraphMetrics.padXRight" :y2="timelineGraphMetrics.bottomY" stroke="#cbd5e1" stroke-width="1.5" />
+
+                                    <!-- Cumulative Intake Area Fill & Trend Curve -->
+                                    <path v-if="timelineGraphMetrics.cumArea" :d="timelineGraphMetrics.cumArea" fill="url(#timeAreaGrad)" />
+                                    <path v-if="timelineGraphMetrics.cumSpline" :d="timelineGraphMetrics.cumSpline" fill="none" stroke="#006A4E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path v-if="timelineGraphMetrics.dailySpline" :d="timelineGraphMetrics.dailySpline" fill="none" stroke="transparent" stroke-width="0.1" />
+
+                                    <!-- Daily Registration Column Bars -->
+                                    <g v-for="(b, i) in timelineGraphMetrics.bars" :key="'tbar-' + i">
+                                        <rect v-if="b.height > 0"
+                                              :x="b.x" :y="b.y" :width="b.width" :height="b.height"
+                                              fill="url(#timeDailyBarGrad)" rx="2" ry="2" />
+                                        
+                                        <!-- X-Axis Labels at key intervals -->
+                                        <text v-if="i === 0 || i === 7 || i === 14 || i === 21 || i === timelineGraphMetrics.bars.length - 1"
+                                              :x="b.centerX" :y="timelineGraphMetrics.bottomY + 16"
+                                              fill="#64748b" font-size="8" font-weight="600" text-anchor="middle" font-family="'Outfit', sans-serif">
+                                            {{ b.data.date }}
+                                        </text>
+
+                                        <!-- Interactive Hitbox -->
+                                        <rect :x="b.centerX - 10" :y="0" width="20" :height="timelineGraphMetrics.height" fill="transparent" style="cursor: pointer;"
+                                              @mouseenter="hoveredTimelinePoint = { x: b.centerX, y: b.y, data: b.data }" />
+                                    </g>
+                                </svg>
+
+                                <!-- Floating Tooltip for Timeline -->
+                                <div v-if="hoveredTimelinePoint" class="chart-tooltip-floating" :style="getTooltipStyle(hoveredTimelinePoint, timelineGraphMetrics)">
+                                    <div class="chart-tooltip-prog">
+                                        <i class="fa-solid fa-calendar-day"></i>
+                                        <span>{{ hoveredTimelinePoint.data.date }} (Day {{ hoveredTimelinePoint.data.day }})</span>
                                     </div>
-                                    <div class="prog-bar-bg" style="background: #f1f5f9; height: 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                                        <div class="prog-bar-fill" :style="{ width: pd.pct + '%', background: 'linear-gradient(90deg, #d4af37 0%, var(--primary) 100%)' }"></div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>Total Cumulative Intake:</span>
+                                        <strong style="color:var(--primary, #006A4E)">{{ hoveredTimelinePoint.data.cumulative }} students</strong>
+                                    </div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>Daily New Registrations:</span>
+                                        <strong style="color:#d97706">+{{ hoveredTimelinePoint.data.daily }} applicant(s)</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View 3: Admissions Lifecycle Pipeline Funnel -->
+                            <div v-else class="pipeline-funnel-list">
+                                <div v-for="stage in pipelineFunnel" :key="stage.id" class="funnel-stage-row">
+                                    <div class="funnel-stage-header">
+                                        <div class="funnel-stage-title">
+                                            <i :class="stage.icon" :style="{ color: stage.color }"></i>
+                                            <span>{{ stage.name }} &bull; <small style="color:var(--text-muted);font-weight:500">{{ stage.desc }}</small></span>
+                                        </div>
+                                        <div class="funnel-stage-stats">
+                                            <span style="font-weight:800;font-size:0.86rem;" :style="{ color: stage.color }">
+                                                {{ stage.count }} student(s)
+                                            </span>
+                                            <span class="badge" style="background:#f1f5f9;color:#475569;font-size:0.72rem;font-weight:700;">
+                                                {{ stage.pct }}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="funnel-bar-track">
+                                        <div class="funnel-bar-fill" :style="{ width: stage.pct + '%', background: stage.color }"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1394,11 +1518,11 @@
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="chart-legend-item">
                                         <span class="legend-dot-primary"></span>
-                                        <span>Total Registrations</span>
+                                        <span>Total Applicants</span>
                                     </div>
                                     <div class="chart-legend-item">
                                         <span class="legend-dot-gold"></span>
-                                        <span>Enrolled Students</span>
+                                        <span>Officially Enrolled</span>
                                     </div>
                                 </div>
                                 <div class="chart-pills-row">
@@ -2080,11 +2204,11 @@
                                     <td style="font-weight:600">{{ u.name }}</td>
                                     <td><code style="color:var(--sky)">{{ u.username }}</code></td>
                                     <td><span class="badge badge-role">{{ u.role }}</span></td>
-                                    <td><span class="badge" :class="u.status==='ACTIVE'?'badge-active':u.status==='PENDING'?'badge-pending':'badge-deact'">{{ u.status || 'ACTIVE' }}</span></td>
+                                    <td><span class="badge" :class="(u.status||'ACTIVE').toUpperCase()==='ACTIVE'?'badge-active':(u.status||'').toUpperCase()==='PENDING'?'badge-pending':'badge-deact'">{{ (u.status || 'ACTIVE').toUpperCase() }}</span></td>
                                     <td style="text-align:right"><span style="display:flex;gap:6px;justify-content:flex-end">
-                                        <button type="button" v-if="u.status==='PENDING'"     class="btn-sm-green" @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-check"></i> Approve</button>
-                                        <button type="button" v-if="u.status==='ACTIVE'"      class="btn-sm-warn"  @click="updateStatus(u.id,'DEACTIVATED')"><i class="fa-solid fa-ban"></i> Deactivate</button>
-                                        <button type="button" v-if="u.status==='DEACTIVATED'" class="btn-sm-green" @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-rotate-left"></i> Activate</button>
+                                        <button type="button" v-if="(u.status||'ACTIVE').toUpperCase()==='PENDING'"     class="btn-sm-green" @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-check"></i> Approve</button>
+                                        <button type="button" v-if="(u.status||'ACTIVE').toUpperCase()==='ACTIVE'"      class="btn-sm-warn"  @click="updateStatus(u.id,'DEACTIVATED')"><i class="fa-solid fa-ban"></i> Deactivate</button>
+                                        <button type="button" v-if="(u.status||'').toUpperCase()==='DEACTIVATED'" class="btn-sm-green" @click="updateStatus(u.id,'ACTIVE')"><i class="fa-solid fa-rotate-left"></i> Activate</button>
                                         <button type="button" class="btn-sm-sky" @click="resetOperatorPassword(u)"><i class="fa-solid fa-key"></i> Reset Pass</button>
                                         <button type="button" class="btn-sm-sky" @click="openEditOperatorModal(u)"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                                         <button type="button" class="btn-sm-danger" @click="deleteUser(u.id)"><i class="fa-solid fa-trash"></i></button>
@@ -2823,7 +2947,7 @@
     </div>
 
     <!-- ══ GOOGLE DOCS BULLETIN CREATOR & CARD TEMPLATE MODAL ══ -->
-    <div v-if="modal==='announcement'" class="overlay" @click.self="closeModal">
+    <div v-if="modal==='announcement'" class="overlay" @click.self="closeAnnouncementModal">
         <div class="bulletin-modal-card">
             <!-- Modal Header -->
             <div class="bulletin-modal-header">
@@ -2836,7 +2960,7 @@
                         <div style="font-size:0.72rem;color:var(--text-muted)">Interactive Google Docs Canvas &bull; Live preview identical to Student Portal</div>
                     </div>
                 </div>
-                <button type="button" @click="closeModal" style="background:transparent;border:none;color:#9ca3af;font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:6px;">
+                <button type="button" @click="closeAnnouncementModal" style="background:transparent;border:none;color:#9ca3af;font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:6px;">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -2962,7 +3086,13 @@
                     <div class="docs-card-body">
                         <!-- Editable Headline -->
                         <div>
-                            <input class="docs-live-title" v-model="announcementForm.title" placeholder="Notice / Memo Headline (e.g. Schedule of Midterm Examinations)..." required>
+                            <div class="d-flex align-items-center justify-content-between mb-1" style="font-size:0.74rem;">
+                                <span style="font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Headline / Title <span class="text-danger">*</span></span>
+                                <span :style="{ color: (announcementForm.title || '').length > 140 ? '#dc2626' : '#6b7280', fontWeight: '700' }">
+                                    {{ (announcementForm.title || '').length }}/150
+                                </span>
+                            </div>
+                            <input class="docs-live-title" maxlength="150" v-model="announcementForm.title" placeholder="Notice / Memo Headline (e.g. Schedule of Midterm Examinations)..." required>
                         </div>
 
                         <!-- Contenteditable Google Docs Canvas -->
@@ -3060,7 +3190,7 @@
                     Target: <strong class="text-dark">{{ announcementForm.target_audience === 'ALL' ? 'All Campus Community' : announcementForm.target_audience }}</strong> &bull; Category: <strong class="text-dark">{{ announcementForm.category }}</strong>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn-modal-cancel" @click="closeModal" :disabled="isSavingAnnouncement">Cancel</button>
+                    <button class="btn-modal-cancel" @click="closeAnnouncementModal" :disabled="isSavingAnnouncement">Cancel</button>
                     <button class="btn-modal-save" @click="saveAnnouncement" :disabled="isSavingAnnouncement" style="background-color: var(--primary);">
                         <i v-if="isSavingAnnouncement" class="fa-solid fa-circle-notch fa-spin me-1"></i>
                         {{ isSavingAnnouncement ? 'Publishing Notice...' : (announcementForm.id ? 'Update Notice' : 'Publish Official Announcement') }}
@@ -3152,6 +3282,6 @@
 
 </div><!-- /app -->
 
-<script src="assets/js/controllers/AdminController.js"></script>
+<script src="assets/js/controllers/AdminController.js?v=20260822_swal"></script>
 </body>
 </html>

@@ -22,7 +22,7 @@ try {
     $pdo = Database::getInstance();
 
     if ($action === 'fetch_users') {
-        $stmt  = $pdo->query("SELECT `id`, `username`, `role`, `name`, `email`, `status`, `must_change_password`, `created_at` FROM `station_users` WHERE `role` NOT IN ('ADMIN','SUPER_ADMIN') ORDER BY `id` DESC");
+        $stmt  = $pdo->query("SELECT `id`, `username`, `role`, `name`, `email`, UPPER(COALESCE(NULLIF(`status`, ''), 'ACTIVE')) AS `status`, `must_change_password`, `created_at` FROM `station_users` WHERE `role` NOT IN ('ADMIN','SUPER_ADMIN') ORDER BY `id` DESC");
         $users = $stmt->fetchAll();
         sendResponse(true, $users);
 
@@ -41,7 +41,7 @@ try {
         }
 
         $stmt = $pdo->prepare("UPDATE `station_users` SET `status` = :status WHERE `id` = :id");
-        $stmt->execute(['status' => $status, 'id' => (int)$userId]);
+        $stmt->execute(['status' => strtoupper(trim($status)), 'id' => (int)$userId]);
         sendResponse(true, null, 'Status updated successfully.');
 
     } elseif ($action === 'delete_user') {
@@ -340,7 +340,7 @@ try {
         $enrolled = $studentsCount;
 
         // 2. Program distributions (pre_enrollments + students, normalized to program code)
-        $programsDist = $pdo->query("
+        $programsDistRaw = $pdo->query("
             SELECT program, SUM(cnt) as count FROM (
                 SELECT `course_code` as program, COUNT(*) as cnt
                 FROM `pre_enrollments`
@@ -352,6 +352,36 @@ try {
                 GROUP BY COALESCE(pr.`code`, s.`program`)
             ) t GROUP BY program
         ")->fetchAll(PDO::FETCH_ASSOC);
+
+        $aliasMap = [
+            'BSCOE' => 'BSCpE',
+            'CS' => 'BSCS',
+            'IT' => 'BSIT',
+            'BS Computer Science' => 'BSCS',
+            'BS Information Technology' => 'BSIT',
+            'BS Nursing' => 'BSN',
+            'BS Business Administration' => 'BSBA',
+            'BS Hospitality Management' => 'BSHM',
+            'BS Secondary Education' => 'BSEd',
+            'BS Computer Engineering' => 'BSCpE'
+        ];
+
+        $mergedDist = [];
+        foreach ($programsDistRaw as $p) {
+            $code = trim($p['program'] ?? '');
+            if (isset($aliasMap[$code])) $code = $aliasMap[$code];
+            if (!empty($code)) {
+                $mergedDist[$code] = ($mergedDist[$code] ?? 0) + (int)$p['count'];
+            }
+        }
+
+        $programsDist = [];
+        foreach ($mergedDist as $progCode => $cnt) {
+            $programsDist[] = [
+                'program' => $progCode,
+                'count' => $cnt
+            ];
+        }
 
         // 3. Recent activity logs (recent 5 pre_enrollments & students combined)
         $recentRaw = $pdo->query("
@@ -448,7 +478,16 @@ try {
             ];
         }
 
-        sendResponse(true, compact('total', 'pending', 'verified', 'enrolled', 'programsDist', 'timeline30', 'recent', 'stationQueues'));
+        // 6. Admissions Funnel Pipeline
+        $pipeline = [
+            'pre_registered' => (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` IN ('PRE_REGISTERED', 'Pending')")->fetchColumn(),
+            'verified' => (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` IN ('VERIFIED', 'Approved')")->fetchColumn(),
+            'advised_medical' => (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` IN ('ADVISED', 'MEDICAL_CLEARED')")->fetchColumn(),
+            'paid' => (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` = 'PAID'")->fetchColumn(),
+            'enrolled' => $enrolled
+        ];
+
+        sendResponse(true, compact('total', 'pending', 'verified', 'enrolled', 'programsDist', 'timeline30', 'recent', 'stationQueues', 'pipeline'));
 
     // ──────────────────────────────────────────────────────────────────
     // ACADEMIC CRUD (MIGRATED TO MODULAR SUBFILES: catalog.php, term.php, scheduling.php)

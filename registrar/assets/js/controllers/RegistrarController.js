@@ -213,21 +213,14 @@
             const handleLogout = () => {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: 'Confirm Logout',
+                        title: 'Are you sure?',
                         text: 'Are you sure you want to log out of the Registrar Portal?',
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#dc2626',
-                        cancelButtonColor: '#64748b',
-                        confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true,
-                        customClass: {
-                            popup: 'gncp-swal-card',
-                            title: 'gncp-swal-title',
-                            confirmButton: 'gncp-swal-confirm-btn',
-                            cancelButton: 'gncp-swal-cancel-btn'
-                        }
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, log out',
+                        cancelButtonText: 'Cancel'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             confirmLogout();

@@ -116,24 +116,30 @@ window.app = createApp({
         };
 
         const checkSession = () => {
-            const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
+            const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user') || localStorage.getItem('gncp_station_user') || localStorage.getItem('gncp_admin_user');
             if (stored) {
-                const user = JSON.parse(stored);
-                if (user.role === 'CASHIER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR') {
-                    currentUser.value = user;
-                    fetchCurrentProfile();
-                    if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
-                        window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                try {
+                    const user = JSON.parse(stored);
+                    if (user && (user.role === 'CASHIER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR')) {
+                        currentUser.value = user;
+                        fetchCurrentProfile();
+                        if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                            window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                                loadQueue();
+                            });
+                        } else {
                             loadQueue();
-                        });
-                    } else {
-                        loadQueue();
+                        }
+                        return;
                     }
-                    return;
+                } catch (e) {
+                    console.error('[Cashier] Session parse error:', e);
                 }
             }
             sessionStorage.removeItem('gncp_station_user');
             sessionStorage.removeItem('gncp_admin_user');
+            localStorage.removeItem('gncp_station_user');
+            localStorage.removeItem('gncp_admin_user');
             window.location.href = '../../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         };
 
@@ -155,21 +161,14 @@ window.app = createApp({
         const handleLogout = () => {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Confirm Logout',
+                    title: 'Are you sure?',
                     text: 'Are you sure you want to log out of the Cashier Payment Processing Workstation?',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#dc2626',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    customClass: {
-                        popup: 'gncp-swal-card',
-                        title: 'gncp-swal-title',
-                        confirmButton: 'gncp-swal-confirm-btn',
-                        cancelButton: 'gncp-swal-cancel-btn'
-                    }
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, log out',
+                    cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         confirmLogout();
@@ -577,8 +576,9 @@ window.app = createApp({
             loadQueue();
         };
 
+        const isRecordingPayment = ref(false);
         const recordPayment = async () => {
-            if (!selectedStudent.value) return;
+            if (!selectedStudent.value || isRecordingPayment.value) return;
             const student = selectedStudent.value;
             const payAmt = parseFloat(payAmountInput.value) || 0;
             const currentBal = parseFloat(student.payment.balance) || 0;
@@ -624,108 +624,113 @@ window.app = createApp({
                 return;
             }
 
-            const isFull = (currentBal - payAmt) === 0;
-            const newStatus = isFull ? 'PAID' : 'PARTIAL';
-
-            // Generate a FRESH unique transaction reference for each individual payment
-            const isGCash = student.payment.paymentType === 'GCash';
-            const paymentType = isGCash ? 'GCash (PayMongo)' : 'Cash';
-            const transactionRef = (isGCash && paymongoSession.value?.transactionRef)
-                ? paymongoSession.value.transactionRef
-                : (isGCash ? 'GCASH-' + Math.floor(100000 + Math.random() * 900000) : 'TXN-' + Math.floor(100000 + Math.random() * 900000));
-            student.payment.transactionRef = transactionRef;
-            student.payment.paymentType = paymentType;
-
-            const notes = student.payment.cashierNotes || (isGCash ? 'GCash QR Ph online transfer' : 'Over-the-counter cash payment');
-            const cashierName = currentUser.value ? currentUser.value.name : 'Cashier Officer';
-
-            // 1. Update the reactive local state directly for real-time modal update
-            student.payment.amountPaid = (student.payment.amountPaid || 0) + payAmt;
-            student.payment.balance = currentBal - payAmt;
-            student.payment.status = newStatus;
-            student.status = newStatus;
-
-            if (!student.payment.history || !Array.isArray(student.payment.history)) {
-                student.payment.history = [];
-            }
-
-            student.payment.history.push({
-                date: new Date().toISOString(),
-                amount: payAmt,
-                reference: transactionRef,
-                paymentType: paymentType,
-                cashier: cashierName,
-                notes: notes
-            });
-
-            // 2. Persist to DataBus / localStorage and trigger background sync
-            StationDataBus.updateStudent(student.referenceNumber, (s) => {
-                s.status                 = newStatus;
-                s.payment.status         = newStatus;
-                s.payment.amountPaid     = student.payment.amountPaid;
-                s.payment.balance        = student.payment.balance;
-                s.payment.paymentType    = paymentType;
-                s.payment.transactionRef = transactionRef;
-                s.payment.notes          = notes;
-                s.payment.verifiedBy     = cashierName;
-                s.payment.dateVerified   = new Date().toLocaleDateString();
-                s.payment.history        = student.payment.history;
-
-                const currentStepIdx = (s.roadmap && Array.isArray(s.roadmap)) ? s.roadmap.findIndex(r => r.stepId === 'cashier_payment') : -1;
-                if (currentStepIdx !== -1) {
-                    s.roadmap[currentStepIdx].status = 'COMPLETED';
-                    s.roadmap[currentStepIdx].updatedAt = new Date().toISOString();
-
-                    const nextStep = s.roadmap.slice(currentStepIdx + 1).find(r => r.status === 'PENDING');
-                    if (nextStep) {
-                        nextStep.status = 'IN_PROGRESS';
-                    }
-                }
-            }, ['status', 'payment', 'roadmap']); // Delta: send status + payment + roadmap
-
-            // 3. Directly POST to backend PHP/MySQL to guarantee instant database persistence
+            isRecordingPayment.value = true;
             try {
-                await fetch('../backend/api.php?action=update_student', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        referenceNumber: student.referenceNumber,
-                        updateData: {
-                            payment: student.payment,
-                            roadmap: student.roadmap,
-                            status: newStatus
-                        }
-                    })
+                const isFull = (currentBal - payAmt) === 0;
+                const newStatus = isFull ? 'PAID' : 'PARTIAL';
+
+                // Generate a FRESH unique transaction reference for each individual payment
+                const isGCash = student.payment.paymentType === 'GCash';
+                const paymentType = isGCash ? 'GCash (PayMongo)' : 'Cash';
+                const transactionRef = (isGCash && paymongoSession.value?.transactionRef)
+                    ? paymongoSession.value.transactionRef
+                    : (isGCash ? 'GCASH-' + Math.floor(100000 + Math.random() * 900000) : 'TXN-' + Math.floor(100000 + Math.random() * 900000));
+                student.payment.transactionRef = transactionRef;
+                student.payment.paymentType = paymentType;
+
+                const notes = student.payment.cashierNotes || (isGCash ? 'GCash QR Ph online transfer' : 'Over-the-counter cash payment');
+                const cashierName = currentUser.value ? currentUser.value.name : 'Cashier Officer';
+
+                // 1. Update the reactive local state directly for real-time modal update
+                student.payment.amountPaid = (student.payment.amountPaid || 0) + payAmt;
+                student.payment.balance = currentBal - payAmt;
+                student.payment.status = newStatus;
+                student.status = newStatus;
+
+                if (!student.payment.history || !Array.isArray(student.payment.history)) {
+                    student.payment.history = [];
+                }
+
+                student.payment.history.push({
+                    date: new Date().toISOString(),
+                    amount: payAmt,
+                    reference: transactionRef,
+                    paymentType: paymentType,
+                    cashier: cashierName,
+                    notes: notes
                 });
-            } catch (e) {
-                console.error('[Cashier] Direct backend save failed:', e);
+
+                // 2. Persist to DataBus / localStorage and trigger background sync
+                StationDataBus.updateStudent(student.referenceNumber, (s) => {
+                    s.status                 = newStatus;
+                    s.payment.status         = newStatus;
+                    s.payment.amountPaid     = student.payment.amountPaid;
+                    s.payment.balance        = student.payment.balance;
+                    s.payment.paymentType    = paymentType;
+                    s.payment.transactionRef = transactionRef;
+                    s.payment.notes          = notes;
+                    s.payment.verifiedBy     = cashierName;
+                    s.payment.dateVerified   = new Date().toLocaleDateString();
+                    s.payment.history        = student.payment.history;
+
+                    const currentStepIdx = (s.roadmap && Array.isArray(s.roadmap)) ? s.roadmap.findIndex(r => r.stepId === 'cashier_payment') : -1;
+                    if (currentStepIdx !== -1) {
+                        s.roadmap[currentStepIdx].status = 'COMPLETED';
+                        s.roadmap[currentStepIdx].updatedAt = new Date().toISOString();
+
+                        const nextStep = s.roadmap.slice(currentStepIdx + 1).find(r => r.status === 'PENDING');
+                        if (nextStep) {
+                            nextStep.status = 'IN_PROGRESS';
+                        }
+                    }
+                }, ['status', 'payment', 'roadmap']);
+
+                // 3. Directly POST to backend PHP/MySQL to guarantee instant database persistence
+                try {
+                    await fetch('../backend/api.php?action=update_student', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            referenceNumber: student.referenceNumber,
+                            updateData: {
+                                payment: student.payment,
+                                roadmap: student.roadmap,
+                                status: newStatus
+                            }
+                        })
+                    });
+                } catch (e) {
+                    console.error('[Cashier] Direct backend save failed:', e);
+                }
+
+                loadQueue();
+
+                receiptData.value = {
+                    refNo: student.referenceNumber,
+                    name: student.studentName,
+                    program: student.program,
+                    paymentMode: paymentType,
+                    transactionRef: transactionRef,
+                    totalFee: student.payment.totalFee,
+                    amountPaid: payAmt,
+                    balance: student.payment.balance,
+                    date: new Date().toLocaleString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }),
+                    cashier: cashierName
+                };
+
+                closeModal();
+
+                await Swal.fire({
+                    title: 'Payment Recorded!',
+                    text: `Successfully collected ₱${payAmt.toLocaleString()}. Remaining balance: ₱${student.payment.balance.toLocaleString()}.`,
+                    icon: 'success',
+                    confirmButtonColor: '#006A4E'
+                });
+            } finally {
+                isRecordingPayment.value = false;
             }
-
-            loadQueue();
-
-            receiptData.value = {
-                refNo: student.referenceNumber,
-                name: student.studentName,
-                program: student.program,
-                paymentMode: paymentType,
-                transactionRef: transactionRef,
-                totalFee: student.payment.totalFee,
-                amountPaid: payAmt,
-                balance: student.payment.balance,
-                date: new Date().toLocaleString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                }),
-                cashier: cashierName
-            };
-
-            closeModal();
-
-            await Swal.fire({
-                title: 'Payment Recorded!',
-                text: `Successfully collected ₱${payAmt.toLocaleString()}. Remaining balance: ₱${student.payment.balance.toLocaleString()}.`,
-                icon: 'success',
-                confirmButtonColor: '#006A4E'
-            });
         };
 
         const printCOR = (student) => {
@@ -1097,6 +1102,7 @@ window.app = createApp({
             handleSchemeChange,
             changeDue,
             newBalance,
+            isRecordingPayment,
             recordPayment,
             printCOR,
             markEnrolledAndPrint,

@@ -87,8 +87,11 @@
             });
 
             const handleLogin = () => {
-                if (!loginForm.tempStudentId.trim() || !loginForm.tempPin.trim()) {
-                    loginError.value = 'Please enter both your Student ID and PIN.';
+                loginForm.tempStudentId = (loginForm.tempStudentId || '').trim().toUpperCase();
+                loginForm.tempPin = (loginForm.tempPin || '').trim();
+
+                if (!loginForm.tempStudentId || !loginForm.tempPin) {
+                    loginError.value = 'Please enter both your Reference Number / Student ID and security PIN.';
                     return;
                 }
 

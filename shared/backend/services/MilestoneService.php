@@ -105,6 +105,10 @@ class MilestoneService {
             return ['success' => false, 'message' => 'Milestone title is required.', 'code' => 400];
         }
 
+        if (!empty($dateStart) && !empty($dateEnd) && $dateEnd < $dateStart) {
+            return ['success' => false, 'message' => 'Milestone end date cannot be earlier than start date.', 'code' => 400];
+        }
+
         $validStatuses = ['ACTIVE', 'UPCOMING', 'SCHEDULED', 'COMPLETED'];
         if (!in_array($status, $validStatuses, true)) {
             $status = 'SCHEDULED';

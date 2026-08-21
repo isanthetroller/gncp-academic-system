@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../../../shared/backend/services/AssessmentService.php';
+require_once __DIR__ . '/PaymentService.php';
 
 class EnrollmentService {
     public static function updateStudent(PDO $pdo, array $payload) {
@@ -69,9 +70,15 @@ class EnrollmentService {
             throw new DomainException('This application has been permanently rejected.');
         }
 
-        // Validate payment eligibility if payment update is provided
+        // Validate payment eligibility if actual cashier payment transaction is being processed
         if (isset($updateData['payment'])) {
-            PaymentService::validatePaymentEligibility($existingRecord);
+            $pPayload = $updateData['payment'];
+            $isActualPayment = (isset($pPayload['amountPaid']) && (float)$pPayload['amountPaid'] > 0) ||
+                               in_array(strtoupper($pPayload['status'] ?? ''), ['PAID', 'PARTIAL', 'COMPLETED'], true) ||
+                               !empty($updateData['or_number']);
+            if ($isActualPayment) {
+                PaymentService::validatePaymentEligibility($existingRecord);
+            }
         }
 
         // Check if all steps in the roadmap are completed or skipped & validate sequential order
@@ -95,7 +102,7 @@ class EnrollmentService {
 
         $incomingStatus = $updateData['status'] ?? null;
         $overallStatus = $existingRecord['status'];
-        if ($incomingStatus === 'ENROLLED' || $incomingStatus === 'Approved' || $incomingStatus === 'APPROVED') {
+        if (!empty($incomingStatus)) {
             $overallStatus = $incomingStatus;
         }
         if ($allDone) {
@@ -128,6 +135,8 @@ class EnrollmentService {
                 $sets[] = "`scholarship_data` = :scholarship_data";
                 $params['scholarship_data'] = json_encode($updateData['scholarship']);
             }
+
+            $paymentDataToSave = null;
             if (isset($updateData['payment'])) {
                 $paymentPayload = $updateData['payment'];
                 if (empty($paymentPayload['assessmentSnapshot'])) {
@@ -140,8 +149,7 @@ class EnrollmentService {
                     $paymentPayload['assessmentSnapshot'] = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstp, $discount);
                     $updateData['payment'] = $paymentPayload;
                 }
-                $sets[] = "`payment_data` = :payment_data";
-                $params['payment_data'] = json_encode($updateData['payment']);
+                $paymentDataToSave = $updateData['payment'];
             }
             if (isset($updateData['helpdesk'])) {
                 $sets[] = "`helpdesk_data` = :helpdesk_data";
@@ -157,12 +165,17 @@ class EnrollmentService {
                 $scholarshipData = json_decode($existingRecord['scholarship_data'] ?? '{}', true) ?: [];
                 $discount = (float)($scholarshipData['discount'] ?? 0.00);
 
-                $existingPayment = json_decode($existingRecord['payment_data'] ?? '{}', true) ?: [];
-                if (empty($existingPayment['assessmentSnapshot']) && !empty($advisedSubjects)) {
-                    $existingPayment['assessmentSnapshot'] = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstp, $discount);
-                    $sets[] = "`payment_data` = :payment_data";
-                    $params['payment_data'] = json_encode($existingPayment);
+                if ($paymentDataToSave === null) {
+                    $existingPayment = json_decode($existingRecord['payment_data'] ?? '{}', true) ?: [];
+                    if (empty($existingPayment['assessmentSnapshot']) && !empty($advisedSubjects)) {
+                        $existingPayment['assessmentSnapshot'] = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstp, $discount);
+                        $paymentDataToSave = $existingPayment;
+                    }
                 }
+            }
+            if ($paymentDataToSave !== null) {
+                $sets[] = "`payment_data` = :payment_data";
+                $params['payment_data'] = json_encode($paymentDataToSave);
             }
             if (isset($updateData['enrollment'])) {
                 $sets[] = "`enrollment_data` = :enrollment_data";

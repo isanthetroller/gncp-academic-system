@@ -142,24 +142,30 @@
             };
 
             const checkSession = () => {
-                const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user');
+                const stored = sessionStorage.getItem('gncp_station_user') || sessionStorage.getItem('gncp_admin_user') || localStorage.getItem('gncp_station_user') || localStorage.getItem('gncp_admin_user');
                 if (stored) {
-                    const user = JSON.parse(stored);
-                    if (user.role === 'IT_CENTER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR') {
-                        currentUser.value = user;
-                        fetchCurrentProfile();
-                        if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
-                            window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                    try {
+                        const user = JSON.parse(stored);
+                        if (user && (user.role === 'IT_CENTER' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR')) {
+                            currentUser.value = user;
+                            fetchCurrentProfile();
+                            if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                                window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                                    loadQueue();
+                                });
+                            } else {
                                 loadQueue();
-                            });
-                        } else {
-                            loadQueue();
+                            }
+                            return;
                         }
-                        return;
+                    } catch (e) {
+                        console.error('[IT Center] Session parse error:', e);
                     }
                 }
                 sessionStorage.removeItem('gncp_station_user');
                 sessionStorage.removeItem('gncp_admin_user');
+                localStorage.removeItem('gncp_station_user');
+                localStorage.removeItem('gncp_admin_user');
                 window.location.href = '../../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
             };
 
@@ -193,21 +199,14 @@
             const handleLogout = () => {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: 'Confirm Logout',
+                        title: 'Are you sure?',
                         text: 'Are you sure you want to log out of the IT Center Workstation?',
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#dc2626',
-                        cancelButtonColor: '#64748b',
-                        confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true,
-                        customClass: {
-                            popup: 'gncp-swal-card',
-                            title: 'gncp-swal-title',
-                            confirmButton: 'gncp-swal-confirm-btn',
-                            cancelButton: 'gncp-swal-cancel-btn'
-                        }
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, log out',
+                        cancelButtonText: 'Cancel'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             confirmLogout();

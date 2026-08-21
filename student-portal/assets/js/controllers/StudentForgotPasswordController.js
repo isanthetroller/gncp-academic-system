@@ -50,13 +50,8 @@ window.StudentForgotPasswordController = {
                         title: 'Verification Code Sent',
                         html: `We have sent a 6-digit verification code to <strong>${maskedEmail.value}</strong>.<br><small class="text-muted mt-2 d-block">Please check your inbox (and spam folder) and enter the code below.</small>`,
                         icon: 'success',
-                        confirmButtonColor: '#006A4E',
-                        confirmButtonText: 'Enter Code',
-                        customClass: {
-                            popup: 'gncp-swal-card',
-                            title: 'gncp-swal-title',
-                            confirmButton: 'gncp-swal-confirm-btn'
-                        }
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Enter Code'
                     });
                 }
             } catch (err) {
@@ -107,13 +102,8 @@ window.StudentForgotPasswordController = {
                         title: 'Password Updated!',
                         text: 'Your password has been successfully reset. You can now sign into the Student Portal.',
                         icon: 'success',
-                        confirmButtonColor: '#006A4E',
-                        confirmButtonText: 'Proceed to Sign In',
-                        customClass: {
-                            popup: 'gncp-swal-card',
-                            title: 'gncp-swal-title',
-                            confirmButton: 'gncp-swal-confirm-btn'
-                        }
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Proceed to Sign In'
                     }).then(() => {
                         window.location.href = `login.html?reset=success&id=${encodeURIComponent(identifier.value.trim())}`;
                     });

@@ -45,9 +45,9 @@ if ($action === 'login' || $action === 'login_student') {
         sendResponse(false, null, 'Student ID and password are required.');
     }
 
-    // Lookup in students directory
-    $stmt = $pdo->prepare("SELECT * FROM `students` WHERE `id` = :id");
-    $stmt->execute(['id' => $studentId]);
+    // Lookup in students directory by ID, Email, or Reference Number (case-insensitive)
+    $stmt = $pdo->prepare("SELECT * FROM `students` WHERE LOWER(`id`) = LOWER(:id1) OR LOWER(`email`) = LOWER(:id2) OR LOWER(COALESCE(`temp_reference_no`, '')) = LOWER(:id3) LIMIT 1");
+    $stmt->execute(['id1' => $studentId, 'id2' => $studentId, 'id3' => $studentId]);
     $student = $stmt->fetch();
 
     if (!$student) {

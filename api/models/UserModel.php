@@ -9,27 +9,28 @@ class UserModel {
         $this->pdo = $pdo;
     }
 
-    public function findByUsername($username) {
-        $stmt = $this->pdo->prepare("SELECT * FROM `station_users` WHERE `username` = :username");
-        $stmt->execute(['username' => $username]);
+    public function findByUsername($identity) {
+        $stmt = $this->pdo->prepare("SELECT * FROM `station_users` WHERE LOWER(`username`) = LOWER(:u1) OR LOWER(`email`) = LOWER(:u2) LIMIT 1");
+        $stmt->execute(['u1' => trim($identity), 'u2' => trim($identity)]);
         return $stmt->fetch();
     }
 
     public function getAllUsers() {
-        $stmt = $this->pdo->query("SELECT id, username, name, email, role, status, must_change_password, created_at FROM `station_users` ORDER BY id DESC");
+        $stmt = $this->pdo->query("SELECT id, username, name, email, role, UPPER(COALESCE(NULLIF(status, ''), 'ACTIVE')) as status, must_change_password, created_at FROM `station_users` ORDER BY id DESC");
         return $stmt->fetchAll();
     }
 
     public function createUser($data) {
         $stmt = $this->pdo->prepare("INSERT INTO `station_users` (`username`, `password`, `name`, `email`, `role`, `status`, `must_change_password`) VALUES (:username, :password, :name, :email, :role, :status, :must_change_password)");
         $hashed = password_hash($data['password'], PASSWORD_DEFAULT);
+        $status = strtoupper(trim($data['status'] ?? 'ACTIVE')) ?: 'ACTIVE';
         $stmt->execute([
             'username'             => $data['username'],
             'password'             => $hashed,
             'name'                 => $data['name'],
             'email'                => $data['email'] ?? null,
             'role'                 => $data['role'],
-            'status'               => $data['status'] ?? 'ACTIVE',
+            'status'               => $status,
             'must_change_password' => isset($data['must_change_password']) ? (int)$data['must_change_password'] : 1
         ]);
         return $this->pdo->lastInsertId();
@@ -37,7 +38,7 @@ class UserModel {
 
     public function updateUserStatus($id, $status) {
         $stmt = $this->pdo->prepare("UPDATE `station_users` SET `status` = :status WHERE `id` = :id");
-        return $stmt->execute(['id' => $id, 'status' => $status]);
+        return $stmt->execute(['id' => $id, 'status' => strtoupper(trim($status))]);
     }
 
     public function changePassword($identity, $newPassword) {

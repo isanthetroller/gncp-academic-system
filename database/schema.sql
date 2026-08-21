@@ -101,12 +101,12 @@ CREATE TABLE IF NOT EXISTS `station_users` (
 
 -- Default bootstrap staff and admin accounts
 INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `email`, `status`, `must_change_password`) VALUES
-('admin',      '$2y$10$.fglgoP5NckmejZX75IL.edj9NGdhaNlrFYH50k.e3PXt3sjDcydi', 'SUPER_ADMIN', 'System Administrator',     'admin@gncp.edu.ph',      'ACTIVE', 0),
-('kriz',       '$2y$10$Lts/AU6iVAcKrtCGK6bqaOAChdQUntb5UAre4g6HJdRgnl54dQShu', 'REGISTRAR',   'Kriz Registrar Officer',   'kriz@gncp.edu.ph',       'ACTIVE', 0),
-('tristan',    '$2y$10$O1ieLgtu5imC.U40khr.S.u351.iUr0szschjqQ1pahXXdR6K8HeG', 'HELPDESK',    'Tristan Helpdesk Officer', 'tristan@gncp.edu.ph',    'ACTIVE', 0),
-('ethan',      '$2y$10$bhwxETuzZsD4pI5ZZ.Km0.e.cndS2Of0zVB4cMXnleutgKF.sq/GK', 'MEDICAL',     'Dr. Ethan Medical Doctor', 'ethan@gncp.edu.ph',      'ACTIVE', 0),
-('cashier',    '$2y$10$AwuuTphqv3cLz09KmwKxaOuSyq.januMUUKNMhCQU0njpmXjDNOxm', 'CASHIER',     'Cashier Officer',          'cashier@gncp.edu.ph',    'ACTIVE', 0),
-('it_officer', '$2y$10$5ixzf0tZSJ0MdQEh5.dYeOyxH/MdEnfuBVGizCC1SsiLZWTwyp6sy', 'IT_CENTER',   'IT Center Officer',        'it_officer@gncp.edu.ph', 'ACTIVE', 0)
+('admin',      '$2y$10$xyUKLnTCwM0eJ8e2p53Lq.wNyWew3ACf4hJRE3wMMLmRdowbzRUoa', 'SUPER_ADMIN', 'System Administrator',     'admin@gncp.edu.ph',      'ACTIVE', 0),
+('kriz',       '$2y$10$QVI30Cn5qIzCogzH2oCU..C7OudDTJV9R8cDaQI6Qk/Iv5mnwPxwK', 'REGISTRAR',   'Kriz Registrar Officer',   'kriz@gncp.edu.ph',       'ACTIVE', 0),
+('tristan',    '$2y$10$cd78oR8qYsKcNff4/dpdq.qEh.1CdPlchqvD1Dj/3r/khfbsQByb.', 'HELPDESK',    'Tristan Helpdesk Officer', 'tristan@gncp.edu.ph',    'ACTIVE', 0),
+('ethan',      '$2y$10$a19sAND.7ilrsfBrZ7uY0e0j.nu3bP8GLadkSN1s3pcoM9kkhReXu', 'MEDICAL',     'Dr. Ethan Medical Doctor', 'ethan@gncp.edu.ph',      'ACTIVE', 0),
+('cashier',    '$2y$10$eU8Mlw7SMSnOH.9u1Cy54edUu1MN7Kss01/qyTFwiwJQvNUX6hGS.', 'CASHIER',     'Cashier Officer',          'cashier@gncp.edu.ph',    'ACTIVE', 0),
+('it_officer', '$2y$10$mqcRBKBCst7FSiXbCbO5hemMvt/DweLALcB2iqvm9LI83/gqke20e', 'IT_CENTER',   'IT Center Officer',        'it_officer@gncp.edu.ph', 'ACTIVE', 0)
 ON DUPLICATE KEY UPDATE `password`=VALUES(`password`), `role`=VALUES(`role`), `name`=VALUES(`name`), `status`='ACTIVE', `must_change_password`=0;
 
 -- ============================================================
