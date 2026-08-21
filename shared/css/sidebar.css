@@ -4,13 +4,39 @@
    ========================================================================== */
 
 .sidebar {
-    background: linear-gradient(185deg, #003D2B 0%, #002217 100%);
+    background: var(--sidebar-bg, linear-gradient(185deg, #003D2B 0%, #002217 100%));
     border-right: 1px solid rgba(212,175,55,0.2);
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
     box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+}
+
+/* ── Robust Resets for All Buttons & Anchors within Sidebar ── */
+.sidebar button,
+.sidebar a,
+.sidebar-nav button,
+.sidebar-nav a,
+.nav-body button,
+.nav-body a {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    box-shadow: none !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    text-decoration: none;
 }
 
 .brand {
@@ -102,7 +128,11 @@
 }
 
 /* ── UNIFORM TOP-LEVEL BUTTONS & HEADERS ── */
-.nav-cat-header {
+.nav-cat-header,
+.sidebar-nav button.nav-cat-header,
+.sidebar-nav a.nav-cat-header,
+.sidebar button.nav-cat-header,
+.sidebar a.nav-cat-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -118,12 +148,24 @@
     text-align: left;
     border-radius: 8px;
     transition: background var(--t, 0.2s ease), border-color var(--t, 0.2s ease), border-radius var(--t, 0.2s ease), color var(--t, 0.2s ease);
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
-.nav-cat-header:hover {
+.nav-cat-header:hover,
+.sidebar-nav button.nav-cat-header:hover,
+.sidebar-nav a.nav-cat-header:hover,
+.sidebar button.nav-cat-header:hover,
+.sidebar a.nav-cat-header:hover {
     background: rgba(255,255,255,.07);
     color: #fff;
     border-color: rgba(212, 175, 55, 0.25);
+}
+
+.bg-gold {
+    background-color: var(--gold, #D4AF37) !important;
+    color: #002217 !important;
 }
 
 .nav-cat-header span {

@@ -30,9 +30,13 @@ const EmployeeSidebar = {
         basePath: {
             type: String,
             default: '../'
+        },
+        isMobileMenuOpen: {
+            type: Boolean,
+            default: false
         }
     },
-    emits: ['set-view', 'logout'],
+    emits: ['set-view', 'logout', 'close-mobile-menu'],
     data() {
         return {
             avatarFailed: false,
@@ -59,6 +63,10 @@ const EmployeeSidebar = {
         }
     },
     methods: {
+        selectView(viewName) {
+            this.$emit('set-view', viewName);
+            this.$emit('close-mobile-menu');
+        },
         onAvatarError() {
             this.avatarFailed = true;
         },
@@ -138,7 +146,7 @@ const EmployeeSidebar = {
         }
     },
     template: `
-        <aside class="sidebar">
+        <aside class="sidebar" :class="{ 'mobile-open': isMobileMenuOpen }">
             <div class="brand">
                 <img :src="logoUrl" alt="GNCP Seal" class="brand-logo" @error="$event.target.src='../school-website/assets/images/logo-removebg-preview.png'">
                 <div>
@@ -149,7 +157,7 @@ const EmployeeSidebar = {
 
             <nav class="nav-body">
                 <template v-for="(group, gIdx) in navGroups" :key="gIdx">
-                    <div class="nav-cat" :style="gIdx > 0 ? 'margin-top: 8px;' : ''">{{ group.title }}</div>
+                    <div class="nav-cat" :style="gIdx > 0 ? 'margin-top: 8px;' : ''">{{ group.title || group.category }}</div>
                     
                     <template v-for="item in group.items" :key="item.id || item.key || item.label">
                         <!-- Accordion Category with Sub-items -->
@@ -167,7 +175,7 @@ const EmployeeSidebar = {
                                     <button v-for="sub in getChildren(item)" :key="sub.id || sub.key"
                                             class="nav-item sub-item" 
                                             :class="{ active: currentView === (sub.id || sub.key) }" 
-                                            @click="$emit('set-view', sub.id || sub.key)">
+                                            @click="selectView(sub.id || sub.key)">
                                         <i :class="getIcon(sub.icon)"></i> {{ sub.label || sub.title }}
                                         <span v-if="sub.badge" class="badge bg-gold text-dark ms-auto" style="font-size:0.65rem; font-weight:800; padding:2px 6px;">{{ sub.badge }}</span>
                                     </button>
@@ -179,7 +187,7 @@ const EmployeeSidebar = {
                         <div v-else class="nav-category-wrapper">
                             <button class="nav-cat-header nav-item-top" 
                                     :class="{ active: currentView === (item.id || item.key) }" 
-                                    @click="$emit('set-view', item.id || item.key)">
+                                    @click="selectView(item.id || item.key)">
                                 <span><i :class="getIcon(item.icon)"></i> {{ item.label || item.title }}</span>
                                 <span v-if="item.badge" class="badge bg-gold text-dark ms-auto" style="font-size:0.65rem; font-weight:800; padding:2px 6px;">{{ item.badge }}</span>
                             </button>
@@ -190,7 +198,7 @@ const EmployeeSidebar = {
                 <!-- Section: Administration / Account -->
                 <div class="nav-cat" style="margin-top: 8px;">Administration &amp; User</div>
                 <div class="nav-category-wrapper">
-                    <button class="nav-cat-header nav-item-top" :class="{ active: currentView === 'profile' }" @click="$emit('set-view', 'profile')">
+                    <button class="nav-cat-header nav-item-top" :class="{ active: currentView === 'profile' }" @click="selectView('profile')">
                         <span><i class="fa-solid fa-user-circle"></i> My Account Profile</span>
                     </button>
                 </div>
@@ -202,7 +210,7 @@ const EmployeeSidebar = {
                 </div>
             </nav>
 
-            <div class="sidebar-footer" v-if="currentUser" @click="$emit('set-view', 'profile')" style="cursor:pointer;" title="View & Edit Profile">
+            <div class="sidebar-footer" v-if="currentUser" @click="selectView('profile')" style="cursor:pointer;" title="View & Edit Profile">
                 <div class="footer-avatar">
                     <img v-if="currentUser.avatar && !avatarFailed" :src="formattedAvatar(currentUser.avatar)" alt="" @error="onAvatarError">
                     <span v-else>{{ displayName(currentUser).substring(0,2).toUpperCase() }}</span>

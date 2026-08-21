@@ -97,6 +97,23 @@
             const pendingApplications = ref([]);
             const sections = ref([]);
 
+            const navGroups = computed(() => [
+                {
+                    title: 'Core Operations',
+                    items: [
+                        { id: 'pending-applications', label: 'Pending Reviews', icon: 'fa-solid fa-file-signature', badge: pendingApplications.value.filter(s => s.status !== 'ENROLLED').length || null },
+                        { id: 'students', label: 'Student Directory', icon: 'fa-solid fa-users' }
+                    ]
+                },
+                {
+                    title: 'Performance & Insights',
+                    items: [
+                        { id: 'enrollment-overview', label: 'Enrollment Overview', icon: 'fa-solid fa-chart-pie' },
+                        { id: 'reports', label: 'Statistical Reports', icon: 'fa-solid fa-file-invoice' }
+                    ]
+                }
+            ]);
+
             const reports = computed(() => {
                 const totalProg = programs.value.length;
                 const totalSubs = subjects.value.length;
@@ -1269,7 +1286,8 @@
                 openFeeModal,
                 saveFee,
                 deleteFee,
-                timeGreeting
+                timeGreeting,
+                navGroups
             };
         }
     };

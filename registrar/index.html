@@ -12,14 +12,14 @@
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css">
-    <link rel="stylesheet" href="../shared/css/sidebar.css?v=9">
+    <link rel="stylesheet" href="../shared/css/sidebar.css?v=10">
     <link rel="stylesheet" href="../shared/libs/login.css">
     <!-- Core Libraries -->
     <script src="../shared/libs/bootstrap.bundle.min.js" defer></script>
     <script src="../shared/libs/vue.global.js" defer></script>
     <script src="../shared/libs/sweetalert2.all.min.js" defer></script>
     <script src="../shared/js/PasswordChangeGuard.js" defer></script>
-    <script src="../shared/js/components/EmployeeSidebar.js?v=9" defer></script>
+    <script src="../shared/js/components/EmployeeSidebar.js?v=10" defer></script>
     <!-- Application MVC & Service Layer -->
     <script src="assets/js/services/RegistrarApiService.js?v=16" defer></script>
     <script src="assets/js/models/RegistrarModel.js?v=16" defer></script>
@@ -191,17 +191,7 @@
             <employee-sidebar 
                 station-name="Go-on National College"
                 station-tag="REGISTRAR PORTAL"
-                :nav-groups="[
-                    {
-                        title: 'Main Overview',
-                        items: [
-                            { id: 'pending-applications', label: 'Pending Applications', icon: 'fa-file-signature', badge: pendingApplications.filter(s => s.status !== 'ENROLLED').length || null },
-                            { id: 'students', label: 'Student Directory', icon: 'fa-users' },
-                            { id: 'enrollment-overview', label: 'Enrollment Overview', icon: 'fa-chart-pie' },
-                            { id: 'reports', label: 'Statistical Reports', icon: 'fa-file-invoice' }
-                        ]
-                    }
-                ]"
+                :nav-groups="navGroups"
                 :current-view="currentView" 
                 :current-user="currentUser"
                 base-path="../"
