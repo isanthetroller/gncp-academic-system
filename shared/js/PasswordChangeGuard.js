@@ -10,6 +10,10 @@
                 return Promise.resolve(false);
             }
 
+            const isStudent = (user && user.role === 'STUDENT') || 
+                              (user && !user.role && (user.id || user.studentId)) || 
+                              window.location.pathname.includes('/student-portal/');
+
             return new Promise((resolve) => {
                 const promptPasswordChange = () => {
                     if (typeof Swal === 'undefined') {
@@ -18,13 +22,18 @@
                         return;
                     }
 
+                    const displayName = user.name || user.username || user.id || 'User';
+                    const promptMessage = isStudent
+                        ? `Welcome, <strong>${displayName}</strong>! Because this is your initial login with default temporary credentials, you must set a new secure password before accessing your student portal.`
+                        : `Welcome, <strong>${displayName}</strong>! Because you logged in with a temporary password, you must set a new password before accessing your workstation.`;
+
                     Swal.fire({
                         title: 'Mandatory Password Reset Required',
                         icon: 'warning',
                         html: `
                             <div style="text-align: left; padding: 4px 0 10px 0; font-family: 'Open Sans', sans-serif;">
                                 <p style="font-size: 0.88rem; color: #475569; margin-bottom: 20px; line-height: 1.5;">
-                                    Welcome, <strong>${user.name || user.username}</strong>! Because you logged in with a temporary password, you must set a new password before accessing your workstation.
+                                    ${promptMessage}
                                 </p>
                                 
                                 <div style="margin-bottom: 16px;">
@@ -120,44 +129,74 @@
                                 return false;
                             }
 
-                            // Compute correct relative path to api/index.php
-                            let apiPath = 'api/index.php?action=auth/change_password';
-                            if (window.location.pathname.includes('/stations/')) {
-                                apiPath = '../../api/index.php?action=auth/change_password';
-                            } else if (window.location.pathname.includes('/registrar/') || window.location.pathname.includes('/admin/')) {
-                                apiPath = '../api/index.php?action=auth/change_password';
-                            }
-
-                            return fetch(apiPath, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    username: user.username,
-                                    current_password: curr,
-                                    new_password: newP
-                                })
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (!data.success) {
-                                    throw new Error(data.message || data.error || 'Failed to update password.');
+                            if (isStudent) {
+                                let apiPath = 'backend/api.php?action=change_student_password';
+                                if (window.location.pathname.includes('/student-portal/')) {
+                                    apiPath = 'backend/api.php?action=change_student_password';
                                 }
-                                return data;
-                            })
-                            .catch(err => {
-                                Swal.showValidationMessage(err.message || 'Error communicating with authentication server.');
-                            });
+                                return fetch(apiPath, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        studentId: user.id || user.studentId,
+                                        currentPassword: curr,
+                                        newPassword: newP
+                                    })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (!data.success) {
+                                        throw new Error(data.message || data.error || 'Failed to update student password.');
+                                    }
+                                    return data;
+                                })
+                                .catch(err => {
+                                    Swal.showValidationMessage(err.message || 'Error communicating with student portal server.');
+                                });
+                            } else {
+                                // Staff password update
+                                let apiPath = 'api/index.php?action=auth/change_password';
+                                if (window.location.pathname.includes('/stations/')) {
+                                    apiPath = '../../api/index.php?action=auth/change_password';
+                                } else if (window.location.pathname.includes('/registrar/') || window.location.pathname.includes('/admin/')) {
+                                    apiPath = '../api/index.php?action=auth/change_password';
+                                }
+
+                                return fetch(apiPath, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        username: user.username,
+                                        current_password: curr,
+                                        new_password: newP
+                                    })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (!data.success) {
+                                        throw new Error(data.message || data.error || 'Failed to update password.');
+                                    }
+                                    return data;
+                                })
+                                .catch(err => {
+                                    Swal.showValidationMessage(err.message || 'Error communicating with authentication server.');
+                                });
+                            }
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Update local session user state
                             user.must_change_password = false;
-                            const sessionKey = (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
-                            sessionStorage.setItem(sessionKey, JSON.stringify(user));
+                            if (isStudent) {
+                                sessionStorage.setItem('gncp_portal_student', JSON.stringify(user));
+                                localStorage.setItem('gncp_portal_student', JSON.stringify(user));
+                            } else {
+                                const sessionKey = (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                                sessionStorage.setItem(sessionKey, JSON.stringify(user));
+                            }
 
                             Swal.fire({
                                 title: 'Password Change Complete!',
-                                text: 'Your password has been updated successfully. Proceeding to workstation...',
+                                text: isStudent ? 'Your student portal password has been updated successfully.' : 'Your password has been updated successfully. Proceeding to workstation...',
                                 icon: 'success',
                                 confirmButtonColor: '#006A4E',
                                 timer: 2000,
@@ -167,17 +206,22 @@
                                 resolve(true);
                             });
                         } else {
-                            // User cancelled or closed password reset — clear session and return to login
-                            sessionStorage.removeItem('gncp_admin_user');
-                            sessionStorage.removeItem('gncp_station_user');
+                            if (isStudent) {
+                                sessionStorage.removeItem('gncp_portal_student');
+                                localStorage.removeItem('gncp_portal_student');
+                                window.location.href = 'login.html';
+                            } else {
+                                sessionStorage.removeItem('gncp_admin_user');
+                                sessionStorage.removeItem('gncp_station_user');
 
-                            let loginPath = 'index.html';
-                            if (window.location.pathname.includes('/stations/')) {
-                                loginPath = '../../index.html';
-                            } else if (window.location.pathname.includes('/registrar/') || window.location.pathname.includes('/admin/')) {
-                                loginPath = '../index.html';
+                                let loginPath = 'index.html';
+                                if (window.location.pathname.includes('/stations/')) {
+                                    loginPath = '../../index.html';
+                                } else if (window.location.pathname.includes('/registrar/') || window.location.pathname.includes('/admin/')) {
+                                    loginPath = '../index.html';
+                                }
+                                window.location.href = loginPath;
                             }
-                            window.location.href = loginPath;
                             resolve(false);
                         }
                     });

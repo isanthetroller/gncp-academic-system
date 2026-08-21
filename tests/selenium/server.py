@@ -5,7 +5,13 @@ import time
 import importlib
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
-from fastapi import FastAPI, BackgroundTasks
+
+# Ensure tests/selenium directory is on sys.path regardless of execution root
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
+from fastapi import FastAPI, BackgroundTasks, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +30,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/favicon.ico")
+def get_favicon():
+    return Response(status_code=204)
 
 # Serve Screenshots, Shared Assets, and UI Static Files
 PROJECT_ROOT = os.path.abspath(os.path.join(config.SELENIUM_DIR, "..", ".."))
@@ -120,17 +130,21 @@ def get_status():
             STATE["duration"] = round(time.time() - STATE["start_time"], 2)
     return STATE
 
+RUN_LOCK = threading.Lock()
+
 @app.post("/api/run-test")
 def start_test(payload: dict = None, background_tasks: BackgroundTasks = None):
     global runner_thread
-    if STATE["status"] == "RUNNING" and runner_thread and runner_thread.is_alive():
-        return JSONResponse({"success": False, "message": "Test is already running."}, status_code=400)
-    
-    headless = payload.get("headless", True) if payload else True
-    mode = payload.get("mode", "all") if payload else "all"
-    runner_thread = threading.Thread(target=run_test_thread, args=(headless, mode))
-    runner_thread.daemon = True
-    runner_thread.start()
+    with RUN_LOCK:
+        if STATE["status"] == "RUNNING" or (runner_thread and runner_thread.is_alive()):
+            return JSONResponse({"success": False, "message": "Test is already running."}, status_code=400)
+        
+        STATE["status"] = "RUNNING"
+        headless = payload.get("headless", True) if payload else True
+        mode = payload.get("mode", "all") if payload else "all"
+        runner_thread = threading.Thread(target=run_test_thread, args=(headless, mode))
+        runner_thread.daemon = True
+        runner_thread.start()
 
     return {"success": True, "message": "Selenium Test Pipeline execution started."}
 
@@ -172,6 +186,53 @@ def clear_screenshots():
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=500)
 
+@app.middleware("http")
+async def track_activity_middleware(request, call_next):
+    global LAST_HEARTBEAT
+    LAST_HEARTBEAT = time.time()
+    response = await call_next(request)
+    return response
+
+# ── HEARTBEAT & AUTO-SHUTDOWN ON TAB CLOSE ──
+LAST_HEARTBEAT = time.time()
+CLIENT_CONNECTED = False
+
+@app.post("/api/heartbeat")
+def heartbeat():
+    global LAST_HEARTBEAT, CLIENT_CONNECTED
+    LAST_HEARTBEAT = time.time()
+    CLIENT_CONNECTED = True
+    return {"status": "ok"}
+
+@app.post("/api/shutdown")
+def shutdown():
+    def kill():
+        time.sleep(0.3)
+        print("\n[Server] Received shutdown signal from browser tab. Terminating server cleanly...")
+        os._exit(0)
+    threading.Thread(target=kill, daemon=True).start()
+    return {"status": "shutting_down"}
+
+def watchdog_thread():
+    # Allow 120 seconds on initial launch for user/browser to connect
+    time.sleep(120)
+    while True:
+        time.sleep(10)
+        # Only terminate if client connected, no test running, and no activity for >3600s (1 hour)
+        if CLIENT_CONNECTED and STATE["status"] != "RUNNING" and (time.time() - LAST_HEARTBEAT > 3600):
+            print("\n[Watchdog] Inactive for >1 hour. Auto-terminating Selenium test server...")
+            os._exit(0)
+
 if __name__ == "__main__":
-    print("Starting GNCP Selenium Visual Testing Dashboard Server on http://localhost:8090 ...")
+    # Start auto-shutdown watchdog thread
+    w_thread = threading.Thread(target=watchdog_thread, daemon=True)
+    w_thread.start()
+
+    print("================================================================")
+    print("  GNCP Selenium Visual Test Server Running on:")
+    print("  👉 http://localhost:8090/ui/index.html")
+    print("  (Server will auto-terminate after 1 hour of total inactivity)")
+    print("================================================================\n")
     uvicorn.run(app, host="0.0.0.0", port=8090, log_level="warning")
+
+

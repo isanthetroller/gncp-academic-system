@@ -19,12 +19,16 @@ class PaymentService {
         }
 
         $roadmap = json_decode($existingRecord['roadmap'] ?? '[]', true) ?: [];
-        foreach ($roadmap as $step) {
+        foreach ($roadmap as $idx => $step) {
             $stepId = $step['stepId'] ?? '';
-            if (in_array($stepId, ['registrar_verification', 'advising_assessment', 'clinic_checkup'], true)) {
+            $name   = strtolower($step['name'] ?? '');
+            $isPrior = in_array($stepId, ['registrar_verification', 'advising_assessment', 'clinic_checkup'], true) ||
+                       in_array($name, ['registrar verification', 'academic advising', 'medical clearance'], true) ||
+                       ($stepId === '' && in_array($idx + 1, [2, 3, 4], true));
+            if ($isPrior) {
                 $stepStatus = strtoupper($step['status'] ?? '');
                 if ($stepStatus !== 'COMPLETED' && $stepStatus !== 'SKIPPED') {
-                    throw new Exception("Prior workstation steps (Advising/Medical) must be completed before accepting cashier payment.");
+                    throw new Exception("Prior workstation steps (Registrar/Advising/Medical) must be completed before accepting cashier payment.");
                 }
             }
         }

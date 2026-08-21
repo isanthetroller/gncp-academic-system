@@ -110,7 +110,7 @@ class StationUsersProvisioningTest:
                 timeout=10
             )
             if resp.status_code == 200:
-                deleted = resp.json().get("data", {}).get("deleted", 0)
+                deleted = (resp.json().get("data") or {}).get("deleted", 0)
                 self.log(f"Cleanup complete. Removed {deleted} stale test user account(s).")
         except Exception as e:
             self.log(f"Cleanup warning: {e}", level="WARN")
@@ -172,7 +172,7 @@ class StationUsersProvisioningTest:
                 if not res_json.get("success"):
                     raise Exception(f"Failed to create station user for {role}: {res_json.get('message')}")
 
-                user_id = res_json.get("data", {}).get("userId")
+                user_id = (res_json.get("data") or {}).get("userId")
                 self.log(f"CREATED USER -> Role: {role:10s} | Username: {username:20s} | User ID: {user_id}")
                 
                 self.provisioned_users.append({

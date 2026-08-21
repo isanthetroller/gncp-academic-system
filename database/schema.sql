@@ -72,7 +72,11 @@ CREATE TABLE IF NOT EXISTS `pre_enrollments` (
     `year_level_applied`        VARCHAR(50)  DEFAULT NULL COMMENT 'Year level the student is re-enrolling at',
     `curriculum_version`        VARCHAR(100) DEFAULT '2022 Curriculum',
     `created_at`                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX `idx_existing_student_id` (`existing_student_id`)
+    INDEX `idx_existing_student_id` (`existing_student_id`),
+    INDEX `idx_pe_status_created` (`status`, `created_at`),
+    INDEX `idx_pe_course_year` (`course_code`, `year_level_applied`),
+    INDEX `idx_pe_email` (`email`),
+    INDEX `idx_pe_phone` (`phone`)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -91,15 +95,19 @@ CREATE TABLE IF NOT EXISTS `station_users` (
     `status`                VARCHAR(20) DEFAULT 'PENDING',
     `avatar`                VARCHAR(255) DEFAULT NULL,
     `must_change_password`  TINYINT(1) NOT NULL DEFAULT 1,
-    `created_at`            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `created_at`            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_user_role_status` (`role`, `status`)
 ) ENGINE=InnoDB;
 
--- Default bootstrap admin account (Requires password change on first login)
-INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `status`, `must_change_password`)
-SELECT 'admin',
-       '$2y$10$.fglgoP5NckmejZX75IL.edj9NGdhaNlrFYH50k.e3PXt3sjDcydi',
-       'SUPER_ADMIN', 'System Administrator', 'ACTIVE', 1
-WHERE NOT EXISTS (SELECT 1 FROM `station_users` WHERE `username` = 'admin');
+-- Default bootstrap staff and admin accounts
+INSERT INTO `station_users` (`username`, `password`, `role`, `name`, `email`, `status`, `must_change_password`) VALUES
+('admin',      '$2y$10$.fglgoP5NckmejZX75IL.edj9NGdhaNlrFYH50k.e3PXt3sjDcydi', 'SUPER_ADMIN', 'System Administrator',     'admin@gncp.edu.ph',      'ACTIVE', 0),
+('kriz',       '$2y$10$Lts/AU6iVAcKrtCGK6bqaOAChdQUntb5UAre4g6HJdRgnl54dQShu', 'REGISTRAR',   'Kriz Registrar Officer',   'kriz@gncp.edu.ph',       'ACTIVE', 0),
+('tristan',    '$2y$10$O1ieLgtu5imC.U40khr.S.u351.iUr0szschjqQ1pahXXdR6K8HeG', 'HELPDESK',    'Tristan Helpdesk Officer', 'tristan@gncp.edu.ph',    'ACTIVE', 0),
+('ethan',      '$2y$10$bhwxETuzZsD4pI5ZZ.Km0.e.cndS2Of0zVB4cMXnleutgKF.sq/GK', 'MEDICAL',     'Dr. Ethan Medical Doctor', 'ethan@gncp.edu.ph',      'ACTIVE', 0),
+('cashier',    '$2y$10$AwuuTphqv3cLz09KmwKxaOuSyq.januMUUKNMhCQU0njpmXjDNOxm', 'CASHIER',     'Cashier Officer',          'cashier@gncp.edu.ph',    'ACTIVE', 0),
+('it_officer', '$2y$10$5ixzf0tZSJ0MdQEh5.dYeOyxH/MdEnfuBVGizCC1SsiLZWTwyp6sy', 'IT_CENTER',   'IT Center Officer',        'it_officer@gncp.edu.ph', 'ACTIVE', 0)
+ON DUPLICATE KEY UPDATE `password`=VALUES(`password`), `role`=VALUES(`role`), `name`=VALUES(`name`), `status`='ACTIVE', `must_change_password`=0;
 
 -- ============================================================
 --  TABLE 3: students
@@ -117,6 +125,7 @@ CREATE TABLE IF NOT EXISTS `students` (
     `year_level`    VARCHAR(50) DEFAULT '1st Year',
     `curriculum_version` VARCHAR(100) DEFAULT '2022 Curriculum',
     `status`        VARCHAR(20) DEFAULT 'Active',
+    `must_change_password` TINYINT(1) NOT NULL DEFAULT 1,
     `temp_reference_no` VARCHAR(50) DEFAULT NULL,
     `personal_info` TEXT DEFAULT NULL,
     `academic_info` TEXT DEFAULT NULL,
@@ -125,12 +134,14 @@ CREATE TABLE IF NOT EXISTS `students` (
     `medical_data` TEXT DEFAULT NULL,
     `scholarship_data` TEXT DEFAULT NULL,
     `payment_data` TEXT DEFAULT NULL,
-    `helpdesk_data` TEXT DEFAULT NULL,
-    `enrollment_data` TEXT DEFAULT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `helpdesk_data`     TEXT DEFAULT NULL,
+    `enrollment_data`   TEXT DEFAULT NULL,
+    `created_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_stud_temp_ref` (`temp_reference_no`),
+    INDEX `idx_stud_email` (`email`),
+    INDEX `idx_stud_prog_yr_status` (`program`, `year_level`, `status`),
+    INDEX `idx_stud_created` (`created_at`)
 ) ENGINE=InnoDB;
-
--- (Redundant courses and sections tables removed to prevent duplicate academic hierarchies)
 
 -- ============================================================
 --  TABLE 6: enrollments
@@ -155,7 +166,8 @@ CREATE TABLE IF NOT EXISTS `programs` (
     `code`       VARCHAR(50) UNIQUE NOT NULL,
     `name`       VARCHAR(150) NOT NULL,
     `department` VARCHAR(150) NOT NULL,
-    `status`     VARCHAR(20) DEFAULT 'Active'
+    `status`     VARCHAR(20) DEFAULT 'Active',
+    INDEX `idx_prog_dept` (`department`, `status`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `programs` (`code`, `name`, `department`, `status`) VALUES
@@ -163,7 +175,8 @@ INSERT INTO `programs` (`code`, `name`, `department`, `status`) VALUES
 ('BSIT', 'BS Information Technology', 'Information Technology', 'Active'),
 ('BSN', 'BS Nursing', 'College of Nursing', 'Active'),
 ('BSBA', 'BS Business Administration', 'Business Administration', 'Active'),
-('BSCOE', 'BS Computer Engineering', 'Information Technology', 'Active')
+('BSCOE', 'BS Computer Engineering', 'Information Technology', 'Active'),
+('BSCpE', 'BS Computer Engineering', 'Information Technology', 'Active')
 ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `department`=VALUES(`department`);
 
 -- ============================================================
@@ -178,7 +191,9 @@ CREATE TABLE IF NOT EXISTS `subjects` (
     `lab_units`     INT NOT NULL DEFAULT 0,
     `lab_fee`       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     `department`    VARCHAR(150) NOT NULL,
-    `prerequisites` VARCHAR(150) DEFAULT 'None'
+    `prerequisites` VARCHAR(150) DEFAULT 'None',
+    INDEX `idx_subj_dept` (`department`),
+    INDEX `idx_subj_title` (`title`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `subjects` (`code`, `title`, `description`, `lecture_units`, `lab_units`, `lab_fee`, `department`, `prerequisites`) VALUES
@@ -332,7 +347,8 @@ CREATE TABLE IF NOT EXISTS `curriculum` (
     `year_level`         VARCHAR(50) NOT NULL,
     `semester`           VARCHAR(50) NOT NULL,
     `elective`           TINYINT(1) DEFAULT 0,
-    `curriculum_version` VARCHAR(100) DEFAULT '2022 Curriculum'
+    `curriculum_version` VARCHAR(100) DEFAULT '2022 Curriculum',
+    INDEX `idx_curr_lookup` (`program`, `year_level`, `semester`, `curriculum_version`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `curriculum` (`program`, `subject`, `year_level`, `semester`, `elective`) VALUES
@@ -509,7 +525,9 @@ CREATE TABLE IF NOT EXISTS `academic_periods` (
     `semester`         VARCHAR(50) NOT NULL,
     `enrollment_start` DATE DEFAULT NULL,
     `enrollment_end`   DATE DEFAULT NULL,
-    `status`           VARCHAR(20) DEFAULT 'Inactive'
+    `status`           VARCHAR(20) DEFAULT 'Inactive',
+    INDEX `idx_period_status` (`status`),
+    INDEX `idx_period_ay_sem` (`academic_year`, `semester`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `academic_periods` (`name`, `academic_year`, `semester`, `enrollment_start`, `enrollment_end`, `status`) VALUES
@@ -532,7 +550,10 @@ CREATE TABLE IF NOT EXISTS `subject_sections` (
     `time`       VARCHAR(100) NOT NULL,
     `room`       VARCHAR(50) NOT NULL,
     `capacity`   INT NOT NULL,
-    `section_id` INT DEFAULT NULL
+    `section_id` INT DEFAULT NULL,
+    INDEX `idx_ss_lookup` (`program`, `year_level`, `semester`, `subject`),
+    INDEX `idx_ss_section_id` (`section_id`),
+    INDEX `idx_ss_capacity` (`capacity`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `subject_sections` (`program`, `year_level`, `semester`, `subject`, `code`, `instructor`, `days`, `time`, `room`, `capacity`) VALUES
@@ -593,7 +614,8 @@ CREATE TABLE IF NOT EXISTS `fee_schedule` (
     `type`     VARCHAR(50) NOT NULL,
     `label`    VARCHAR(150) NOT NULL,
     `amount`   DECIMAL(10,2) NOT NULL,
-    `per_unit` TINYINT(1) DEFAULT 0
+    `per_unit` TINYINT(1) DEFAULT 0,
+    INDEX `idx_fee_type` (`type`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `fee_schedule` (`type`, `label`, `amount`, `per_unit`) VALUES
@@ -611,7 +633,8 @@ CREATE TABLE IF NOT EXISTS `departments` (
     `id`     INT AUTO_INCREMENT PRIMARY KEY,
     `code`   VARCHAR(50) UNIQUE NOT NULL,
     `name`   VARCHAR(150) NOT NULL,
-    `status` VARCHAR(20) DEFAULT 'Active'
+    `status` VARCHAR(20) DEFAULT 'Active',
+    INDEX `idx_dept_status` (`status`)
 ) ENGINE=InnoDB;
 
 INSERT INTO `departments` (`code`, `name`, `status`) VALUES
@@ -635,7 +658,9 @@ CREATE TABLE IF NOT EXISTS `sections` (
     `curriculum_version` VARCHAR(50) NOT NULL DEFAULT '2022 Curriculum',
     `capacity`           INT NOT NULL DEFAULT 40,
     `adviser`            VARCHAR(150) DEFAULT NULL,
-    UNIQUE KEY `unique_section_cohort` (`code`, `program`, `year_level`, `academic_period_id`)
+    UNIQUE KEY `unique_section_cohort` (`code`, `program`, `year_level`, `academic_period_id`),
+    INDEX `idx_sect_period` (`academic_period_id`),
+    INDEX `idx_sect_prog_yr` (`program`, `year_level`)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -652,7 +677,9 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
     `new_state`         JSON NULL,
     `created_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_ref_num` (`reference_number`),
-    INDEX `idx_operator` (`operator_username`)
+    INDEX `idx_operator` (`operator_username`),
+    INDEX `idx_audit_created` (`created_at`),
+    INDEX `idx_audit_action` (`action_performed`)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -668,7 +695,9 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
     `expires_at` DATETIME NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_email` (`email`),
-    INDEX `idx_code` (`code`)
+    INDEX `idx_code` (`code`),
+    INDEX `idx_token` (`token`),
+    INDEX `idx_expires` (`expires_at`)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -688,11 +717,52 @@ CREATE TABLE IF NOT EXISTS `announcements` (
     `status`          VARCHAR(20) DEFAULT 'PUBLISHED',
     `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX `idx_status_created` (`status`, `created_at`),
-    INDEX `idx_category` (`category`)
+    INDEX `idx_status_pinned_created` (`status`, `is_pinned`, `created_at`),
+    INDEX `idx_category` (`category`),
+    INDEX `idx_author_id` (`author_id`)
 ) ENGINE=InnoDB;
 
+INSERT INTO `announcements` (`id`, `title`, `category`, `content`, `image_url`, `author_name`, `is_pinned`, `status`, `target_audience`) VALUES
+(1, 'Official Schedule & Guidelines: 1st Semester Preliminary Examinations', 'ACADEMIC', '<p>Please be guided by the official schedule and room assignments for the upcoming <strong>1st Semester Preliminary Examinations</strong> across all undergraduate degree programs:</p><ul><li><strong>October 15, 2026 (Tuesday):</strong> General Education & Core Applied Sciences</li><li><strong>October 16, 2026 (Wednesday):</strong> Major Professional Courses & Laboratory Practicums</li><li><strong>October 17, 2026 (Thursday):</strong> Capstone Design Reviews & Departmentals</li></ul><blockquote><strong>Examination Protocol Reminder:</strong> Students are required to present their validated Certificate of Registration (COR) and Examination Permit upon entry to testing rooms.</blockquote>', NULL, 'Dr. Eleanor Vance (VP for Academic Affairs)', 1, 'PUBLISHED', 'ALL'),
+(2, 'Final Call: Academic Advising & NSTP Section Allocation for A.Y. 2026-2027', 'ENROLLMENT', '<p>The <strong>Office of the University Registrar</strong> announces that the late enrollment, section cohort alignment, and NSTP component locking window will officially conclude on <strong>September 30, 2026</strong>.</p><ul><li><strong>NSTP 1 Components:</strong> CWTS and ROTC enlistments are strictly capped at 45 students per section.</li><li><strong>Course Overload Petitions:</strong> Graduating seniors must submit Dean-approved overload forms before validation week.</li></ul>', NULL, 'Office of the University Registrar', 0, 'PUBLISHED', 'ALL'),
+(3, 'Annual College Convocation & Student Leadership Summit 2026', 'EVENT', '<p>All bonafide GNCP students and student leaders are cordially invited to the <strong>2026 Annual College Convocation & Student Leadership Summit</strong> on November 12, 2026 at the GNCP University Gymnasium & Main Auditorium.</p><blockquote>Theme: "Empowering Academic Excellence & Tech-Driven Community Leadership". Free admission and snack kit provision upon presentation of Student Portal ID.</blockquote>', NULL, 'Office of Student Affairs & Services', 0, 'PUBLISHED', 'ALL'),
+(4, 'Health Services Advisory: Mandatory Annual Physical & Dental Screening Schedule', 'MEDICAL', '<p>In compliance with institutional health and safety protocols, the <strong>College Health & Medical Clinic</strong> is conducting its free Annual Physical, Visual Acuity, and Dental Screening for all enrolled students.</p><ul><li><strong>BSIT & BSCS:</strong> Mondays & Tuesdays (9:00 AM - 3:00 PM)</li><li><strong>BSCpE & BSN:</strong> Wednesdays & Thursdays (9:00 AM - 3:00 PM)</li><li><strong>BSBA & Transferees:</strong> Fridays (9:00 AM - 12:00 NN)</li></ul>', NULL, 'College Health & Medical Clinic', 0, 'PUBLISHED', 'ALL'),
+(5, 'Call for Applications: CHED Tertiary Education Subsidy (TES) & Merit Grants', 'FINANCIAL', '<p>Applications for the <strong>Commission on Higher Education (CHED) Tertiary Education Subsidy (TES)</strong> and <strong>GNCP Institutional Academic Honor Grants</strong> for Academic Year 2026-2027 are now officially open.</p><blockquote>Submit your digitized document portfolio at the Scholarships Desk, 2nd Floor Student Services Building on or before <strong>October 31, 2026</strong>.</blockquote>', NULL, 'Scholarships & Student Assistance Office', 0, 'PUBLISHED', 'ALL')
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `category` = VALUES(`category`),
+    `content` = VALUES(`content`),
+    `author_name` = VALUES(`author_name`),
+    `is_pinned` = VALUES(`is_pinned`),
+    `status` = VALUES(`status`);
 
+-- ============================================================
+--  TABLE 18: academic_milestones
+--  Key academic calendar milestones and deadlines managed by Admin.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `academic_milestones` (
+    `id`                 INT AUTO_INCREMENT PRIMARY KEY,
+    `academic_period_id` INT DEFAULT NULL,
+    `title`              VARCHAR(150) NOT NULL,
+    `date_start`         DATE DEFAULT NULL,
+    `date_end`           DATE DEFAULT NULL,
+    `date_display`       VARCHAR(100) DEFAULT NULL,
+    `status`             VARCHAR(30) NOT NULL DEFAULT 'SCHEDULED',
+    `display_order`      INT NOT NULL DEFAULT 0,
+    `created_at`         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`         TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_milestone_period` (`academic_period_id`),
+    INDEX `idx_milestone_status` (`status`),
+    INDEX `idx_milestone_order` (`display_order`)
+) ENGINE=InnoDB;
 
-
-
+INSERT INTO `academic_milestones` (`id`, `academic_period_id`, `title`, `date_start`, `date_end`, `date_display`, `status`, `display_order`) VALUES
+(1, 1, 'Enrollment & Advising', '2026-07-01', '2026-09-30', 'Jul 01 - Sep 30, 2026', 'ACTIVE', 1),
+(2, 1, 'Preliminary Examinations', '2026-10-15', '2026-10-17', 'October 15 - 17, 2026', 'UPCOMING', 2),
+(3, 1, 'Midterm Grade Encoding', '2026-11-05', '2026-11-08', 'November 05 - 08, 2026', 'SCHEDULED', 3),
+(4, 1, 'Final Semester Examinations', '2026-12-15', '2026-12-18', 'December 15 - 18, 2026', 'SCHEDULED', 4)
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `date_display` = VALUES(`date_display`),
+    `status` = VALUES(`status`),
+    `display_order` = VALUES(`display_order`);

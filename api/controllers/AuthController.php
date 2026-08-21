@@ -135,6 +135,19 @@ class AuthController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+        $_SESSION = [];
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params["path"] ?? '/',
+                $params["domain"] ?? '',
+                $params["secure"] ?? false,
+                $params["httponly"] ?? true
+            );
+        }
         session_unset();
         session_destroy();
         return ['success' => true, 'message' => 'Logged out successfully.'];
@@ -163,7 +176,7 @@ class AuthController {
         if ($raw) {
             $sessionUser = is_array($raw) ? $raw : json_decode($raw, true);
         }
-        $username = $sessionUser['username'] ?? $_GET['username'] ?? '';
+        $username = !empty($_GET['username']) ? trim($_GET['username']) : ($sessionUser['username'] ?? '');
         if (!$username) {
             return ['success' => false, 'message' => 'Unauthorized or missing username.', 'code' => 401];
         }

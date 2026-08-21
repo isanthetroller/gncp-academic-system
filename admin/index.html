@@ -9,10 +9,11 @@
     <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="../shared/libs/login.css">
-    <link rel="stylesheet" href="assets/css/sidebar.css?v=5">
+    <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css?v=5">
+    <link rel="stylesheet" href="assets/css/sidebar.css?v=11">
     <script src="../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../shared/libs/vue.global.js"></script>
-    <script src="assets/js/components/AdminSidebar.js?v=5"></script>
+    <script src="assets/js/components/AdminSidebar.js?v=11"></script>
     <script src="../shared/libs/sweetalert2.all.min.js"></script>
     <script src="../shared/js/PasswordChangeGuard.js"></script>
     <script src="../shared/academic_constants.js"></script>
@@ -45,40 +46,8 @@
         /* ── SHELL ────────────────────────────────────────────────────── */
         .shell { display:grid; grid-template-columns:256px 1fr; height:100vh; overflow:hidden; }
 
-        /* ── SIDEBAR ──────────────────────────────────────────────────── */
-        .sidebar { background: linear-gradient(185deg, #003D2B 0%, #002217 100%); border-right: 1px solid rgba(212,175,55,0.25); display:flex; flex-direction:column; height:100vh; overflow-y:auto; box-shadow: 4px 0 20px rgba(0,0,0,0.12); }
-        .brand { display:flex; align-items:center; gap:14px; padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); }
-        .brand-logo { width:42px; height:42px; object-fit:contain; flex-shrink:0; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.35)); }
-        .brand h1 { font-size:.92rem; font-weight:800; color:#fff; line-height:1.25; letter-spacing:0.2px; margin:0 0 4px 0; }
-        .brand p  { font-size:.62rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--gold); margin:0; display:inline-block; padding:2px 8px; background:rgba(212,175,55,0.12); border-radius:4px; border:1px solid rgba(212,175,55,0.25); line-height:1.3; }
-
-        .nav-body { flex:1; padding:12px 10px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
-        .nav-cat  { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:1.3px; color:rgba(255,255,255,.4); padding:14px 10px 5px; }
-        .nav-cat-header { display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 12px 8px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); color:rgba(255,255,255,.85); font-size:.84rem; font-weight:700; cursor:pointer; text-align:left; border-radius:10px; transition: all var(--t); margin-top: 8px; }
-        .nav-cat-header:hover { background: rgba(255,255,255,.08); color:#fff; transform: translateX(2px); }
-        .nav-cat-items { padding-left: 10px; display: flex; flex-direction: column; gap: 3px; margin-top: 3px; }
-        .nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; color:rgba(255,255,255,.7); font-size:.84rem; font-weight:500; cursor:pointer; transition:all var(--t); border:none; border-left:3px solid transparent; background:none; width:100%; text-align:left; position:relative; }
-        .nav-item.sub-item { font-size: .81rem; padding: 7px 11px; opacity: 0.92; }
-        .nav-item i { width:16px; text-align:center; font-size:.85rem; flex-shrink:0; transition: transform var(--t); }
-        .nav-item:hover { color:#fff; background:rgba(255,255,255,.08); padding-left:15px; transform: translateX(4px); }
-        .nav-item:hover i { transform: scale(1.15); color: var(--gold); }
-        .nav-item.active { color:#fff; background: linear-gradient(90deg, rgba(212, 175, 55, 0.22) 0%, rgba(255, 255, 255, 0.06) 100%); font-weight:700; border-left-color:var(--gold); border-radius:0 10px 10px 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
-        .nav-item.active i { color: var(--gold); }
-        .nav-logout { color:rgba(248,113,113,.9)!important; border-radius: 9px; margin-top: 6px; background: transparent !important; border: none !important; }
-        .nav-logout:hover { background: rgba(255,255,255,0.06)!important; color:#fff!important; }
-        .nav-logout i { color: rgba(248,113,113,0.9); transition: color 0.2s ease, transform 0.2s ease; }
-        .nav-logout:hover i { color: var(--gold) !important; transform: scale(1.2); }
+        /* ── SIDEBAR & LAYOUT SHELL ──────────────────────────────────── */
         .row-highlight td { background: var(--gold-light)!important; }
-        .sidebar-footer { padding:14px 16px; border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:12px; flex-shrink:0; background: rgba(0,0,0,0.15); }
-        .footer-avatar { width:38px; height:38px; border-radius:50%; border:2px solid var(--gold); background: linear-gradient(135deg, var(--gold) 0%, #b89320 100%); color:#003d2b; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; font-family:var(--font-head); flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.3); overflow:hidden; box-sizing:border-box; padding:0; margin:0; }
-        .footer-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:none; margin:0; padding:0; }
-
-
-        .footer-dot { width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,.25); flex-shrink:0; animation: pulse-dot 2s infinite; }
-        @keyframes pulse-dot { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.2); opacity:0.85; } }
-        .footer-info { flex:1; min-width:0; }
-        .footer-info strong { display:block; color:rgba(255,255,255,.95); font-size:.78rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .footer-info span   { color:var(--gold); font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
 
         /* ── MAIN ─────────────────────────────────────────────────────── */
         .main { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
@@ -132,7 +101,10 @@
         /* ── FORM MODALS ──────────────────────────────────────────────── */
         .overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.5); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; animation:fadeIn .15s ease; overflow-y:auto; padding:20px; }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        .modal-card { background:#fff; border:1px solid var(--border); border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.15); padding:32px; width:100%; max-width:520px; animation:slideUp .2s ease; }
+        .modal-card { background:#fff; border:1px solid var(--border); border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.15); padding:28px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; animation:slideUp .2s ease; scroll-behavior:smooth; }
+        .modal-card::-webkit-scrollbar { width:6px; }
+        .modal-card::-webkit-scrollbar-track { background:#f1f5f9; border-radius:3px; }
+        .modal-card::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:3px; }
         @keyframes slideUp { from{transform:translateY(14px);opacity:0} to{transform:translateY(0);opacity:1} }
         .modal-title { font-family:var(--font-head); font-weight:800; font-size:1.15rem; color:var(--text); margin-bottom:20px; display:flex; align-items:center; gap:9px; }
         .form-row { display:grid; gap:14px; margin-bottom:14px; }
@@ -266,6 +238,726 @@
         .warn-banner.sm { font-size: 0.76rem; padding: 8px 12px; margin-bottom: 14px; gap: 8px; }
         .warn-banner.sm i.fa-lightbulb { font-size: 0.95rem; margin-top: 1px; }
 
+        /* ── GOOGLE DOCS BULLETIN CREATOR & CARD TEMPLATE ─────────────── */
+        .bulletin-modal-card {
+            max-width: 920px;
+            width: 96vw;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            border-radius: 14px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+            overflow: hidden;
+            border: 1px solid rgba(212,175,55,0.35);
+            margin: auto;
+        }
+        .bulletin-modal-header {
+            padding: 14px 22px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 60;
+        }
+        .bulletin-modal-body {
+            padding: 18px 22px 28px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1 1 auto;
+            max-height: calc(92vh - 130px);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            scroll-behavior: smooth;
+        }
+        .bulletin-modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        .bulletin-modal-body::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .bulletin-modal-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .bulletin-modal-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .bulletin-modal-footer {
+            padding: 12px 22px;
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 60;
+        }
+        
+        /* Meta Selector Bar */
+        .docs-meta-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr auto;
+            gap: 12px;
+            align-items: center;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            flex-shrink: 0;
+        }
+        .docs-meta-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .docs-meta-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #6b7280;
+        }
+
+        /* Google Docs Toolbar (Sticky while scrolling down card) */
+        .docs-toolbar {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 6px 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            position: sticky;
+            top: -18px;
+            z-index: 40;
+            flex-shrink: 0;
+        }
+        .docs-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #374151;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .docs-btn:hover {
+            background: #f3f4f6;
+            color: #111827;
+            border-color: #e5e7eb;
+        }
+        .docs-btn:active, .docs-btn.active {
+            background: #e5e7eb;
+            color: var(--primary);
+        }
+        .docs-divider {
+            width: 1px;
+            height: 22px;
+            background: #e5e7eb;
+            margin: 0 4px;
+        }
+        .docs-format-select {
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            padding: 0 8px;
+            cursor: pointer;
+            outline: none;
+        }
+        .docs-format-select:hover {
+            border-color: #d1d5db;
+        }
+        .docs-color-label {
+            position: relative;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: #374151;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
+        }
+        .docs-color-label:hover {
+            background: #f3f4f6;
+        }
+        .docs-color-label input[type="color"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        /* Live Student Portal Bulletin Card Template Container */
+        .docs-bulletin-card-container {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease;
+        }
+        .docs-bulletin-card-container.is-pinned {
+            border-left: 5px solid var(--primary, #006A4E);
+        }
+        .docs-card-header {
+            padding: 16px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            background: #fafafa;
+        }
+        .docs-card-body {
+            padding: 22px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #ffffff;
+        }
+        .docs-live-title {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #111827;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.15s ease;
+            background: transparent;
+            letter-spacing: -0.01em;
+        }
+        .docs-live-title:hover, .docs-live-title:focus {
+            border-color: #d1d5db;
+            background: #f9fafb;
+        }
+        .docs-live-title::placeholder {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        /* Rich Contenteditable Document Canvas */
+        .docs-live-canvas {
+            min-height: 140px;
+            max-height: none;
+            overflow: visible;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            line-height: 1.75;
+            color: #374151;
+            outline: none;
+            background: #ffffff;
+            transition: all 0.15s ease;
+            word-break: break-word;
+        }
+        .docs-live-canvas:hover, .docs-live-canvas:focus {
+            border-color: #d1d5db;
+            background: #ffffff;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .docs-live-canvas:empty:before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            font-style: italic;
+            pointer-events: none;
+            display: block;
+        }
+        .docs-live-canvas p { margin-bottom: 14px; }
+        .docs-live-canvas p:last-child { margin-bottom: 0; }
+        .docs-live-canvas h1, .docs-live-canvas h2, .docs-live-canvas h3, .docs-live-canvas h4 {
+            color: #111827;
+            font-weight: 700;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .docs-live-canvas h1 { font-size: 1.25rem; }
+        .docs-live-canvas h2 { font-size: 1.08rem; }
+        .docs-live-canvas h3 { font-size: 0.98rem; }
+        .docs-live-canvas h4 { font-size: 0.90rem; }
+        .docs-live-canvas ul, .docs-live-canvas ol {
+            margin: 12px 0 16px 22px;
+            padding-left: 0;
+        }
+        .docs-live-canvas li { margin-bottom: 6px; line-height: 1.6; }
+        .docs-live-canvas blockquote {
+            border-left: 4px solid var(--primary, #006A4E);
+            background: #f8fafc;
+            padding: 12px 18px;
+            margin: 16px 0;
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        .docs-live-canvas a {
+            color: var(--primary, #006A4E);
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .docs-live-canvas hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 14px 0;
+        }
+
+        /* Image Attachment & Interactive Resizer Controls */
+        .docs-image-section {
+            border-top: 1px dashed #e5e7eb;
+            padding-top: 14px;
+            margin-top: 6px;
+        }
+        .docs-image-dropzone {
+            border: 2px dashed #d1d5db;
+            border-radius: 10px;
+            padding: 22px 16px;
+            text-align: center;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .docs-image-dropzone:hover {
+            border-color: var(--primary);
+            background: #f0fdf4;
+        }
+        .docs-image-resizer-bar {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .docs-image-resizer-bar .resizer-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .docs-image-resizer-bar label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            margin: 0;
+        }
+        .docs-range-slider {
+            width: 120px;
+            accent-color: var(--primary, #006A4E);
+            cursor: pointer;
+        }
+        .docs-size-preset-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .docs-size-preset-btn:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .docs-size-preset-btn.active {
+            background: var(--primary, #006A4E);
+            border-color: var(--primary, #006A4E);
+            color: #ffffff;
+        }
+        .docs-live-img-container {
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            margin: 8px auto 0 auto;
+        }
+        .docs-live-img-container img {
+            display: block;
+            margin: 0 auto;
+            transition: all 0.2s ease;
+        }
+        .docs-card-footer {
+            padding: 10px 18px;
+            background: #f9fafb;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.76rem;
+            color: #6b7280;
+        }
+
+        /* Category Tag Styles in Admin */
+        .bulletin-tag {
+            display: inline-block;
+            font-size: 0.70rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .bulletin-tag-ACADEMIC { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .bulletin-tag-ENROLLMENT { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .bulletin-tag-EVENT { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .bulletin-tag-URGENT { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .bulletin-tag-GENERAL { background: #f9fafb; color: #374151; border: 1px solid #e5e7eb; }
+
+        /* ── HARMONIOUS GNCP LIGHT-THEME COURSE ANALYTICS & SPLINE CHART ── */
+        .chart-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .chart-title-text {
+            font-family: var(--font-head, 'Outfit', sans-serif);
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text, #111827);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .chart-view-toggle {
+            display: flex;
+            background: #f1f5f9;
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid var(--border, #e2e8f0);
+            gap: 2px;
+        }
+
+        .btn-chart-toggle {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-chart-toggle:hover {
+            color: #1e293b;
+        }
+
+        .btn-chart-toggle.active {
+            background: #ffffff;
+            color: var(--primary, #006A4E);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 106, 78, 0.18);
+        }
+
+        .chart-svg-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            /* overflow: visible allows tooltip to float outside SVG bounds */
+            overflow: visible;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+
+        .chart-svg-container svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 12px;
+            /* Clip SVG paths to canvas — tooltip lives in HTML layer above */
+            overflow: hidden;
+        }
+
+        .chart-tooltip-floating {
+            position: absolute;
+            pointer-events: none;
+            background: #ffffff;
+            border: 1px solid rgba(0, 106, 78, 0.25);
+            border-left: 3.5px solid var(--primary, #006A4E);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+            border-radius: 8px;
+            padding: 8px 12px;
+            z-index: 100;
+            white-space: nowrap;
+            transition: left 0.06s ease, top 0.06s ease, transform 0.06s ease;
+        }
+
+        .chart-tooltip-prog {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--primary, #006A4E);
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-tooltip-stat {
+            font-size: 0.72rem;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .chart-legend-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.74rem;
+            color: #64748b;
+            padding-top: 12px;
+            margin-top: 4px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .legend-dot-primary {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #006A4E;
+            box-shadow: 0 0 6px rgba(0, 106, 78, 0.4);
+        }
+
+        .legend-dot-gold {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #d4af37;
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+        }
+
+        .chart-pills-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .chart-pill-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.70rem;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .chart-pill-btn:hover, .chart-pill-btn.active {
+            background: rgba(0, 106, 78, 0.08);
+            border-color: var(--primary, #006A4E);
+            color: var(--primary, #006A4E);
+        }
+
+        /* ── MOBILE & TABLET RESPONSIVE OVERHAUL (<= 991.98px) ── */
+        .mobile-header-bar {
+            display: none;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+        }
+
+        @media (max-width: 991.98px) {
+            html {
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                touch-action: pan-y;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            body {
+                overflow-x: hidden !important;
+                overflow-y: visible !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                touch-action: pan-y;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #admin-app {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .shell {
+                display: flex !important;
+                flex-direction: column !important;
+                grid-template-columns: none !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+            }
+
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.65);
+                backdrop-filter: blur(4px);
+                z-index: 1045;
+                transition: opacity 0.25s ease;
+            }
+
+            .sidebar-backdrop.show {
+                display: block !important;
+            }
+
+            .mobile-header-bar {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                padding: 10px 16px !important;
+                background: var(--sidebar-bg, #003D2B) !important;
+                border-bottom: 2px solid var(--gold, #D4AF37) !important;
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 1020 !important;
+                min-height: 56px !important;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .mobile-brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .mobile-menu-btn {
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                min-height: 44px !important;
+                border-radius: 8px !important;
+                background: rgba(255, 255, 255, 0.12) !important;
+                border: 1px solid rgba(255, 255, 255, 0.25) !important;
+                color: #ffffff !important;
+                display: grid !important;
+                place-items: center !important;
+                font-size: 1.15rem !important;
+                cursor: pointer !important;
+                transition: background 0.15s ease !important;
+            }
+
+            .mobile-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.22) !important;
+            }
+
+            .main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding-left: 0 !important;
+                height: auto !important;
+                min-height: calc(100vh - 56px) !important;
+                overflow: visible !important;
+            }
+
+            .topbar {
+                display: none !important;
+            }
+
+            .content {
+                flex: none !important;
+                height: auto !important;
+                overflow: visible !important;
+                padding: 16px 14px !important;
+            }
+
+            .table-responsive, .tbl-wrap {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .db-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+                gap: 12px !important;
+            }
+
+            .db-sections-grid {
+                grid-template-columns: 1fr !important;
+                gap: 14px !important;
+            }
+
+            .filter-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px !important;
+            }
+
+            .filter-bar .row-count {
+                margin-left: 0 !important;
+                align-self: flex-start !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -274,18 +966,34 @@
     <!-- ══ DASHBOARD ════════════════════════════════════════════════════ -->
     <div v-if="currentAdmin" class="shell">
 
+        <!-- Mobile Backdrop Overlay -->
+        <div class="sidebar-backdrop" :class="{ show: isMobileMenuOpen }" @click="isMobileMenuOpen = false"></div>
+
         <!-- Sidebar Component -->
         <admin-sidebar 
             :view="view" 
             :expanded-cats="expandedCats" 
             :current-admin="currentAdmin" 
+            :is-mobile-menu-open="isMobileMenuOpen"
             @set-view="setView" 
+            @close-mobile-menu="isMobileMenuOpen = false"
             @logout="handleLogout">
         </admin-sidebar>
 
         <!-- Main Panel -->
         <div class="main">
-            <!-- Top Bar -->
+            <!-- Mobile Header Bar -->
+            <div class="mobile-header-bar">
+                <div class="mobile-brand">
+                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width:32px;height:32px;object-fit:contain;">
+                    <h2 style="font-size:1.05rem;font-weight:800;color:#fff;margin:0;">GNCP Super Admin</h2>
+                </div>
+                <button type="button" class="mobile-menu-btn" @click="isMobileMenuOpen = !isMobileMenuOpen" aria-label="Toggle menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Top Bar (Desktop) -->
             <div class="topbar">
                 <div class="topbar-left">
                     <span class="eyebrow">{{ eyebrow }}</span>
@@ -293,9 +1001,6 @@
                     <span class="topbar-title">{{ viewTitle }}</span>
                 </div>
                 <div class="topbar-right">
-                    <button type="button" class="btn-add" @click="loadDashboard" :disabled="isLoadingStats">
-                        <i class="fa-solid fa-rotate" :class="{'fa-spin': isLoadingStats}" style="margin-right:6px"></i>Refresh
-                    </button>
                 </div>
             </div>
 
@@ -305,11 +1010,86 @@
                 <div v-if="errorMsg"   class="alert-err"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>{{ errorMsg }}</div>
 
                 <!-- ── STATS ROW ───────────────────── -->
-                <div v-if="view!=='dashboard'" class="stats-row">
+                <div v-if="view!=='dashboard' && view!=='profile'" class="stats-row">
                     <div class="stat"><div class="stat-label">Programs</div><div class="stat-value">{{ programs.length }}</div><div class="stat-meta">Active academic programs</div></div>
                     <div class="stat"><div class="stat-label">Subjects</div><div class="stat-value">{{ subjects.length }}</div><div class="stat-meta">In the course catalog</div></div>
                     <div class="stat"><div class="stat-label">Section Cohorts</div><div class="stat-value">{{ sections.length }}</div><div class="stat-meta">Total section cohorts</div></div>
                     <div class="stat"><div class="stat-label">Class Offerings</div><div class="stat-value">{{ classOfferings.length }}</div><div class="stat-meta">Total scheduled classes</div></div>
+                </div>
+
+                <!-- ── MY PROFILE VIEW ────────────────── -->
+                <div v-if="view === 'profile'" class="profile-view-wrap" style="padding-top:8px">
+                    <div class="profile-hero">
+                        <div class="avatar-wrap" @click="triggerFileInput" title="Click to change profile picture">
+                            <img v-if="formattedAvatar" :src="formattedAvatar" alt="Profile Picture" @error="onAvatarError">
+                            <div v-else class="avatar-initials">{{ initials }}</div>
+                            <div class="avatar-overlay">
+                                <i class="fa-solid fa-camera mb-1" style="font-size:1.1rem"></i>
+                                <span>Change Photo</span>
+                            </div>
+                        </div>
+                        <input type="file" ref="fileInput" @change="onFileSelected" accept="image/*" style="display:none">
+                        <div class="profile-hero-info">
+                            <h3>{{ user.name || (currentAdmin ? currentAdmin.name : 'Super Admin') }}<span class="profile-hero-badge">{{ user.role || (currentAdmin ? currentAdmin.role : 'SUPER_ADMIN') }}</span></h3>
+                            <p><i class="fa-solid fa-envelope me-2"></i>{{ user.email || (currentAdmin ? currentAdmin.email : 'admin@gncp.edu.ph') }}</p>
+                            <p style="margin-top:4px"><i class="fa-solid fa-at me-2"></i>{{ user.username || (currentAdmin ? currentAdmin.username : 'admin') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-grid">
+                        <div class="card p-4">
+                            <div class="card-title mb-3" style="font-weight:800; font-size:1.05rem; color:var(--primary, #006A4E);"><i class="fa-solid fa-user-edit me-2"></i> Personal Details</div>
+                            <form @submit.prevent="saveStaffProfile">
+                                <div style="margin-bottom:14px"><label class="f-label">Full Name</label><input class="f-input" type="text" v-model="user.name" required></div>
+                                <div style="margin-bottom:14px"><label class="f-label">Email Address</label><input class="f-input" type="email" v-model="user.email" required></div>
+                                <div style="margin-bottom:14px"><label class="f-label">Username / Identity Code</label><input class="f-input" type="text" :value="user.username" disabled></div>
+                                <div style="margin-bottom:14px"><label class="f-label">System Role</label><input class="f-input" type="text" :value="user.role" disabled></div>
+                                <div class="text-end" style="margin-top:12px">
+                                    <button type="submit" class="btn-primary-save" :disabled="saving">
+                                        <i class="fa-solid fa-save"></i> {{ saving ? 'Saving...' : 'Save Personal Details' }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="card p-4">
+                            <div class="card-title mb-3" style="font-weight:800; font-size:1.05rem; color:var(--primary, #006A4E);"><i class="fa-solid fa-shield-alt me-2"></i> Account Security &amp; Password</div>
+                            <form @submit.prevent="updatePassword">
+                                <div style="margin-bottom:14px">
+                                    <label class="f-label">Current Password</label>
+                                    <div style="position:relative">
+                                        <input :type="showCurrentPass ? 'text' : 'password'" class="f-input" v-model="pass.current" placeholder="Enter your current password" required style="padding-right:42px">
+                                        <button type="button" @click="showCurrentPass = !showCurrentPass" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                                            <i :class="showCurrentPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom:14px">
+                                    <label class="f-label">New Password</label>
+                                    <div style="position:relative">
+                                        <input :type="showNewPass ? 'text' : 'password'" class="f-input" v-model="pass.newPass" @input="checkPassStrength" placeholder="At least 6 characters" required style="padding-right:42px">
+                                        <button type="button" @click="showNewPass = !showNewPass" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                                            <i :class="showNewPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                        </button>
+                                    </div>
+                                    <div v-if="pass.newPass" class="pass-strength-bar" :style="{ background: passStrengthColor, width: passStrengthWidth }"></div>
+                                    <div v-if="pass.newPass" class="pass-strength-text" :style="{ color: passStrengthColor }">{{ passStrengthLabel }}</div>
+                                </div>
+                                <div style="margin-bottom:14px">
+                                    <label class="f-label">Confirm New Password</label>
+                                    <input type="password" class="f-input" v-model="pass.confirm" placeholder="Re-enter new password" :class="{ 'is-invalid': pass.confirm && pass.confirm !== pass.newPass }" required>
+                                    <div v-if="pass.confirm && pass.confirm !== pass.newPass" style="font-size:0.72rem;color:#dc2626;margin-top:4px;font-weight:600">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>Passwords do not match.
+                                    </div>
+                                </div>
+                                <div class="text-end" style="margin-top:12px">
+                                    <button type="submit" class="btn-primary-save" style="background:#003D2B" :disabled="updatingPass || (pass.confirm && pass.confirm !== pass.newPass)">
+                                        <i class="fa-solid fa-key"></i> {{ updatingPass ? 'Updating...' : 'Update Password' }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ── DASHBOARD VIEW ────────────────── -->
@@ -395,21 +1175,236 @@
                             </div>
                         </div>
 
-                        <!-- Right Panel: Course Distribution -->
+                        <!-- Right Panel: Registrations Trend & Course Distribution -->
                         <div class="card">
-                            <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Registrations by Course</div>
-                            <div class="prog-dist-list">
-                                <div v-for="pd in dashboardStats.programsDist" :key="pd.program" class="prog-item">
-                                    <div class="prog-header">
-                                        <span>{{ pd.program }}</span>
-                                        <span>{{ pd.count }} applicant(s)</span>
+                            <div class="chart-card-header">
+                                <div class="chart-title-text">
+                                    <i class="fa-solid fa-chart-line" style="color:var(--primary, #006A4E);"></i>
+                                    Registrations Analytics
+                                </div>
+                                <div class="chart-view-toggle">
+                                    <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'timeline' }" @click="chartViewMode = 'timeline'">
+                                        <i class="fa-solid fa-chart-area"></i> 30-Day Trend
+                                    </button>
+                                    <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'spline' }" @click="chartViewMode = 'spline'">
+                                        <i class="fa-solid fa-bezier-curve"></i> By Course
+                                    </button>
+                                    <button type="button" class="btn-chart-toggle" :class="{ active: chartViewMode === 'bars' }" @click="chartViewMode = 'bars'">
+                                        <i class="fa-solid fa-chart-simple"></i> Breakdown
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 30-Day Timeline Spline View (Light-Theme Executive Curve) -->
+                            <div v-if="chartViewMode === 'timeline'" class="chart-svg-container" @mouseleave="hoveredTimelinePoint = null">
+                                <svg :viewBox="`0 0 ${timelineGraphMetrics.width} ${timelineGraphMetrics.height}`" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+                                    <defs>
+                                        <filter id="emeraldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#006A4E" flood-opacity="0.25"/>
+                                        </filter>
+                                        <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#d4af37" flood-opacity="0.3"/>
+                                        </filter>
+                                        <linearGradient id="emeraldAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#006A4E" stop-opacity="0.14"/>
+                                            <stop offset="100%" stop-color="#006A4E" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                        <linearGradient id="goldAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#d4af37" stop-opacity="0.16"/>
+                                            <stop offset="100%" stop-color="#d4af37" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                    </defs>
+
+                                    <!-- Gridlines -->
+                                    <g class="chart-grid">
+                                        <line v-for="level in [0.25, 0.5, 0.75, 1.0]" :key="level"
+                                              :x1="timelineGraphMetrics.padXLeft" :y1="timelineGraphMetrics.bottomY - (level * (timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)))"
+                                              :x2="timelineGraphMetrics.width - timelineGraphMetrics.padXRight" :y2="timelineGraphMetrics.bottomY - (level * (timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)))"
+                                              stroke="#f1f5f9" stroke-dasharray="4 4" stroke-width="1" />
+                                        
+                                        <!-- Y-Axis Ticks Left (Cumulative / Total) -->
+                                        <text :x="timelineGraphMetrics.padXLeft - 8" :y="timelineGraphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">0</text>
+                                        <text :x="timelineGraphMetrics.padXLeft - 8" :y="timelineGraphMetrics.bottomY - ((timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ Math.round(timelineGraphMetrics.maxVal / 2) }}</text>
+                                        <text :x="timelineGraphMetrics.padXLeft - 8" :y="timelineGraphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ timelineGraphMetrics.maxVal }}</text>
+
+                                        <!-- Y-Axis Ticks Right (Daily Volume) -->
+                                        <text :x="timelineGraphMetrics.width - timelineGraphMetrics.padXRight + 8" :y="timelineGraphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">0</text>
+                                        <text :x="timelineGraphMetrics.width - timelineGraphMetrics.padXRight + 8" :y="timelineGraphMetrics.bottomY - ((timelineGraphMetrics.height - (timelineGraphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">{{ Math.round(timelineGraphMetrics.maxDaily / 2) }}</text>
+                                        <text :x="timelineGraphMetrics.width - timelineGraphMetrics.padXRight + 8" :y="timelineGraphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">{{ timelineGraphMetrics.maxDaily }}</text>
+                                    </g>
+
+                                    <!-- Bottom Base Axis -->
+                                    <line :x1="timelineGraphMetrics.padXLeft" :y1="timelineGraphMetrics.bottomY" :x2="timelineGraphMetrics.width - timelineGraphMetrics.padXRight" :y2="timelineGraphMetrics.bottomY" stroke="#e2e8f0" stroke-width="1.5" />
+
+                                    <!-- Gold Flowing Spline Wave (Daily Velocity) -->
+                                    <path v-if="timelineGraphMetrics.dailyArea" :d="timelineGraphMetrics.dailyArea" fill="url(#goldAreaGrad)" />
+                                    <path v-if="timelineGraphMetrics.dailySpline" :d="timelineGraphMetrics.dailySpline" fill="none" stroke="#d4af37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#goldGlow)" />
+
+                                    <!-- Emerald Smooth Spline Curve (Total Cumulative) -->
+                                    <path v-if="timelineGraphMetrics.cumArea" :d="timelineGraphMetrics.cumArea" fill="url(#emeraldAreaGrad)" />
+                                    <path v-if="timelineGraphMetrics.cumSpline" :d="timelineGraphMetrics.cumSpline" fill="none" stroke="#006A4E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#emeraldGlow)" />
+
+                                    <!-- X-Axis Labels (Days 1 to 30) -->
+                                    <g v-for="(p, i) in timelineGraphMetrics.pointsCum" :key="'tlabel-' + i">
+                                        <text v-if="i === 0 || (i + 1) % 2 === 1 || i === timelineGraphMetrics.pointsCum.length - 1" :x="p.x" :y="timelineGraphMetrics.bottomY + 14" fill="#64748b" font-size="8" font-weight="600" text-anchor="middle" font-family="'Outfit', sans-serif">
+                                            {{ p.data.day }}
+                                        </text>
+                                    </g>
+
+                                    <!-- Hover Crosshair Line -->
+                                    <line v-if="hoveredTimelinePoint" :x1="hoveredTimelinePoint.x" :y1="timelineGraphMetrics.padY - 8" :x2="hoveredTimelinePoint.x" :y2="timelineGraphMetrics.bottomY" stroke="rgba(0,106,78,0.4)" stroke-width="1.5" stroke-dasharray="3 3" />
+
+                                    <!-- Interactive Data Points & Hitboxes -->
+                                    <g v-for="(p, i) in timelineGraphMetrics.pointsCum" :key="'tpt-' + i" @mouseenter="hoveredTimelinePoint = p">
+                                        <!-- Gold Dot (Daily) -->
+                                        <circle :cx="timelineGraphMetrics.pointsDaily[i].x" :cy="timelineGraphMetrics.pointsDaily[i].y" r="2.8" fill="#ffffff" stroke="#d4af37" stroke-width="1.8" />
+                                        
+                                        <!-- Emerald Dot (Cumulative) -->
+                                        <circle :cx="p.x" :cy="p.y" :r="hoveredTimelinePoint && hoveredTimelinePoint.data.day === p.data.day ? 5.5 : 3.5" fill="#ffffff" stroke="#006A4E" stroke-width="2.2" style="transition: r 0.15s ease;" />
+                                        
+                                        <!-- Red Peak Marker (✕) at key intervals like in reference image -->
+                                        <text v-if="i === 2 || i === 12 || i === 22" :x="p.x" :y="timelineGraphMetrics.pointsDaily[i].y - 8" fill="#dc2626" font-size="9" font-weight="900" text-anchor="middle" font-family="'Outfit', sans-serif">✕</text>
+
+                                        <!-- Invisible Hitbox -->
+                                        <rect :x="p.x - 10" :y="0" width="20" :height="timelineGraphMetrics.height" fill="transparent" style="cursor: pointer;" />
+                                    </g>
+                                </svg>
+
+                                <!-- Floating Tooltip (Boundary Aware) -->
+                                <div v-if="hoveredTimelinePoint" class="chart-tooltip-floating" :style="getTooltipStyle(hoveredTimelinePoint, timelineGraphMetrics)">
+                                    <div class="chart-tooltip-prog">
+                                        <i class="fa-solid fa-calendar-day"></i>
+                                        <span>Day {{ hoveredTimelinePoint.data.day }} &bull; {{ hoveredTimelinePoint.data.date }}</span>
                                     </div>
-                                    <div class="prog-bar-bg">
-                                        <div class="prog-bar-fill" :style="{width: (dashboardStats.total > 0 ? (pd.count / dashboardStats.total * 100) : 0) + '%'}"></div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>Total Cumulative:</span>
+                                        <strong style="color:var(--primary, #006A4E)">{{ hoveredTimelinePoint.data.cumulative }} students</strong>
+                                    </div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>Daily Velocity:</span>
+                                        <strong style="color:#d97706">+{{ hoveredTimelinePoint.data.daily }} registrations</strong>
                                     </div>
                                 </div>
-                                <div v-if="dashboardStats.programsDist.length === 0" style="text-align:center;color:var(--text-muted);font-style:italic;padding:20px;">
-                                    No registrations found yet.
+                            </div>
+
+                            <!-- Course Spline View (Harmonious GNCP Light Theme) -->
+                            <div v-else-if="chartViewMode === 'spline'" class="chart-svg-container" @mouseleave="hoveredChartPoint = null">
+                                <svg :viewBox="`0 0 ${graphMetrics.width} ${graphMetrics.height}`" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+                                    <defs>
+                                        <filter id="emeraldGlow2" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#006A4E" flood-opacity="0.25"/>
+                                        </filter>
+                                        <filter id="goldGlow2" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#d4af37" flood-opacity="0.3"/>
+                                        </filter>
+                                        <linearGradient id="emeraldGradient2" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#006A4E" stop-opacity="0.14"/>
+                                            <stop offset="100%" stop-color="#006A4E" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                        <linearGradient id="goldGradient2" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#d4af37" stop-opacity="0.16"/>
+                                            <stop offset="100%" stop-color="#d4af37" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                    </defs>
+
+                                    <!-- Gridlines -->
+                                    <g class="chart-grid">
+                                        <line v-for="level in [0.25, 0.5, 0.75, 1.0]" :key="level"
+                                              :x1="graphMetrics.padXLeft" :y1="graphMetrics.bottomY - (level * (graphMetrics.height - (graphMetrics.padY * 2)))"
+                                              :x2="graphMetrics.width - graphMetrics.padXRight" :y2="graphMetrics.bottomY - (level * (graphMetrics.height - (graphMetrics.padY * 2)))"
+                                              stroke="#f1f5f9" stroke-dasharray="4 4" stroke-width="1" />
+                                        
+                                        <!-- Left & Right Ticks -->
+                                        <text :x="graphMetrics.padXLeft - 8" :y="graphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">0</text>
+                                        <text :x="graphMetrics.padXLeft - 8" :y="graphMetrics.bottomY - ((graphMetrics.height - (graphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ Math.round(graphMetrics.maxVal / 2) }}</text>
+                                        <text :x="graphMetrics.padXLeft - 8" :y="graphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="end" font-family="'Outfit', sans-serif">{{ graphMetrics.maxVal }}</text>
+
+                                        <text :x="graphMetrics.width - graphMetrics.padXRight + 8" :y="graphMetrics.bottomY + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">0%</text>
+                                        <text :x="graphMetrics.width - graphMetrics.padXRight + 8" :y="graphMetrics.bottomY - ((graphMetrics.height - (graphMetrics.padY * 2)) / 2) + 3" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">50%</text>
+                                        <text :x="graphMetrics.width - graphMetrics.padXRight + 8" :y="graphMetrics.padY + 4" fill="#94a3b8" font-size="8.5" text-anchor="start" font-family="'Outfit', sans-serif">100%</text>
+                                    </g>
+
+                                    <!-- Bottom Base Axis -->
+                                    <line :x1="graphMetrics.padXLeft" :y1="graphMetrics.bottomY" :x2="graphMetrics.width - graphMetrics.padXRight" :y2="graphMetrics.bottomY" stroke="#e2e8f0" stroke-width="1.5" />
+
+                                    <!-- Gold Area & Spline Wave (Enrolled) -->
+                                    <path v-if="graphMetrics.enrolledArea" :d="graphMetrics.enrolledArea" fill="url(#goldGradient2)" />
+                                    <path v-if="graphMetrics.enrolledSpline" :d="graphMetrics.enrolledSpline" fill="none" stroke="#d4af37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#goldGlow2)" />
+
+                                    <!-- Emerald Area & Spline Wave (Total Registrations) -->
+                                    <path v-if="graphMetrics.totalArea" :d="graphMetrics.totalArea" fill="url(#emeraldGradient2)" />
+                                    <path v-if="graphMetrics.totalSpline" :d="graphMetrics.totalSpline" fill="none" stroke="#006A4E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#emeraldGlow2)" />
+
+                                    <!-- Course Labels -->
+                                    <g v-for="(p, i) in graphMetrics.pointsTotal" :key="'label-' + p.data.code">
+                                        <text :x="p.x" :y="graphMetrics.bottomY + 16" fill="#475569" font-size="9.5" font-weight="700" text-anchor="middle" font-family="'Outfit', sans-serif">
+                                            {{ p.data.code }}
+                                        </text>
+                                    </g>
+
+                                    <!-- Hover Crosshair -->
+                                    <line v-if="hoveredChartPoint" :x1="hoveredChartPoint.x" :y1="graphMetrics.padY - 8" :x2="hoveredChartPoint.x" :y2="graphMetrics.bottomY" stroke="rgba(0,106,78,0.4)" stroke-width="1.5" stroke-dasharray="3 3" />
+
+                                    <!-- Data Nodes -->
+                                    <g v-for="(p, i) in graphMetrics.pointsTotal" :key="'pt-' + p.data.code" @mouseenter="setHoveredPoint(p, i)">
+                                        <!-- Enrolled Dot (Gold with white center) -->
+                                        <circle :cx="graphMetrics.pointsEnrolled[i].x" :cy="graphMetrics.pointsEnrolled[i].y" r="3.5" fill="#ffffff" stroke="#d4af37" stroke-width="2" />
+                                        
+                                        <!-- Total Dot (Emerald with white center) -->
+                                        <circle :cx="p.x" :cy="p.y" :r="hoveredChartPoint && hoveredChartPoint.data.code === p.data.code ? 6 : 4.5" fill="#ffffff" stroke="#006A4E" stroke-width="2.5" style="transition: r 0.15s ease;" />
+                                        
+                                        <!-- Peak Red Tag (✕) -->
+                                        <text v-if="p.data.count === graphMetrics.maxVal && p.data.count > 0" :x="p.x" :y="p.y - 10" fill="#dc2626" font-size="9" font-weight="800" text-anchor="middle" font-family="'Outfit', sans-serif">✕</text>
+                                        <rect :x="p.x - 22" :y="0" width="44" :height="graphMetrics.height" fill="transparent" style="cursor: pointer;" />
+                                    </g>
+                                </svg>
+
+                                <!-- Floating Tooltip (Boundary Aware) -->
+                                <div v-if="hoveredChartPoint" class="chart-tooltip-floating" :style="getTooltipStyle(hoveredChartPoint, graphMetrics)">
+                                    <div class="chart-tooltip-prog">
+                                        <i class="fa-solid fa-graduation-cap"></i>
+                                        <span>{{ hoveredChartPoint.data.code }}</span>
+                                    </div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>Total Applicants:</span>
+                                        <strong style="color:var(--primary, #006A4E)">{{ hoveredChartPoint.data.count }} ({{ hoveredChartPoint.data.pct }}%)</strong>
+                                    </div>
+                                    <div class="chart-tooltip-stat">
+                                        <span>Enrolled:</span>
+                                        <strong style="color:#d97706">{{ hoveredChartPoint.data.enrolled }} students</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modern Stacked Progress Bars View -->
+                            <div v-else class="prog-dist-list" style="padding: 6px 0;">
+                                <div v-for="pd in courseAnalytics" :key="'bar-' + pd.code" class="prog-item" style="margin-bottom: 10px;">
+                                    <div class="prog-header" style="color: var(--text); font-size: 0.82rem; margin-bottom: 4px;">
+                                        <span style="font-weight: 700;">{{ pd.code }} &bull; <small style="color: var(--text-muted)">{{ pd.name }}</small></span>
+                                        <span style="color: var(--primary); font-weight: 800;">{{ pd.count }} applicant(s) ({{ pd.pct }}%)</span>
+                                    </div>
+                                    <div class="prog-bar-bg" style="background: #f1f5f9; height: 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                        <div class="prog-bar-fill" :style="{ width: pd.pct + '%', background: 'linear-gradient(90deg, #d4af37 0%, var(--primary) 100%)' }"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Legend & Quick-Filter Row -->
+                            <div class="chart-legend-bar">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="chart-legend-item">
+                                        <span class="legend-dot-primary"></span>
+                                        <span>Total Registrations</span>
+                                    </div>
+                                    <div class="chart-legend-item">
+                                        <span class="legend-dot-gold"></span>
+                                        <span>Enrolled Students</span>
+                                    </div>
+                                </div>
+                                <div class="chart-pills-row">
+                                    <button v-for="c in courseAnalytics" :key="'pill-' + c.code" type="button" class="chart-pill-btn" :class="{ active: hoveredChartPoint && hoveredChartPoint.data.code === c.code }" @mouseenter="hoveredChartPoint = graphMetrics.pointsTotal.find(p => p.data.code === c.code)">
+                                        {{ c.code }}: {{ c.count }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -678,68 +1673,126 @@
                     </div>
                 </div>
 
-                <!-- ── ACADEMIC PERIODS ──────────────── -->
-                <div v-if="view==='periods'" class="card">
-                    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-                        <span><i class="fa-solid fa-calendar-days"></i> Enrollment Semesters</span>
-                        <div style="display:flex;gap:10px">
-                            <button class="btn-add" @click="openAddModal"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Add Period</button>
-                            <button class="btn-add" style="background-color: var(--gold)" @click="openCloneTermModal"><i class="fa-solid fa-copy" style="margin-right:6px"></i>Clone Previous Term</button>
+                <!-- ── ACADEMIC PERIODS & MILESTONES ──────────────── -->
+                <div v-if="view==='periods'">
+                    <div class="card">
+                        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                            <span><i class="fa-solid fa-calendar-days"></i> Enrollment Semesters</span>
+                            <div style="display:flex;gap:10px">
+                                <button class="btn-add" @click="openAddModal"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Add Period</button>
+                                <button class="btn-add" style="background-color: var(--gold)" @click="openCloneTermModal"><i class="fa-solid fa-copy" style="margin-right:6px"></i>Clone Previous Term</button>
+                            </div>
+                        </div>
+                        <div class="warn-banner">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <div>
+                                <strong>Guide:</strong> Manage your school terms here. Make sure exactly one term is set to <strong>Active</strong>. You can use <strong>Clone Previous Term</strong> to copy over section structures and class offerings from a past term in one click.
+                            </div>
+                        </div>
+                        <!-- Filter Bar -->
+                        <div class="filter-bar">
+                            <span class="filter-label">Filter:</span>
+                            <select class="filter-select" v-model="filterPeriodSem">
+                                <option value="">All Semesters</option>
+                                <option>1st Semester</option><option>2nd Semester</option><option>Summer</option>
+                            </select>
+                            <select class="filter-select" v-model="filterPeriodStatus">
+                                <option value="">All Statuses</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                            <button v-if="filterPeriodSem||filterPeriodStatus" class="filter-clear" @click="filterPeriodSem='';filterPeriodStatus=''"><i class="fa-solid fa-xmark" style="margin-right:4px"></i>Clear</button>
+                            <span class="row-count">{{ filteredPeriods.length }} period(s)</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="tbl">
+                                <thead><tr>
+                                    <th class="th-sortable" @click="sortBy('periods','name')">Name <span class="sort-icon" :class="{active:sortKey==='periods_name'}">{{ sortKey==='periods_name'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
+                                    <th class="th-sortable" @click="sortBy('periods','academicYear')">A.Y. <span class="sort-icon" :class="{active:sortKey==='periods_academicYear'}">{{ sortKey==='periods_academicYear'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
+                                    <th class="th-sortable" @click="sortBy('periods','semester')">Semester <span class="sort-icon" :class="{active:sortKey==='periods_semester'}">{{ sortKey==='periods_semester'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Linked</th>
+                                    <th class="th-sortable" @click="sortBy('periods','status')">Status <span class="sort-icon" :class="{active:sortKey==='periods_status'}">{{ sortKey==='periods_status'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
+                                    <th class="text-end">Actions</th>
+                                </tr></thead>
+                                <tbody>
+                                    <tr v-for="p in filteredPeriods" :key="p.id">
+                                        <td style="font-weight:600">{{ p.name }}</td>
+                                        <td>{{ p.academicYear }}</td>
+                                        <td>{{ p.semester }}</td>
+                                        <td style="font-size:.78rem">{{ p.enrollmentStart || '—' }}</td>
+                                        <td style="font-size:.78rem">{{ p.enrollmentEnd   || '—' }}</td>
+                                        <td>
+                                            <span v-if="sections.filter(s => s.academicPeriodId === p.id).length > 0" class="badge badge-active" style="font-size:.65rem" :title="sections.filter(s => s.academicPeriodId === p.id).length + ' section(s) linked'"><i class="fa-solid fa-shapes" style="margin-right:3px"></i>{{ sections.filter(s => s.academicPeriodId === p.id).length }} section(s)</span>
+                                            <span v-else style="font-size:.72rem;color:var(--text-light)">None</span>
+                                        </td>
+                                        <td><span class="badge" :class="p.status==='Active'?'badge-active':'badge-deact'">{{ p.status }}</span></td>
+                                        <td style="text-align:right"><span style="display:flex;gap:6px;justify-content:flex-end">
+                                            <button class="btn-sm-sky" @click="editPeriod(p)"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                            <button class="btn-sm-danger" @click="deletePeriod(p.id)"><i class="fa-solid fa-trash"></i></button>
+                                        </span></td>
+                                    </tr>
+                                    <tr v-if="filteredPeriods.length===0" class="empty-row"><td colspan="8">No academic periods found.</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="warn-banner">
-                        <i class="fa-solid fa-lightbulb"></i>
-                        <div>
-                            <strong>Guide:</strong> Manage your school terms here. Make sure exactly one term is set to <strong>Active</strong>. You can use <strong>Clone Previous Term</strong> to copy over section structures and class offerings from a past term in one click.
+
+                    <!-- Card 2: Academic Milestones & Deadlines -->
+                    <div class="card" style="margin-top:24px">
+                        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                            <span><i class="fa-solid fa-flag-checkered" style="color:var(--primary)"></i> Academic Milestones &amp; Calendar Deadlines</span>
+                            <button class="btn-add" @click="openMilestoneModal()"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Add Milestone</button>
                         </div>
-                    </div>
-                    <!-- Filter Bar -->
-                    <div class="filter-bar">
-                        <span class="filter-label">Filter:</span>
-                        <select class="filter-select" v-model="filterPeriodSem">
-                            <option value="">All Semesters</option>
-                            <option>1st Semester</option><option>2nd Semester</option><option>Summer</option>
-                        </select>
-                        <select class="filter-select" v-model="filterPeriodStatus">
-                            <option value="">All Statuses</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                        <button v-if="filterPeriodSem||filterPeriodStatus" class="filter-clear" @click="filterPeriodSem='';filterPeriodStatus=''"><i class="fa-solid fa-xmark" style="margin-right:4px"></i>Clear</button>
-                        <span class="row-count">{{ filteredPeriods.length }} period(s)</span>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="tbl">
-                            <thead><tr>
-                                <th class="th-sortable" @click="sortBy('periods','name')">Name <span class="sort-icon" :class="{active:sortKey==='periods_name'}">{{ sortKey==='periods_name'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
-                                <th class="th-sortable" @click="sortBy('periods','academicYear')">A.Y. <span class="sort-icon" :class="{active:sortKey==='periods_academicYear'}">{{ sortKey==='periods_academicYear'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
-                                <th class="th-sortable" @click="sortBy('periods','semester')">Semester <span class="sort-icon" :class="{active:sortKey==='periods_semester'}">{{ sortKey==='periods_semester'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Linked</th>
-                                <th class="th-sortable" @click="sortBy('periods','status')">Status <span class="sort-icon" :class="{active:sortKey==='periods_status'}">{{ sortKey==='periods_status'?(sortDir===1?'▲':'▼'):'⇅' }}</span></th>
-                                <th class="text-end">Actions</th>
-                            </tr></thead>
-                            <tbody>
-                                <tr v-for="p in filteredPeriods" :key="p.id">
-                                    <td style="font-weight:600">{{ p.name }}</td>
-                                    <td>{{ p.academicYear }}</td>
-                                    <td>{{ p.semester }}</td>
-                                    <td style="font-size:.78rem">{{ p.enrollmentStart || '—' }}</td>
-                                    <td style="font-size:.78rem">{{ p.enrollmentEnd   || '—' }}</td>
-                                    <td>
-                                        <span v-if="sections.filter(s => s.academicPeriodId === p.id).length > 0" class="badge badge-active" style="font-size:.65rem" :title="sections.filter(s => s.academicPeriodId === p.id).length + ' section(s) linked'"><i class="fa-solid fa-shapes" style="margin-right:3px"></i>{{ sections.filter(s => s.academicPeriodId === p.id).length }} section(s)</span>
-                                        <span v-else style="font-size:.72rem;color:var(--text-light)">None</span>
-                                    </td>
-                                    <td><span class="badge" :class="p.status==='Active'?'badge-active':'badge-deact'">{{ p.status }}</span></td>
-                                    <td style="text-align:right"><span style="display:flex;gap:6px;justify-content:flex-end">
-                                        <button class="btn-sm-sky" @click="editPeriod(p)"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                                        <button class="btn-sm-danger" @click="deletePeriod(p.id)"><i class="fa-solid fa-trash"></i></button>
-                                    </span></td>
-                                </tr>
-                                <tr v-if="filteredPeriods.length===0" class="empty-row"><td colspan="8">No academic periods found.</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="warn-banner">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <div>
+                                <strong>Student Portal Sync:</strong> Key institutional deadlines, examination weeks, and encoding dates configured here are dynamically broadcast to the <strong>Student Portal Campus Feed &amp; Bulletins</strong> sidebar.
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="tbl">
+                                <thead>
+                                    <tr>
+                                        <th style="width:70px">Order</th>
+                                        <th>Milestone Event</th>
+                                        <th>Academic Period</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Display String</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="m in milestones" :key="m.id">
+                                        <td><span class="badge" style="background:#f1f5f9;color:#334155;font-weight:700">#{{ m.display_order }}</span></td>
+                                        <td style="font-weight:600;color:var(--text)">{{ m.title }}</td>
+                                        <td style="font-size:0.8rem;color:var(--text-muted)">{{ m.period_name || getPeriodName(m.academic_period_id) }}</td>
+                                        <td style="font-size:0.8rem">{{ m.date_start || '—' }}</td>
+                                        <td style="font-size:0.8rem">{{ m.date_end || '—' }}</td>
+                                        <td style="font-size:0.82rem;font-weight:500">{{ m.date_display }}</td>
+                                        <td>
+                                            <span class="badge" :class="{
+                                                'badge-active': m.status === 'ACTIVE',
+                                                'badge-pending': m.status === 'UPCOMING',
+                                                'badge-deact': m.status === 'SCHEDULED' || m.status === 'COMPLETED'
+                                            }">{{ m.status }}</span>
+                                        </td>
+                                        <td style="text-align:right">
+                                            <span style="display:flex;gap:6px;justify-content:flex-end">
+                                                <button class="btn-sm-sky" @click="openMilestoneModal(m)"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                                <button class="btn-sm-danger" @click="deleteMilestone(m.id)"><i class="fa-solid fa-trash"></i></button>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="milestones.length === 0" class="empty-row">
+                                        <td colspan="8">No academic milestones configured yet. Click "+ Add Milestone" to create key term deadlines.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -1101,6 +2154,127 @@
                                 <tr v-if="filteredAccounts.length===0" class="empty-row"><td colspan="7">No student portal accounts found.</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- ── ANNOUNCEMENTS & CAMPUS BULLETIN VIEW ────────── -->
+                <div v-if="view==='announcements'" class="card">
+                    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                        <span><i class="fa-solid fa-bullhorn" style="color:var(--gold)"></i> Campus Bulletins &amp; Official Notices</span>
+                        <button class="btn-add" @click="openAnnouncementModal()"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Create Announcement</button>
+                    </div>
+                    <div class="warn-banner">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <div>
+                            <strong>Campus Communications:</strong> Official memoranda, circulars, and announcements posted here are immediately broadcast to the Student Portal under <strong>Campus Feed &amp; Bulletins</strong>.
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="margin-top:10px">
+                        <table class="tbl">
+                            <thead><tr>
+                                <th>Title &amp; Reference</th>
+                                <th>Category</th>
+                                <th>Audience</th>
+                                <th>Pinned</th>
+                                <th>Status</th>
+                                <th>Published At</th>
+                                <th class="text-end">Actions</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr v-for="item in announcements" :key="item.id">
+                                    <td>
+                                        <div style="font-weight:700;color:var(--text)">{{ item.title }}</div>
+                                        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px">
+                                            By {{ item.author_name || 'College Administration' }} • Ref #{{ item.id }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge" :class="'badge-' + (item.category === 'ACADEMIC' ? 'role' : item.category === 'URGENT' ? 'deact' : item.category === 'ENROLLMENT' ? 'active' : 'pending')">
+                                            {{ item.category }}
+                                        </span>
+                                    </td>
+                                    <td><span class="badge badge-role" style="font-size:0.65rem">{{ item.target_audience || 'ALL' }}</span></td>
+                                    <td>
+                                        <button class="btn-sm-warn" @click="togglePinAnnouncement(item)" :style="{ background: item.is_pinned ? 'rgba(212,175,55,0.2)' : 'transparent' }" :title="item.is_pinned ? 'Click to unpin' : 'Click to pin to top'">
+                                            <i class="fa-solid fa-thumbtack" :style="{ color: item.is_pinned ? 'var(--gold)' : 'var(--text-muted)' }"></i>
+                                            {{ item.is_pinned ? 'Pinned' : 'Regular' }}
+                                        </button>
+                                    </td>
+                                    <td><span :class="'badge badge-' + (item.status === 'PUBLISHED' ? 'active' : 'pending')">{{ item.status }}</span></td>
+                                    <td style="font-size:0.78rem;color:var(--text-muted)">{{ item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', {month:'short', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—' }}</td>
+                                    <td class="text-end">
+                                        <span style="display:flex;gap:6px;justify-content:flex-end">
+                                            <button class="btn-sm-sky" @click="openAnnouncementModal(item)" title="Edit Notice" style="padding: 4px 8px"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="btn-sm-danger" @click="deleteAnnouncement(item.id)" title="Delete Notice" style="padding: 4px 8px"><i class="fa-solid fa-trash"></i></button>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr v-if="announcements.length === 0" class="empty-row">
+                                    <td colspan="7">No official announcements posted yet. Click "+ Create Announcement" above to publish your first notice.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── Academic Milestones & Schedule Deadlines (Campus Desk) ── -->
+                    <div style="margin-top: 36px; border-top: 1px solid var(--border); padding-top: 24px;">
+                        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                            <span><i class="fa-solid fa-calendar-days" style="color:var(--gold)"></i> Academic Milestones &amp; Term Deadlines (Campus Desk)</span>
+                            <button class="btn-add" @click="openMilestoneModal()"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Add Milestone</button>
+                        </div>
+                        <div class="warn-banner">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <div>
+                                <strong>Campus Desk Synchronization:</strong> Deadlines and key academic events configured here are directly broadcast to the Student Portal's <strong>Campus Desk (Academic Milestones)</strong> sidebar widget.
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="margin-top:10px">
+                            <table class="tbl">
+                                <thead><tr>
+                                    <th>Milestone Title</th>
+                                    <th>Academic Period</th>
+                                    <th>Scheduled Date / Display</th>
+                                    <th>Lifecycle Status</th>
+                                    <th>Order</th>
+                                    <th class="text-end">Actions</th>
+                                </tr></thead>
+                                <tbody>
+                                    <tr v-for="m in milestones" :key="m.id">
+                                        <td>
+                                            <div style="font-weight:700;color:var(--text)">{{ m.title }}</div>
+                                            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px">Ref #{{ m.id }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-role">{{ getPeriodName(m.academic_period_id) }}</span>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight:600;font-size:0.82rem;color:var(--text)">{{ m.date_display || (m.date_start ? (m.date_start + ' - ' + (m.date_end || '')) : 'TBA') }}</div>
+                                            <div v-if="m.date_start" style="font-size:0.72rem;color:var(--text-muted)">{{ m.date_start }} to {{ m.date_end || 'Ongoing' }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge" :class="{
+                                                'badge-active': m.status === 'ACTIVE',
+                                                'badge-pending': m.status === 'UPCOMING',
+                                                'badge-role': m.status === 'SCHEDULED',
+                                                'badge-deact': m.status === 'COMPLETED'
+                                            }">{{ m.status }}</span>
+                                        </td>
+                                        <td><span style="font-weight:700;color:var(--text-muted)">#{{ m.display_order || 0 }}</span></td>
+                                        <td class="text-end">
+                                            <span style="display:flex;gap:6px;justify-content:flex-end">
+                                                <button class="btn-sm-sky" @click="openMilestoneModal(m)" title="Edit Milestone" style="padding: 4px 8px"><i class="fa-solid fa-pen"></i></button>
+                                                <button class="btn-sm-danger" @click="deleteMilestone(m.id)" title="Delete Milestone" style="padding: 4px 8px"><i class="fa-solid fa-trash"></i></button>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="milestones.length === 0" class="empty-row">
+                                        <td colspan="6">No academic milestones configured for this term. Click "+ Add Milestone" above to create scheduled deadlines.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -1662,1086 +2836,336 @@
         </div>
     </div>
 
-</div><!-- /app -->
-
-<script>
-const { createApp, ref, reactive, computed, onMounted, onUnmounted } = Vue;
-
-const API = 'backend/api.php';
-
-const handleFetchResponse = async (res) => {
-    const text = await res.text();
-    try {
-        return JSON.parse(text);
-    } catch (e) {
-        console.error('Invalid JSON response from server:', text);
-        return { success: false, error: 'Server returned an invalid format. Check console logs for details.' };
-    }
-};
-
-const post = (action, body) => fetch(`${API}?action=${action}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }).then(handleFetchResponse);
-const get  = (action)        => fetch(`${API}?action=${action}`).then(handleFetchResponse);
-
-createApp({
-    components: {
-        'admin-sidebar': window.AdminSidebar
-    },
-    setup() {
-        // Auth
-        const currentAdmin = ref(null);
-        const isLoggingIn  = ref(false);
-        const loginError   = ref('');
-        const showOperatorPassword = ref(false);
-
-        const timeGreeting = computed(() => {
-            const hour = new Date().getHours();
-            if (hour < 12) return 'Great Morning';
-            if (hour < 18) return 'Great Afternoon';
-            return 'Great Evening';
-        });
-
-        let pollTimer = null;
-
-        const startLiveSync = () => {
-            if (pollTimer) clearInterval(pollTimer);
-            pollTimer = setInterval(() => {
-                if (currentAdmin.value) {
-                    loadAll();
-                }
-            }, 4000);
-        };
-
-        const stopLiveSync = () => {
-            if (pollTimer) {
-                clearInterval(pollTimer);
-                pollTimer = null;
-            }
-        };
-        const loginForm    = reactive({ username:'', password:'' });
-
-        // View state
-        const view    = ref('dashboard');
-        const search  = ref('');
-        const modal   = ref('');
-        const form    = reactive({});
-
-        // Operator Management State (Decoupled & Isolated)
-        const operatorForm = reactive({ id: null, name: '', email: '', username: '', password: '', role: '' });
-        const isOperatorModalOpen = ref(false);
-        const isEditOperatorModalOpen = ref(false);
-        const isSubmittingOperator = ref(false);
-
-        // Students & Collapsible navigation
-        const students = ref([]);
-        const expandedCats = ref({ catalog: true, term: true, scheduling: true });
-        const selectedDeptName = ref('');
-        const filterStudentProgram = ref('');
-        const filterStudentYear = ref('');
-        const filterStudentStatus = ref('');
-        const filterAccountProgram = ref('');
-        const filterAccountYear = ref('');
-        const filterAccountStatus = ref('');
-
-
-
-        // Term Cloning State
-        const cloneForm = reactive({
-            fromPeriodId: '',
-            newPeriodName: '',
-            newAcademicYear: '',
-            newSemester: '1st Semester',
-            enrollmentStart: '',
-            enrollmentEnd: '',
-            cloneSections: true,
-            cloneOfferings: true
-        });
-
-        // Bulk Sections State
-        const bulkForm = reactive({
-            program: '',
-            curriculumVersion: '2022 Curriculum',
-            yearLevel: '1st Year',
-            academicPeriodId: '',
-            capacity: 40,
-            adviser: '',
-            count: 3
-        });
-
-        // Sort & Filter state
-        const sortKey = ref(''); // e.g. 'programs_code'
-        const sortDir = ref(1);   // 1: asc, -1: desc
-        const filterProgramDept = ref('');
-        const filterProgramStatus = ref('');
-        const filterSubjectDept = ref('');
-        const filterSubjectLab = ref('');
-        const filterCurrProgram = ref('');
-        const filterCurrYear = ref('');
-        const filterCurrSem = ref('');
-        const filterPeriodSem = ref('');
-        const filterPeriodStatus = ref('');
-        const filterSectPeriod = ref('');
-        const filterSectProgram = ref('');
-        const filterSectYear = ref('');
-        const filterSectSem = ref('');
-        const filterSectDays = ref('');
-        
-        // Views & Collapsibles
-        const currView = ref('table'); // table | grouped
-        const sectView = ref('table'); // table | cards
-        const collapsedGroups = ref([]);
-
-        // Dashboard Stats State
-        const dashboardStats = ref(null);
-        const isLoadingStats = ref(false);
-
-        // Notifications
-        const successMsg = ref('');
-        const errorMsg   = ref('');
-
-        // Data
-        const departments = ref([]);
-        const programs    = ref([]);
-        const subjects    = ref([]);
-        const curriculum  = ref([]);
-        const periods     = ref([]);
-        const sections    = ref([]); // cohort sections
-        const classOfferings = ref([]); // class offerings
-        const fees        = ref([]);
-        const users       = ref([]);
-        const filterUserStatus = ref('ALL');
-
-        // ── Computed labels ──
-        const eyebrow = computed(() => {
-            if (view.value === 'dashboard') return 'System Analytics';
-            if (['departments_programs','subjects','curriculum'].includes(view.value)) return 'Subjects & Degree Courses';
-            if (['periods','sections'].includes(view.value)) return 'School Terms & Sections';
-            if (['classOfferings','students','fees'].includes(view.value)) return 'Schedules & Billing';
-            if (view.value === 'student_accounts') return 'Student Management';
-            return 'Staff Accounts';
-        });
-        const viewTitle = computed(() => ({
-            dashboard:'Dashboard Overview',
-            departments_programs:'Departments & Courses', subjects:'Master List of Subjects', curriculum:'Subjects per Semester',
-            periods:'Enrollment Semesters', sections:'Class Sections', classOfferings:'Create Class Schedules',
-            students:'Student Records', fees:'Tuition & Misc Fees',
-            operators:'Staff Logins (Operators)',
-            student_accounts:'Student Portal Accounts'
-        }[view.value] || ''));
-        const addLabel = computed(() => ({
-            departments_programs:'Program', subjects:'Subject', curriculum:'Entry',
-            periods:'Period', sections:'Section', classOfferings:'Class Offering', fees:'Fee', operators:'Operator'
-        }[view.value] || ''));
-        const searchPlaceholder = computed(() => `Search ${viewTitle.value.toLowerCase()}…`);
-
-        // ── Unique lists & Stats ──
-        const uniqueProgramDepts = computed(() => {
-            return [...new Set(programs.value.map(p => p.department).filter(Boolean))].sort();
-        });
-        const uniqueSubjectDepts = computed(() => {
-            return [...new Set(subjects.value.map(s => s.department).filter(Boolean))].sort();
-        });
-        const uniqueCurriculumVersions = computed(() => {
-            let list = curriculum.value;
-            if (form.program) {
-                list = list.filter(c => c.program === form.program);
-            }
-            const versions = list.map(c => c.curriculumVersion).filter(Boolean);
-            if (versions.length === 0) return ['2022 Curriculum'];
-            return [...new Set(versions)].sort();
-        });
-        const uniqueCurriculumVersionsForBulk = computed(() => {
-            if (!bulkForm.program) return ['2022 Curriculum'];
-            const versions = curriculum.value
-                .filter(c => c.program === bulkForm.program)
-                .map(c => c.curriculumVersion)
-                .filter(Boolean);
-            if (versions.length === 0) return ['2022 Curriculum'];
-            return [...new Set(versions)].sort();
-        });
-        const programStats = computed(() => {
-            const stats = {};
-            programs.value.forEach(p => {
-                stats[p.name] = { subjects: 0, sections: 0 };
-            });
-            curriculum.value.forEach(c => {
-                if (stats[c.program]) stats[c.program].subjects++;
-            });
-            sections.value.forEach(s => {
-                if (stats[s.program]) stats[s.program].sections++;
-            });
-            return stats;
-        });
-
-        // ── Sorting helper ──
-        const sortData = (data, prefix) => {
-            if (!sortKey.value.startsWith(prefix + '_')) return data;
-            const prop = sortKey.value.substring(prefix.length + 1);
-            return [...data].sort((a, b) => {
-                let va = a[prop];
-                let vb = b[prop];
-                if (typeof va === 'string') va = va.toLowerCase();
-                if (typeof vb === 'string') vb = vb.toLowerCase();
-                if (va < vb) return -1 * sortDir.value;
-                if (va > vb) return 1 * sortDir.value;
-                return 0;
-            });
-        };
-
-        const sortBy = (prefix, prop) => {
-            const key = prefix + '_' + prop;
-            if (sortKey.value === key) {
-                sortDir.value = -sortDir.value;
-            } else {
-                sortKey.value = key;
-                sortDir.value = 1;
-            }
-        };
-
-        // ── Filtered lists ──
-        const q = () => search.value.toLowerCase();
-        
-        const filteredDepartments = computed(() => {
-            let res = departments.value.filter(d => !q() || (d.code+d.name).toLowerCase().includes(q()));
-            return sortData(res, 'departments');
-        });
-
-        const filteredPrograms = computed(() => {
-            let res = programs.value.filter(p => {
-                const matchesSearch = !q() || (p.code+p.name+p.department).toLowerCase().includes(q());
-                const matchesDept = !filterProgramDept.value || p.department === filterProgramDept.value;
-                const matchesStatus = !filterProgramStatus.value || p.status === filterProgramStatus.value;
-                return matchesSearch && matchesDept && matchesStatus;
-            });
-            return sortData(res, 'programs');
-        });
-
-        const filteredProgramsList = computed(() => {
-            let res = programs.value;
-            if (selectedDeptName.value) {
-                res = res.filter(p => p.department === selectedDeptName.value);
-            }
-            return res.filter(p => {
-                return !q() || (p.code+p.name+p.department).toLowerCase().includes(q());
-            });
-        });
-
-        const filteredStudents = computed(() => {
-            return students.value.filter(st => {
-                const matchesSearch = !q() || (st.id + st.name + st.program + st.yearLevel + st.status).toLowerCase().includes(q());
-                const matchesProg = !filterStudentProgram.value || st.program === filterStudentProgram.value;
-                const matchesYear = !filterStudentYear.value || st.yearLevel === filterStudentYear.value;
-                const matchesStatus = !filterStudentStatus.value || st.status === filterStudentStatus.value;
-                return matchesSearch && matchesProg && matchesYear && matchesStatus;
-            });
-        });
-
-        const filteredSubjects = computed(() => {
-            let res = subjects.value.filter(s => {
-                const matchesSearch = !q() || (s.code+s.title+s.department).toLowerCase().includes(q());
-                const matchesDept = !filterSubjectDept.value || s.department === filterSubjectDept.value;
-                const matchesLab = !filterSubjectLab.value || (filterSubjectLab.value === 'lab' ? s.labUnits > 0 : s.labUnits === 0);
-                return matchesSearch && matchesDept && matchesLab;
-            });
-            return sortData(res, 'subjects');
-        });
-
-        const filteredCurriculum = computed(() => {
-            let res = curriculum.value.filter(c => {
-                const matchesSearch = !q() || (c.program+c.subject+c.yearLevel+c.semester).toLowerCase().includes(q());
-                const matchesProg = !filterCurrProgram.value || c.program === filterCurrProgram.value;
-                const matchesYear = !filterCurrYear.value || c.yearLevel === filterCurrYear.value;
-                const matchesSem = !filterCurrSem.value || c.semester === filterCurrSem.value;
-                return matchesSearch && matchesProg && matchesYear && matchesSem;
-            });
-            return sortData(res, 'curriculum');
-        });
-
-        // Grouped curriculum structure: Program -> Year Level -> Semester -> Entries
-        const curriculumGrouped = computed(() => {
-            const list = filteredCurriculum.value;
-            const progs = [...new Set(list.map(c => c.program))].sort();
-            return progs.map(progName => {
-                const progEntries = list.filter(c => c.program === progName);
-                const years = [...new Set(progEntries.map(c => c.yearLevel))].sort();
-                const yearBlocks = years.map(yr => {
-                    const yrEntries = progEntries.filter(c => c.yearLevel === yr);
-                    const sems = [...new Set(yrEntries.map(c => c.semester))].sort();
-                    const semBlocks = sems.map(sem => {
-                        return {
-                            semester: sem,
-                            entries: yrEntries.filter(c => c.semester === sem)
-                        };
-                    });
-                    return {
-                        year: yr,
-                        semesters: semBlocks
-                    };
-                });
-                return {
-                    program: progName,
-                    years: yearBlocks,
-                    entries: progEntries
-                };
-            });
-        });
-
-        const toggleCurrGroup = (progName) => {
-            if (collapsedGroups.value.includes(progName)) {
-                collapsedGroups.value = collapsedGroups.value.filter(g => g !== progName);
-            } else {
-                collapsedGroups.value.push(progName);
-            }
-        };
-
-        const filteredPeriods = computed(() => {
-            let res = periods.value.filter(p => {
-                const matchesSearch = !q() || (p.name+p.academicYear).toLowerCase().includes(q());
-                const matchesSem = !filterPeriodSem.value || p.semester === filterPeriodSem.value;
-                const matchesStatus = !filterPeriodStatus.value || p.status === filterPeriodStatus.value;
-                return matchesSearch && matchesSem && matchesStatus;
-            });
-            return sortData(res, 'periods');
-        });
-
-        const filteredSections = computed(() => {
-            let res = sections.value.filter(s => {
-                const matchesSearch = !q() || (s.code+s.program+s.yearLevel).toLowerCase().includes(q());
-                const matchesProg = !filterSectProgram.value || s.program === filterSectProgram.value;
-                const matchesYear = !filterSectYear.value || s.yearLevel === filterSectYear.value;
-                const matchesPeriod = !filterSectPeriod.value || s.academicPeriodId === parseInt(filterSectPeriod.value);
-                return matchesSearch && matchesProg && matchesYear && matchesPeriod;
-            });
-            return sortData(res, 'sections');
-        });
-
-        const filteredClassOfferings = computed(() => {
-            let res = classOfferings.value.filter(s => {
-                const matchesSearch = !q() || (s.code+s.subject+s.instructor+(s.program||'')+(s.yearLevel||'')+(s.semester||'')).toLowerCase().includes(q());
-                const matchesProg = !filterSectProgram.value || s.program === filterSectProgram.value;
-                const matchesYear = !filterSectYear.value || s.yearLevel === filterSectYear.value;
-                const matchesSem = !filterSectSem.value || s.semester === filterSectSem.value;
-                const matchesDays = !filterSectDays.value || s.days === filterSectDays.value;
-                return matchesSearch && matchesProg && matchesYear && matchesSem && matchesDays;
-            });
-            return sortData(res, 'classOfferings');
-        });
-
-        const filteredFees       = computed(() => fees.value.filter(f       => !q() || (f.type+f.label).toLowerCase().includes(q())));
-        const filteredUsers      = computed(() => {
-            if (!Array.isArray(users.value)) return [];
-            return users.value.filter(u => {
-                if (!u) return false;
-                const roleUpper = (u.role || '').toUpperCase();
-                if (['ADMIN', 'SUPER_ADMIN'].includes(roleUpper)) return false;
-                
-                const userStatusUpper   = (u.status || 'ACTIVE').toUpperCase();
-                const filterStatusUpper = (filterUserStatus.value || 'ALL').toUpperCase();
-                return filterStatusUpper === 'ALL' || userStatusUpper === filterStatusUpper;
-            });
-        });
-        const filteredAccounts   = computed(() => {
-            let res = students.value.filter(acc => {
-                const matchesSearch = !q() || (acc.id + acc.name + (acc.email||'') + acc.program + acc.yearLevel + acc.status).toLowerCase().includes(q());
-                const matchesProg   = !filterAccountProgram.value || acc.program === filterAccountProgram.value;
-                const matchesYear   = !filterAccountYear.value   || acc.yearLevel === filterAccountYear.value;
-                const matchesStatus = !filterAccountStatus.value  || acc.status === filterAccountStatus.value;
-                return matchesSearch && matchesProg && matchesYear && matchesStatus;
-            });
-            return sortData(res, 'accounts');
-        });
-
-        const filteredSubjectsForSection = computed(() => {
-            if (!form.program || !form.yearLevel || !form.semester) {
-                return subjects.value;
-            }
-            const matchingCurr = curriculum.value.filter(c => 
-                c.program === form.program && 
-                c.yearLevel === form.yearLevel && 
-                c.semester === form.semester &&
-                (!form.curriculumVersion || c.curriculumVersion === form.curriculumVersion)
-            );
-            const titles = matchingCurr.map(c => c.subject);
-            return subjects.value.filter(s => titles.includes(s.title));
-        });
-
-        const getPeriodName = (id) => {
-            const p = periods.value.find(ap => ap.id === id);
-            return p ? p.name : 'Unknown Period';
-        };
-
-        const getSectionCohortCode = (id) => {
-            const sec = sections.value.find(s => s.id === id);
-            return sec ? `${sec.program} - ${sec.yearLevel} - ${sec.code}` : 'Unassigned';
-        };
-
-        const onSectionSelect = () => {
-            const sec = sections.value.find(s => s.id === parseInt(form.sectionId));
-            if (sec) {
-                form.program = sec.program;
-                form.yearLevel = sec.yearLevel;
-                const period = periods.value.find(p => p.id === sec.academicPeriodId);
-                form.semester = period ? period.semester : '1st Semester';
-                form.curriculumVersion = sec.curriculumVersion || '2022 Curriculum';
-                form.capacity = sec.capacity;
-                form.code = '';
-                form.subject = '';
-            }
-        };
-
-        const onSubjectSelect = () => {
-            if (!form.sectionId || !form.subject) return;
-            const sec = sections.value.find(s => s.id === parseInt(form.sectionId));
-            const sub = subjects.value.find(s => s.title === form.subject);
-            if (sec && sub) {
-                const progObj = programs.value.find(p => p.name === sec.program);
-                const progCode = progObj ? progObj.code : sec.program;
-                const progShort = progCode.replace('BS', '');
-                form.code = progShort + '-' + sub.code + '-' + sec.code;
-            }
-        };
-
-        // ── Helpers ──
-        const notify = (ok, msg) => {
-            successMsg.value = ''; errorMsg.value = '';
-            if (ok) successMsg.value = msg; else errorMsg.value = msg;
-            setTimeout(() => { successMsg.value = ''; errorMsg.value = ''; }, 4000);
-        };
-        const closeModal = () => { modal.value = ''; Object.keys(form).forEach(k => delete form[k]); };
-        
-        const loadDashboard = () => {
-            isLoadingStats.value = true;
-            get('fetch_dashboard_stats').then(r => {
-                isLoadingStats.value = false;
-                if (r.success) dashboardStats.value = r.data;
-            }).catch(() => { isLoadingStats.value = false; });
-        };
-
-        const setView    = (v) => { 
-            view.value = v; 
-            search.value = ''; 
-            closeModal(); 
-            if (v === 'dashboard') loadDashboard();
-            if (v === 'operators') {
-                filterUserStatus.value = 'ALL';
-                get('fetch_users').then(r => { if (r && r.success) users.value = r.data || []; });
-            }
-        };
-
-        // ── Auth ──
-        const fetchCurrentProfile = () => {
-            fetch('../api/index.php?action=auth/profile')
-                .then(res => res.json())
-                .then(res => {
-                    if (res && res.success && res.data) {
-                        const prof = res.data;
-                        const avatarUrl = prof.avatar || prof.photo || prof.image || null;
-                        if (avatarUrl && currentAdmin.value) {
-                            currentAdmin.value.avatar = avatarUrl;
-                            if (prof.name) currentAdmin.value.name = prof.name;
-                            const key = (currentAdmin.value.role === 'SUPER_ADMIN' || currentAdmin.value.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
-                            sessionStorage.setItem(key, JSON.stringify(currentAdmin.value));
-                        }
-                    }
-                }).catch(() => {});
-        };
-
-        onMounted(() => {
-            const s = sessionStorage.getItem('gncp_admin_user') || sessionStorage.getItem('gncp_station_user');
-            if (s) {
-                try {
-                    const u = JSON.parse(s);
-                    if (u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN')) {
-                        currentAdmin.value = u;
-                        fetchCurrentProfile();
-                        if (u.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
-                            window.PasswordChangeGuard.checkAndPrompt(u, function() {
-                                loadAll();
-                                startLiveSync();
-                            });
-                        } else {
-                            loadAll();
-                            startLiveSync();
-                        }
-                        return;
-                    }
-                } catch(e) {}
-            }
-            sessionStorage.removeItem('gncp_admin_user');
-            sessionStorage.removeItem('gncp_station_user');
-            window.location.href = '../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-        });
-
-
-        onUnmounted(() => {
-            stopLiveSync();
-        });
-
-        const handleLogout = async () => {
-            const result = await Swal.fire({
-                title: 'Logout',
-                text: 'Log out of the Super Admin Portal?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#006A4E',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, logout'
-            });
-            if (!result.isConfirmed) return;
-            stopLiveSync();
-            currentAdmin.value = null;
-            sessionStorage.removeItem('gncp_admin_user');
-            sessionStorage.removeItem('gncp_station_user');
-            localStorage.removeItem('gncp_admin_user');
-            localStorage.removeItem('gncp_station_user');
-
-            fetch('../api/index.php?action=auth/logout', { method: 'POST' })
-                .catch(() => {})
-                .finally(() => {
-                    window.location.href = '../index.html?clear=true';
-                });
-        };
-
-        // ── Load all data ──
-        const loadAll = () => {
-            loadDashboard();
-            get('fetch_academic_data').then(r => {
-                if (r.success && r.data) {
-                    departments.value = window.GNCP_DEPARTMENTS;
-                    programs.value   = r.data.programs  || [];
-                    subjects.value   = r.data.subjects  || [];
-                    curriculum.value = r.data.curriculum|| [];
-                    periods.value    = r.data.periods   || [];
-                    sections.value   = r.data.sections  || [];
-                    classOfferings.value = r.data.classOfferings || [];
-                    fees.value       = r.data.fees      || [];
-                    students.value   = r.data.students  || [];
-                }
-            });
-            get('fetch_users').then(r => { if (r.success) users.value = r.data || []; });
-        };
-
-        // ── Open modals ──
-        const openAddModal = () => {
-            search.value = '';
-            if (view.value === 'departments_programs') { Object.assign(form, {id:null,code:'',name:'',department:selectedDeptName.value || '',status:'Active'}); modal.value='program'; }
-            if (view.value === 'subjects')   { Object.assign(form, {id:null,code:'',title:'',description:'',lectureUnits:3,labUnits:0,labFee:0,department:'',prerequisites:'None'}); modal.value='subject'; }
-            if (view.value === 'curriculum') { Object.assign(form, {id:null,program:'',curriculumVersion:'2022 Curriculum',subject:'',yearLevel:'1st Year',semester:'1st Semester',elective:false}); modal.value='curriculum'; }
-            if (view.value === 'periods')    { Object.assign(form, {id:null,name:'',academicYear:'',semester:'1st Semester',enrollmentStart:'',enrollmentEnd:'',status:'Active'}); modal.value='period'; }
-            if (view.value === 'sections')   { Object.assign(form, {id:null,code:'',program:'',yearLevel:'1st Year',academicPeriodId:'',curriculumVersion:'2022 Curriculum',capacity:40,adviser:''}); modal.value='section'; }
-            if (view.value === 'classOfferings') { Object.assign(form, {id:null,sectionId:'',program:'',yearLevel:'1st Year',semester:'1st Semester',subject:'',code:'',instructor:'TBD',days:'MWF',time:'09:00 AM - 10:30 AM',room:'Room 101',capacity:40}); modal.value='classOffering'; }
-            if (view.value === 'fees')       { Object.assign(form, {id:null,type:'Tuition',label:'',amount:0,perUnit:false}); modal.value='fee'; }
-            if (view.value === 'operators')  { Object.assign(form, {name:'',username:'',password:'',role:''}); modal.value='operator'; }
-        };
-        const editDepartment = d => { Object.assign(form, {...d}); modal.value='department'; };
-        const editProgram    = p => { Object.assign(form, {...p}); modal.value='program'; };
-        const editSubject    = s => { Object.assign(form, {...s}); modal.value='subject'; };
-        const editCurriculum = c => { Object.assign(form, {...c}); modal.value='curriculum'; };
-        const editPeriod     = p => { Object.assign(form, {...p}); modal.value='period'; };
-        const editSection    = s => { Object.assign(form, {...s}); modal.value='section'; };
-        const editClassOffering = c => { Object.assign(form, {...c}); modal.value='classOffering'; };
-        const editFee        = f => { Object.assign(form, {...f}); modal.value='fee'; };
-
-        // Wizard & Accelerators Modals opening
-        const openAddDepartmentModal = () => {
-            Object.assign(form, {id:null,code:'',name:'',status:'Active'});
-            modal.value = 'department';
-        };
-        const openAddProgramModal = () => {
-            Object.assign(form, {id:null,code:'',name:'',department:selectedDeptName.value || '',status:'Active'});
-            modal.value = 'program';
-        };
-        const openCloneTermModal = () => {
-            cloneForm.fromPeriodId = periods.value.length > 0 ? periods.value[0].id : '';
-            cloneForm.newPeriodName = '';
-            cloneForm.newAcademicYear = '';
-            cloneForm.newSemester = '1st Semester';
-            cloneForm.enrollmentStart = '';
-            cloneForm.enrollmentEnd = '';
-            cloneForm.cloneSections = true;
-            cloneForm.cloneOfferings = true;
-            modal.value = 'clone-term';
-        };
-        const openBulkSectionsModal = () => {
-            bulkForm.program = programs.value.length > 0 ? programs.value[0].name : '';
-            bulkForm.curriculumVersion = '2022 Curriculum';
-            bulkForm.yearLevel = '1st Year';
-            bulkForm.academicPeriodId = periods.value.length > 0 ? periods.value[0].id : '';
-            bulkForm.capacity = 40;
-            bulkForm.adviser = '';
-            bulkForm.count = 3;
-            modal.value = 'bulk-sections';
-        };
-
-
-
-        const submitCloneTerm = () => {
-            if (!cloneForm.fromPeriodId || !cloneForm.newPeriodName || !cloneForm.newAcademicYear) {
-                notify(false, 'Please fill in all required fields.');
-                return;
-            }
-            post('clone_term', { clone: cloneForm }).then(r => {
-                if (r.success && r.data) {
-                    periods.value = r.data.periods || [];
-                    sections.value = r.data.sections || [];
-                    classOfferings.value = r.data.classOfferings || [];
-                    closeModal();
-                    notify(true, r.message || 'Term cloned successfully!');
-                } else {
-                    notify(false, r.error || 'Failed to clone term.');
-                }
-            });
-        };
-
-        const submitBulkSections = () => {
-            if (!bulkForm.program || !bulkForm.yearLevel || !bulkForm.academicPeriodId || bulkForm.count <= 0) {
-                notify(false, 'Please fill in all required fields.');
-                return;
-            }
-            post('bulk_generate_sections', { bulk: bulkForm }).then(r => {
-                if (r.success && r.data) {
-                    sections.value = r.data.sections || r.data || [];
-                    closeModal();
-                    notify(true, r.message || 'Sections generated successfully!');
-                } else {
-                    notify(false, r.error || 'Failed to generate sections.');
-                }
-            });
-        };
-        const onBulkProgramSelect = () => {
-            const matching = curriculum.value.filter(c => c.program === bulkForm.program);
-            if (matching.length > 0) {
-                bulkForm.curriculumVersion = matching[0].curriculumVersion;
-            } else {
-                bulkForm.curriculumVersion = '2022 Curriculum';
-            }
-        };
-
-        // ── CRUD helpers ──
-        const crudSave = (action, bodyKey, dataList, payload) =>
-            post(action, {[bodyKey]: {...form, ...payload}}).then(r => {
-                if (r.success) { dataList.value = r.data; closeModal(); notify(true, 'Saved successfully.'); }
-                else notify(false, r.error || 'Save failed.');
-            });
-        const crudDel = async (action, id, dataList, label) => {
-            const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: `Delete this ${label}? This cannot be undone.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#006A4E',
-                confirmButtonText: 'Yes, delete it!'
-            });
-            if (!result.isConfirmed) return;
-            post(action, {id}).then(r => {
-                if (r.success) { dataList.value = r.data; notify(true, `${label} deleted.`); }
-                else Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
-            });
-        };
-
-        const saveDepartment = () => crudSave('save_department', 'department', departments, {});
-        const deleteDepartment = id => crudDel('delete_department', id, departments, 'department');
-        const saveProgram    = () => crudSave('save_program',   'program',    programs,   {});
-        const deleteProgram = async (id) => {
-            const prog = programs.value.find(p => p.id === id);
-            if (!prog) return;
-            const currCount = curriculum.value.filter(c => c.program === prog.name).length;
-            const secCount = sections.value.filter(s => s.program === prog.name).length;
-            const offCount = classOfferings.value.filter(o => o.program === prog.name).length;
-            let warningHtml = `<p style="margin-bottom:8px">You are about to delete <strong>${prog.name}</strong> (${prog.code}).</p>`;
-            if (currCount > 0 || secCount > 0 || offCount > 0) {
-                warningHtml += `<div style="text-align:left;background:#fff3cd;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
-                warningHtml += `<strong style="color:#856404"><i class="fa-solid fa-triangle-exclamation"></i> The following will also be deleted:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
-                if (currCount > 0) warningHtml += `<li>${currCount} curriculum mapping(s)</li>`;
-                if (offCount > 0) warningHtml += `<li>${offCount} class offering(s)</li>`;
-                if (secCount > 0) warningHtml += `<li>${secCount} section cohort(s)</li>`;
-                warningHtml += `</ul></div>`;
-            }
-            const result = await Swal.fire({
-                title: 'Delete Program?',
-                html: warningHtml,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#006A4E',
-                confirmButtonText: 'Yes, delete everything'
-            });
-            if (!result.isConfirmed) return;
-            post('delete_program', {id}).then(r => {
-                if (r.success) {
-                    programs.value = r.data;
-                    // Refresh dependent lists since cascading deletions occurred
-                    get('fetch_academic_data').then(rd => {
-                        if (rd.success && rd.data) {
-                            curriculum.value = rd.data.curriculum || [];
-                            sections.value = rd.data.sections || [];
-                            classOfferings.value = rd.data.classOfferings || [];
-                        }
-                    });
-                    notify(true, `Program "${prog.name}" and all dependent data deleted.`);
-                } else {
-                    Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
-                }
-            });
-        };
-        const saveSubject    = () => crudSave('save_subject',   'subject',    subjects,   {});
-        const deleteSubject  = id => crudDel('delete_subject',  id,           subjects,   'subject');
-        const saveCurriculum = () => crudSave('save_curriculum','curriculum', curriculum, {});
-        const deleteCurriculum=id => crudDel('delete_curriculum',id,          curriculum, 'entry');
-        const savePeriod     = () => crudSave('save_academic_period','period',periods,    {});
-        const deletePeriod = async (id) => {
-            const period = periods.value.find(p => p.id === id);
-            if (!period) return;
-            const linkedSections = sections.value.filter(s => s.academicPeriodId === id);
-            const linkedOfferings = classOfferings.value.filter(o => linkedSections.some(s => s.id === o.sectionId));
-            let warningHtml = `<p style="margin-bottom:8px">Delete academic period <strong>${period.name}</strong>?</p>`;
-            if (linkedSections.length > 0 || linkedOfferings.length > 0) {
-                warningHtml += `<div style="text-align:left;background:#f8d7da;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
-                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This period has active linked records:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
-                if (linkedSections.length > 0) warningHtml += `<li>${linkedSections.length} section cohort(s)</li>`;
-                if (linkedOfferings.length > 0) warningHtml += `<li>${linkedOfferings.length} class offering(s)</li>`;
-                warningHtml += `</ul><p style="margin-top:6px;color:#721c24;font-weight:600">You must remove these first before deleting the period.</p></div>`;
-            }
-            const result = await Swal.fire({
-                title: 'Delete Period?',
-                html: warningHtml,
-                icon: linkedSections.length > 0 ? 'error' : 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#006A4E',
-                confirmButtonText: linkedSections.length > 0 ? 'Try Anyway' : 'Yes, delete it'
-            });
-            if (!result.isConfirmed) return;
-            post('delete_academic_period', {id}).then(r => {
-                if (r.success) { periods.value = r.data; notify(true, 'Period deleted.'); }
-                else Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
-            });
-        };
-        const saveSection    = () => crudSave('save_section',   'section',    sections,   {});
-        const deleteSection = async (id) => {
-            const sec = sections.value.find(s => s.id === id);
-            if (!sec) return;
-            const linkedOfferings = classOfferings.value.filter(o => o.sectionId === id);
-            let warningHtml = `<p style="margin-bottom:8px">Delete section <strong>${sec.code}</strong> (${sec.program} — ${sec.yearLevel})?</p>`;
-            if (linkedOfferings.length > 0) {
-                warningHtml += `<div style="text-align:left;background:#f8d7da;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
-                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This section has active linked records:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
-                warningHtml += `<li>${linkedOfferings.length} class offering(s) scheduled</li>`;
-                warningHtml += `</ul><p style="margin-top:6px;color:#721c24;font-weight:600">You must remove these first before deleting the section.</p></div>`;
-            }
-            const result = await Swal.fire({
-                title: 'Delete Section?',
-                html: warningHtml,
-                icon: linkedOfferings.length > 0 ? 'error' : 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#006A4E',
-                confirmButtonText: linkedOfferings.length > 0 ? 'Try Anyway' : 'Yes, delete it'
-            });
-            if (!result.isConfirmed) return;
-            post('delete_section', {id}).then(r => {
-                if (r.success) { sections.value = r.data; notify(true, 'Section deleted.'); }
-                else Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
-            });
-        };
-        const saveClassOffering = () => crudSave('save_subject_section', 'section', classOfferings, {});
-        const deleteClassOffering = id => crudDel('delete_subject_section', id, classOfferings, 'class offering');
-        const openBlockSectionModal = () => {
-            Object.assign(form, {
-                program: '',
-                yearLevel: '1st Year',
-                semester: '1st Semester',
-                sectionSuffix: '',
-                capacity: 40,
-                instructor: 'TBD',
-                days: 'MWF',
-                time: '09:00 AM - 10:30 AM',
-                room: 'Room 101'
-            });
-            modal.value = 'block-section';
-        };
-        const saveBlockSection = () => {
-            if (!form.program || !form.yearLevel || !form.semester || !form.sectionSuffix) {
-                notify(false, 'Please fill in all required fields.');
-                return;
-            }
-            post('save_block_section', { block: form }).then(r => {
-                if (r.success) {
-                    classOfferings.value = r.data;
-                    closeModal();
-                    notify(true, r.message || 'Block section generated successfully.');
-                } else {
-                    notify(false, r.error || 'Failed to generate block section.');
-                }
-            });
-        };
-        const saveFee        = () => crudSave('save_fee',       'fee',        fees,       {});
-        const deleteFee      = id => crudDel('delete_fee',      id,           fees,       'fee');
-
-        // ── Operator Management (Isolated Methods & Tracing) ──
-        const fetchOperators = () => {
-            console.log('[Trace: Operators] Fetching operators list...');
-            return get('fetch_users').then(r => {
-                if (r && r.success) {
-                    users.value = r.data || [];
-                    console.log(`[Trace: Operators] Loaded ${users.value.length} operators:`, users.value);
-                } else {
-                    console.error('[Trace: Operators] Failed to fetch operators:', r);
-                }
-            });
-        };
-
-        const openCreateOperatorModal = () => {
-            console.log('[Trace: Operators] Triggered Create Operator Modal');
-            search.value = '';
-            Object.assign(operatorForm, { id: null, name: '', email: '', username: '', password: '', role: '' });
-            isOperatorModalOpen.value = true;
-            console.log('[Trace: Operators] isOperatorModalOpen set to true');
-        };
-
-        const closeCreateOperatorModal = () => {
-            if (isSubmittingOperator.value) return;
-            console.log('[Trace: Operators] Closing Create Operator Modal');
-            isOperatorModalOpen.value = false;
-        };
-
-        const submitCreateOperator = () => {
-            console.log('[Trace: Operators] Submitting new operator:', operatorForm);
-            if (!operatorForm.name || !operatorForm.username || !operatorForm.role) {
-                Swal.fire({
-                    title: 'Missing Information',
-                    text: 'Full name, username, and assigned station role are required.',
-                    icon: 'warning',
-                    confirmButtonColor: '#006A4E'
-                });
-                return;
-            }
-
-            const payloadName = operatorForm.name;
-            const payloadUsername = operatorForm.username;
-            const payloadRole = operatorForm.role;
-
-            isSubmittingOperator.value = true;
-
-            post('save_user', { user: { ...operatorForm } }).then(r => {
-                isSubmittingOperator.value = false;
-                if (r.success) {
-                    console.log('[Trace: Operators] Operator account created successfully:', r);
-                    closeCreateOperatorModal();
-                    fetchOperators();
-
-                    const pass = (r.data && r.data.tempPassword) ? r.data.tempPassword : (operatorForm.password || '(As specified)');
-                    const emailSent = r.data && r.data.emailSent;
-                    const emailMsg = r.data && r.data.emailMessage ? r.data.emailMessage : '';
-
-                    Swal.fire({
-                        title: 'Operator Created Successfully!',
-                        html: `
-                            <div style="text-align: left; padding: 14px 18px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px;">
-                                <div style="margin-bottom: 8px;"><strong>Operator Name:</strong> ${payloadName}</div>
-                                <div style="margin-bottom: 8px;"><strong>Username:</strong> <code style="color: #006A4E; font-weight: 700; font-size: 1rem;">${payloadUsername}</code></div>
-                                <div style="margin-bottom: 8px;"><strong>Station Role:</strong> <span class="badge badge-role">${payloadRole}</span></div>
-                                <div style="margin-bottom: 12px;"><strong>Temporary Password:</strong><br><code style="font-size: 1.2rem; color: #006A4E; background: #e6f4ed; padding: 6px 14px; border-radius: 6px; display: inline-block; margin-top: 4px; font-weight: bold;">${pass}</code></div>
-                                <div style="font-size: 0.85rem; padding: 10px 14px; border-radius: 6px; background: ${emailSent ? '#d1fae5' : '#fef3c7'}; color: ${emailSent ? '#065f46' : '#92400e'}; border: 1px solid ${emailSent ? '#a7f3d0' : '#fde68a'};">
-                                    <i class="fa-solid ${emailSent ? 'fa-envelope-circle-check' : 'fa-info-circle'}" style="margin-right: 6px;"></i>
-                                    ${emailSent ? 'Account credentials have been emailed to the operator.' : (emailMsg || 'No email specified or running in local mode.')}
+    <!-- ══ GOOGLE DOCS BULLETIN CREATOR & CARD TEMPLATE MODAL ══ -->
+    <div v-if="modal==='announcement'" class="overlay" @click.self="closeModal">
+        <div class="bulletin-modal-card">
+            <!-- Modal Header -->
+            <div class="bulletin-modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:36px;height:36px;border-radius:8px;background:rgba(212,175,55,0.12);display:grid;place-items:center;border:1px solid rgba(212,175,55,0.25)">
+                        <i class="fa-solid fa-bullhorn" style="color:var(--gold);font-size:1rem"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:800;font-size:1.02rem;color:var(--text)">{{ announcementForm.id ? 'Edit Campus Notice' : 'Publish Official Campus Notice' }}</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted)">Interactive Google Docs Canvas &bull; Live preview identical to Student Portal</div>
+                    </div>
+                </div>
+                <button type="button" @click="closeModal" style="background:transparent;border:none;color:#9ca3af;font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:6px;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body: Meta bar + Google Docs Toolbar + Live Card Canvas -->
+            <div class="bulletin-modal-body">
+                <!-- 1. Metadata Configuration Grid -->
+                <div class="docs-meta-grid" style="grid-template-columns: 1.4fr 1fr 1fr auto; gap: 12px; align-items: flex-end;">
+                    <div class="docs-meta-field">
+                        <label class="docs-meta-label"><i class="fa-solid fa-user-tie me-1 text-secondary"></i> Issuing Authority / Author</label>
+                        <input type="text" class="form-input" v-model="announcementForm.author_name"
+                            placeholder="e.g. Dr. Eleanor Vance (VP for Academic Affairs)"
+                            style="font-size:0.82rem;font-weight:600;padding:6px 10px;" required>
+                    </div>
+                    <div class="docs-meta-field">
+                        <label class="docs-meta-label"><i class="fa-solid fa-tag me-1 text-secondary"></i> Category</label>
+                        <select class="form-select" v-model="announcementForm.category" style="font-size:0.82rem;font-weight:600;padding:6px 10px;">
+                            <option value="GENERAL">General Notice</option>
+                            <option value="ACADEMIC">Academic Memo</option>
+                            <option value="ENROLLMENT">Enrollment Advisory</option>
+                            <option value="EVENT">Campus Event &amp; Activity</option>
+                            <option value="URGENT">Urgent Advisory</option>
+                        </select>
+                    </div>
+                    <div class="docs-meta-field">
+                        <label class="docs-meta-label"><i class="fa-solid fa-users me-1 text-secondary"></i> Target Audience</label>
+                        <select class="form-select" v-model="announcementForm.target_audience" style="font-size:0.82rem;font-weight:600;padding:6px 10px;">
+                            <option value="ALL">All Campus Community</option>
+                            <option value="STUDENTS">Students Only</option>
+                            <option value="FACULTY">Faculty Only</option>
+                            <option value="STAFF">Station Staff Only</option>
+                        </select>
+                    </div>
+                    <div class="docs-meta-field" style="justify-content:center;padding-bottom:8px">
+                        <label for="pin-notice-cb" style="display:flex;align-items:center;gap:7px;cursor:pointer;margin:0;font-size:0.8rem;font-weight:700;color:var(--text);">
+                            <input type="checkbox" id="pin-notice-cb" v-model="announcementForm.is_pinned" style="width:16px;height:16px;accent-color:var(--primary);">
+                            <i class="fa-solid fa-thumbtack" :style="{ color: announcementForm.is_pinned ? 'var(--gold)' : '#9ca3af' }"></i>
+                            Pin to Top
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 2. Google Docs Formatting Toolbar -->
+                <div class="docs-toolbar">
+                    <button type="button" class="docs-btn" title="Undo (Ctrl+Z)" @click="formatDoc('undo')"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" class="docs-btn" title="Redo (Ctrl+Y)" @click="formatDoc('redo')"><i class="fa-solid fa-rotate-right"></i></button>
+                    <div class="docs-divider"></div>
+
+                    <!-- Heading format select -->
+                    <select class="docs-format-select" @change="applyFormatBlock($event)" title="Text Style">
+                        <option value="p">Normal text</option>
+                        <option value="h2">Heading 1</option>
+                        <option value="h3">Heading 2</option>
+                        <option value="h4">Heading 3</option>
+                        <option value="blockquote">Callout Quote</option>
+                    </select>
+                    <div class="docs-divider"></div>
+
+                    <!-- Inline style buttons -->
+                    <button type="button" class="docs-btn" title="Bold (Ctrl+B)" @click="formatDoc('bold')"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" class="docs-btn" title="Italic (Ctrl+I)" @click="formatDoc('italic')"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" class="docs-btn" title="Underline (Ctrl+U)" @click="formatDoc('underline')"><i class="fa-solid fa-underline"></i></button>
+                    <button type="button" class="docs-btn" title="Strikethrough" @click="formatDoc('strikeThrough')"><i class="fa-solid fa-strikethrough"></i></button>
+                    
+                    <!-- Color Pickers -->
+                    <label class="docs-color-label" title="Text Color">
+                        <i class="fa-solid fa-font"></i>
+                        <input type="color" @change="applyTextColor($event)" value="#111827">
+                    </label>
+                    <label class="docs-color-label" title="Highlight Text Color">
+                        <i class="fa-solid fa-highlighter" style="color:#d97706"></i>
+                        <input type="color" @change="applyHiliteColor($event)" value="#fef08a">
+                    </label>
+                    <div class="docs-divider"></div>
+
+                    <!-- Alignment -->
+                    <button type="button" class="docs-btn" title="Align Left" @click="formatDoc('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
+                    <button type="button" class="docs-btn" title="Align Center" @click="formatDoc('justifyCenter')"><i class="fa-solid fa-align-center"></i></button>
+                    <button type="button" class="docs-btn" title="Align Right" @click="formatDoc('justifyRight')"><i class="fa-solid fa-align-right"></i></button>
+                    <button type="button" class="docs-btn" title="Justify" @click="formatDoc('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
+                    <div class="docs-divider"></div>
+
+                    <!-- Lists -->
+                    <button type="button" class="docs-btn" title="Bulleted List" @click="formatDoc('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" class="docs-btn" title="Numbered List" @click="formatDoc('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
+                    <button type="button" class="docs-btn" title="Insert Divider Line" @click="formatDoc('insertHorizontalRule')"><i class="fa-solid fa-minus"></i></button>
+                    <div class="docs-divider"></div>
+
+                    <!-- Links & Clear -->
+                    <button type="button" class="docs-btn" title="Insert Link" @click="insertLink"><i class="fa-solid fa-link"></i></button>
+                    <button type="button" class="docs-btn" title="Clear Formatting" @click="formatDoc('removeFormat')"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+
+                <!-- 3. Exact Student Portal Bulletin Card Live Canvas -->
+                <div class="docs-bulletin-card-container" :class="{ 'is-pinned': announcementForm.is_pinned }">
+                    <!-- Live Header -->
+                    <div class="docs-card-header">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <div style="width:36px;height:36px;border-radius:50%;background:#f3f4f6;display:grid;place-items:center;border:1px solid #e5e7eb;flex-shrink:0;">
+                                <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" style="width:24px;height:24px;object-fit:contain;">
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center" style="gap: 6px;">
+                                    <span style="font-weight:700;font-size:0.84rem;color:#111827">{{ announcementForm.author_name || (currentAdmin ? (currentAdmin.name || currentAdmin.username) : 'Dr. Eleanor Vance (VP for Academic Affairs)') }}</span>
+                                    <i class="fa-solid fa-circle-check text-primary" style="font-size:0.8rem; margin-left: 4px;" title="Official Account"></i>
+                                </div>
+                                <div style="font-size:0.72rem;color:#6b7280;">Live Preview &bull; Broadcasts to Student Portal</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span v-if="announcementForm.is_pinned"
+                                class="badge bg-warning bg-opacity-10 text-dark border border-warning rounded-pill px-2 py-0.5" style="font-size:0.68rem">
+                                <i class="fa-solid fa-thumbtack text-warning me-1"></i> Pinned
+                            </span>
+                            <span class="bulletin-tag" :class="'bulletin-tag-' + (announcementForm.category || 'GENERAL')">
+                                {{ announcementForm.category }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Live Editable Card Body -->
+                    <div class="docs-card-body">
+                        <!-- Editable Headline -->
+                        <div>
+                            <input class="docs-live-title" v-model="announcementForm.title" placeholder="Notice / Memo Headline (e.g. Schedule of Midterm Examinations)..." required>
+                        </div>
+
+                        <!-- Contenteditable Google Docs Canvas -->
+                        <div id="announcement-content-canvas"
+                            contenteditable="true"
+                            class="docs-live-canvas"
+                            placeholder="Write the complete official circular, details, instructions, or memoranda here... Type, format, and style just like Google Docs."
+                            @input="syncEditorContent">
+                        </div>
+
+                        <!-- Attached Media & Interactive Resizer Controls -->
+                        <div class="docs-image-section">
+                            <!-- When no image is uploaded -->
+                            <div v-if="!uploadImgPreview && !announcementForm.image_url">
+                                <input type="file" id="announcement-image-upload" @change="handleAnnouncementImageSelect" accept="image/*" style="display:none">
+                                <label for="announcement-image-upload" class="docs-image-dropzone">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.6rem;color:var(--primary);margin-bottom:4px"></i>
+                                    <div style="font-weight:700;font-size:0.84rem;color:#111827">Attach Official Poster / Banner Image (Optional)</div>
+                                    <div style="font-size:0.74rem;color:#6b7280">Click to browse PNG, JPG, WebP image up to 5MB</div>
+                                </label>
+                            </div>
+
+                            <!-- When image IS uploaded: Show Interactive Resizer Toolbar + Live Image -->
+                            <div v-else>
+                                <div class="docs-image-resizer-bar" style="flex-wrap:wrap;gap:8px 14px;">
+                                    <!-- 1. Fit Mode Toggle -->
+                                    <div class="resizer-group">
+                                        <label><i class="fa-solid fa-expand me-1"></i> Mode:</label>
+                                        <button type="button" class="docs-size-preset-btn" :class="{ active: !announcementForm.image_fit || announcementForm.image_fit === 'contain' }" @click="announcementForm.image_fit = 'contain'" title="Show complete uncropped image without clipping">
+                                            <i class="fa-solid fa-arrows-to-eye me-1"></i> Fit Whole Image
+                                        </button>
+                                        <button type="button" class="docs-size-preset-btn" :class="{ active: announcementForm.image_fit === 'cover' }" @click="announcementForm.image_fit = 'cover'" title="Crop to fill banner area">
+                                            <i class="fa-solid fa-crop me-1"></i> Fill &amp; Crop
+                                        </button>
+                                    </div>
+
+                                    <!-- 2. Height Controls -->
+                                    <div class="resizer-group">
+                                        <label><i class="fa-solid fa-up-down me-1"></i> Height:</label>
+                                        <button type="button" class="docs-size-preset-btn" :class="{ active: announcementForm.image_height === 'auto' || !announcementForm.image_height }" @click="announcementForm.image_height = 'auto'">
+                                            Auto (Full)
+                                        </button>
+                                        <input type="range" class="docs-range-slider" min="160" max="800" step="20"
+                                            :value="announcementForm.image_height === 'auto' ? 500 : (announcementForm.image_height || 450)"
+                                            @input="announcementForm.image_height = parseInt($event.target.value)">
+                                        <span style="font-size:0.75rem;font-weight:700;color:var(--primary);min-width:48px">
+                                            {{ announcementForm.image_height === 'auto' ? 'Full' : ((announcementForm.image_height || 450) + 'px') }}
+                                        </span>
+                                    </div>
+
+                                    <!-- 3. Width Scale -->
+                                    <div class="resizer-group">
+                                        <label><i class="fa-solid fa-arrows-left-right me-1"></i> Width:</label>
+                                        <button type="button" class="docs-size-preset-btn" :class="{ active: announcementForm.image_width === 60 }" @click="announcementForm.image_width = 60">60%</button>
+                                        <button type="button" class="docs-size-preset-btn" :class="{ active: announcementForm.image_width === 80 }" @click="announcementForm.image_width = 80">80%</button>
+                                        <button type="button" class="docs-size-preset-btn" :class="{ active: !announcementForm.image_width || announcementForm.image_width === 100 }" @click="announcementForm.image_width = 100">100%</button>
+                                    </div>
+
+                                    <!-- 4. Actions -->
+                                    <div class="resizer-group ms-auto">
+                                        <input type="file" id="announcement-image-replace" @change="handleAnnouncementImageSelect" accept="image/*" style="display:none">
+                                        <label for="announcement-image-replace" class="docs-size-preset-btn" style="cursor:pointer;margin:0"><i class="fa-solid fa-arrow-rotate-right me-1"></i> Change</label>
+                                        <button type="button" class="btn-sm-danger" @click="removeAnnouncementImage" style="padding:3px 8px;font-size:0.72rem"><i class="fa-solid fa-trash me-1"></i> Remove</button>
+                                    </div>
+                                </div>
+
+                                <!-- Live Scaled Image Preview (Uncropped Fit) -->
+                                <div class="docs-live-img-container" :style="{ width: (announcementForm.image_width || 100) + '%' }">
+                                    <img :src="uploadImgPreview || announcementForm.image_url"
+                                        alt="Notice Banner"
+                                        :style="{
+                                            maxHeight: announcementForm.image_height === 'auto' ? '850px' : ((announcementForm.image_height || 450) + 'px'),
+                                            width: '100%',
+                                            objectFit: announcementForm.image_fit || 'contain'
+                                        }">
                                 </div>
                             </div>
-                        `,
-                        icon: 'success',
-                        confirmButtonColor: '#006A4E',
-                        confirmButtonText: 'Done & Return'
-                    });
-                } else {
-                    console.error('[Trace: Operators] Create operator failed:', r);
-                    Swal.fire({
-                        title: 'Account Creation Failed',
-                        html: `<div style="color:#dc2626;font-weight:600">${r.message || r.error || 'Failed to create operator account.'}</div>`,
-                        icon: 'error',
-                        confirmButtonColor: '#006A4E'
-                    });
-                }
-            }).catch(err => {
-                isSubmittingOperator.value = false;
-                console.error('[Trace: Operators] Network error creating operator:', err);
-                Swal.fire({
-                    title: 'Server Error',
-                    text: 'An error occurred while connecting to the server.',
-                    icon: 'error',
-                    confirmButtonColor: '#006A4E'
-                });
-            });
-        };
+                        </div>
+                    </div>
 
-        const openEditOperatorModal = (u) => {
-            console.log('[Trace: Operators] Triggered Edit Operator Modal for user:', u);
-            Object.assign(operatorForm, { id: u.id, name: u.name, username: u.username, email: u.email || '', role: u.role, password: '' });
-            isEditOperatorModalOpen.value = true;
-        };
+                    <!-- Live Card Footer -->
+                    <div class="docs-card-footer">
+                        <span><i class="fa-solid fa-shield-halved text-success me-1"></i> Official GNCP Bulletin Preview</span>
+                        <div class="d-flex align-items-center gap-3">
+                            <span>{{ editorWordCount }} words &bull; {{ editorCharCount }} chars</span>
+                            <span class="font-monospace text-muted">Ref #{{ announcementForm.id || 'NEW' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        const closeEditOperatorModal = () => {
-            if (isSubmittingOperator.value) return;
-            console.log('[Trace: Operators] Closing Edit Operator Modal');
-            isEditOperatorModalOpen.value = false;
-        };
+            <!-- Modal Footer / Actions -->
+            <div class="bulletin-modal-footer">
+                <div style="font-size:0.76rem;color:#6b7280">
+                    Target: <strong class="text-dark">{{ announcementForm.target_audience === 'ALL' ? 'All Campus Community' : announcementForm.target_audience }}</strong> &bull; Category: <strong class="text-dark">{{ announcementForm.category }}</strong>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn-modal-cancel" @click="closeModal" :disabled="isSavingAnnouncement">Cancel</button>
+                    <button class="btn-modal-save" @click="saveAnnouncement" :disabled="isSavingAnnouncement" style="background-color: var(--primary);">
+                        <i v-if="isSavingAnnouncement" class="fa-solid fa-circle-notch fa-spin me-1"></i>
+                        {{ isSavingAnnouncement ? 'Publishing Notice...' : (announcementForm.id ? 'Update Notice' : 'Publish Official Announcement') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        const submitEditOperator = () => {
-            console.log('[Trace: Operators] Submitting operator update:', operatorForm);
-            if (!operatorForm.name || !operatorForm.role) {
-                Swal.fire({
-                    title: 'Missing Required Fields',
-                    text: 'Full Name and Station Role are required.',
-                    icon: 'warning',
-                    confirmButtonColor: '#006A4E'
-                });
-                return;
-            }
-
-            const targetName = operatorForm.name;
-            isSubmittingOperator.value = true;
-
-            post('update_operator', {
-                userId: operatorForm.id,
-                name: operatorForm.name,
-                email: operatorForm.email,
-                role: operatorForm.role
-            }).then(r => {
-                isSubmittingOperator.value = false;
-                if (r.success) {
-                    console.log('[Trace: Operators] Operator updated successfully:', r);
-                    closeEditOperatorModal();
-                    fetchOperators();
-                    Swal.fire({
-                        title: 'Operator Updated!',
-                        text: `Account details for ${targetName} have been updated successfully.`,
-                        icon: 'success',
-                        confirmButtonColor: '#006A4E'
-                    });
-                } else {
-                    console.error('[Trace: Operators] Update operator failed:', r);
-                    Swal.fire({
-                        title: 'Update Failed',
-                        text: r.message || r.error || 'Failed to update operator account.',
-                        icon: 'error',
-                        confirmButtonColor: '#006A4E'
-                    });
-                }
-            }).catch(err => {
-                isSubmittingOperator.value = false;
-                Swal.fire({
-                    title: 'Server Error',
-                    text: 'An error occurred while connecting to the server.',
-                    icon: 'error',
-                    confirmButtonColor: '#006A4E'
-                });
-            });
-        };
-
-        const resetOperatorPassword = async (u) => {
-            console.log('[Trace: Operators] Initiating password reset for user:', u);
-            const { value: newPass } = await Swal.fire({
-                title: 'Reset Operator Password',
-                text: `Set a new temporary password for ${u.name} (${u.username}):`,
-                input: 'text',
-                inputPlaceholder: 'Leave blank to auto-generate',
-                showCancelButton: true,
-                confirmButtonColor: '#006A4E',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Reset Password'
-            });
-            if (newPass === undefined) return;
-            post('reset_operator_password', { userId: u.id, newPassword: newPass }).then(r => {
-                if (r.success) {
-                    console.log('[Trace: Operators] Password reset successful:', r);
-                    fetchOperators();
-                    Swal.fire({
-                        title: 'Password Reset Successful!',
-                        html: `Temporary password for <strong>${u.username}</strong>:<br><br><code style="font-size:1.25rem;color:#006A4E;background:#e6f4ed;padding:6px 14px;border-radius:6px;display:inline-block">${r.data.tempPassword}</code><br><br>${r.data.emailSent ? 'Credentials have been emailed to the operator.' : (r.data.emailMessage || 'No email sent.')}`,
-                        icon: 'success',
-                        confirmButtonColor: '#006A4E'
-                    });
-                } else {
-                    console.error('[Trace: Operators] Password reset failed:', r);
-                    notify(false, r.message || r.error || 'Failed to reset password.');
-                }
-            });
-        };
-
-        const updateStatus = (userId, status) => {
-            console.log(`[Trace: Operators] Updating status for user ID ${userId} -> ${status}`);
-            return post('update_user_status', { userId, status }).then(r => {
-                if (r.success) fetchOperators();
-                else notify(false, r.error || 'Failed to update status.');
-            });
-        };
-
-        const deleteUser = async userId => {
-            console.log(`[Trace: Operators] Requesting deletion for user ID ${userId}`);
-            const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: 'Delete this operator account?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#006A4E',
-                confirmButtonText: 'Yes, delete it!'
-            });
-            if (!result.isConfirmed) return;
-            post('delete_user', { userId }).then(r => {
-                if (r.success) {
-                    console.log(`[Trace: Operators] User ID ${userId} deleted`);
-                    fetchOperators();
-                } else {
-                    console.error('[Trace: Operators] Delete user failed:', r);
-                    notify(false, r.error || 'Failed to delete.');
-                }
-            });
-        };
-
-        return {
-            currentAdmin, isLoggingIn, loginError, loginForm, showOperatorPassword,
-            view, search, modal, form, operatorForm, isOperatorModalOpen, isEditOperatorModalOpen, isSubmittingOperator,
-            successMsg, errorMsg,
-            departments, programs, subjects, curriculum, periods, sections, classOfferings, fees, users, students,
-            eyebrow, viewTitle, addLabel, searchPlaceholder,
-            filteredDepartments, filteredPrograms, filteredSubjects, filteredCurriculum,
-            filteredPeriods, filteredSections, filteredClassOfferings, filteredFees, filteredUsers, filteredSubjectsForSection,
-            filteredProgramsList, filteredStudents, filteredAccounts, uniqueCurriculumVersionsForBulk,
-            handleLogout, setView, openAddModal, closeModal,
-            editDepartment, editProgram, editSubject, editCurriculum, editPeriod, editSection, editClassOffering, editFee,
-            saveDepartment, deleteDepartment, saveProgram, deleteProgram, saveSubject, deleteSubject,
-            saveCurriculum, deleteCurriculum, savePeriod, deletePeriod,
-            saveSection, deleteSection, saveClassOffering, deleteClassOffering, saveFee, deleteFee,
-            openBlockSectionModal, saveBlockSection,
-            openCreateOperatorModal, closeCreateOperatorModal, submitCreateOperator,
-            openEditOperatorModal, closeEditOperatorModal, submitEditOperator,
-            resetOperatorPassword, updateStatus, deleteUser,
-            dashboardStats, isLoadingStats, loadDashboard, loadAll,
-            // Sort & Filter
-            sortKey, sortDir, sortBy,
-            filterUserStatus,
-            filterProgramDept, filterProgramStatus,
-            filterSubjectDept, filterSubjectLab,
-            filterCurrProgram, filterCurrYear, filterCurrSem,
-            filterPeriodSem, filterPeriodStatus,
-            filterSectPeriod, filterSectProgram, filterSectYear, filterSectSem,
-            filterSectDays,
-            // Views & Collapsibles
-            currView, sectView, collapsedGroups,
-            uniqueProgramDepts, uniqueSubjectDepts, uniqueCurriculumVersions, programStats,
-            curriculumGrouped, toggleCurrGroup,
-            getPeriodName, getSectionCohortCode, onSectionSelect, onSubjectSelect,
+    <!-- ══ ACADEMIC MILESTONE MODAL ══ -->
+    <div v-if="modal==='milestone'" class="overlay" @click.self="closeModal">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-title">
+                <i class="fa-solid fa-flag-checkered" style="color:var(--primary)"></i>
+                {{ milestoneForm.id ? 'Edit Academic Milestone' : 'Add Academic Milestone' }}
+            </div>
             
-            // New state & helpers
-            expandedCats, selectedDeptName, filterStudentProgram, filterStudentYear, filterStudentStatus,
-            filterAccountProgram, filterAccountYear, filterAccountStatus,
-            cloneForm, bulkForm,
-            openAddDepartmentModal, openAddProgramModal, openCloneTermModal, openBulkSectionsModal,
-            submitCloneTerm, submitBulkSections, onBulkProgramSelect,
-            timeGreeting
-        };
-    }
-}).mount('#admin-app');
-</script>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Milestone Event Title <span style="color:var(--danger)">*</span></label>
+                    <input class="form-input" v-model="milestoneForm.title" placeholder="e.g. Preliminary Examinations, Midterm Grade Encoding">
+                </div>
+            </div>
+
+            <div class="form-row col2">
+                <div class="form-group">
+                    <label class="form-label">Academic Period <span style="color:var(--danger)">*</span></label>
+                    <select class="form-select" v-model="milestoneForm.academic_period_id">
+                        <option :value="null" disabled>Select Term…</option>
+                        <option v-for="p in periods" :key="p.id" :value="p.id">{{ p.name }} ({{ p.status }})</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lifecycle Status <span style="color:var(--danger)">*</span></label>
+                    <select class="form-select" v-model="milestoneForm.status">
+                        <option value="ACTIVE">Active (Ongoing Now)</option>
+                        <option value="UPCOMING">Upcoming (Next in pipeline)</option>
+                        <option value="SCHEDULED">Scheduled (Future)</option>
+                        <option value="COMPLETED">Completed (Finished)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row col2">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-input" v-model="milestoneForm.date_start" @change="updateMilestoneDisplayDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-input" v-model="milestoneForm.date_end" @change="updateMilestoneDisplayDate">
+                </div>
+            </div>
+
+            <div class="form-row col2">
+                <div class="form-group">
+                    <label class="form-label">Custom Display String</label>
+                    <input class="form-input" v-model="milestoneForm.date_display" placeholder="e.g. Oct 15 – 17, 2026 or TBA">
+                    <small style="color:var(--text-light);font-size:0.72rem">Format shown directly to students on the portal feed.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Display Order</label>
+                    <input type="number" class="form-input" v-model="milestoneForm.display_order" min="1" max="99">
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button type="button" class="btn-modal-cancel" @click="closeModal" :disabled="isSavingMilestone">Cancel</button>
+                <button type="button" class="btn-modal-save" @click="saveMilestone" :disabled="isSavingMilestone" style="background-color: var(--primary);">
+                    <i v-if="isSavingMilestone" class="fa-solid fa-circle-notch fa-spin me-1"></i>
+                    {{ isSavingMilestone ? 'Saving...' : (milestoneForm.id ? 'Save Changes' : 'Create Milestone') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── LOGOUT CONFIRMATION DIALOG OVERLAY ── -->
+    <div v-if="showLogoutConfirm" class="confirm-overlay" @click.self="showLogoutConfirm = false">
+        <div class="confirm-card">
+            <div class="confirm-icon"><i class="fa-solid fa-right-from-bracket text-danger"></i></div>
+            <h4 class="confirm-title">Confirm Logout</h4>
+            <p class="confirm-msg">Are you sure you want to log out of the Super Admin Portal?</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn-cancel" @click="showLogoutConfirm = false">Cancel</button>
+                <button class="confirm-btn-danger" @click="confirmLogout">Log Out</button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /app -->
+
+<script src="assets/js/controllers/AdminController.js"></script>
 </body>
 </html>

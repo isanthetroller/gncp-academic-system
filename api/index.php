@@ -63,6 +63,18 @@ try {
         'student/cleanup_test_records'=> fn($p) => (new StudentController($pdo))->cleanupTestRecords($p),
 
         'stations/update'         => fn($p) => (new StationController($pdo))->updateStudent($p),
+        'stations/next_student_id'=> function() use ($pdo) {
+            require_once __DIR__ . '/../shared/backend/utils/student.php';
+            return ['success' => true, 'data' => ['nextStudentId' => generateUniqueStudentId($pdo, '2026')]];
+        },
+        'stations/stats'          => function() use ($pdo) {
+            require_once __DIR__ . '/../stations/backend/services/QueueService.php';
+            return ['success' => true, 'data' => QueueService::getEnrollmentStats($pdo)];
+        },
+        'stations/student_accounts'=> function() use ($pdo) {
+            require_once __DIR__ . '/../stations/backend/services/QueueService.php';
+            return ['success' => true, 'data' => QueueService::fetchStudentAccounts($pdo)];
+        },
 
         'registrar/update_status' => fn($p) => RegistrarService::updateApplicationStatus($pdo, $p),
         'registrar/update_step'   => fn($p) => RegistrarService::updateRoadmapStep($pdo, $p),
@@ -82,7 +94,11 @@ try {
         'announcements/list'              => fn($p) => (new AdminController($pdo))->getAnnouncements($_GET),
         'admin/save_announcement'         => fn($p) => (new AdminController($pdo))->saveAnnouncement($p),
         'admin/delete_announcement'       => fn($p) => (new AdminController($pdo))->deleteAnnouncement($p),
-        'admin/upload_announcement_image' => fn($p) => (new AdminController($pdo))->uploadAnnouncementImage()
+        'admin/upload_announcement_image' => fn($p) => (new AdminController($pdo))->uploadAnnouncementImage(),
+
+        'milestones/list'                 => fn($p) => (new AdminController($pdo))->getMilestones($_GET),
+        'admin/save_milestone'            => fn($p) => (new AdminController($pdo))->saveMilestone($p),
+        'admin/delete_milestone'          => fn($p) => (new AdminController($pdo))->deleteMilestone($p)
     ];
 
     if ($action === 'stations/queue' || $action === 'fetch_queue') {

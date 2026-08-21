@@ -321,7 +321,12 @@ try {
             ];
         }
 
-        sendResponse(true, compact('departments', 'programs', 'subjects', 'curriculum', 'periods', 'sections', 'classOfferings', 'fees', 'students'));
+        // Academic Milestones
+        require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
+        $milestonesRes = MilestoneService::getMilestones($pdo);
+        $milestones = $milestonesRes['success'] ? $milestonesRes['data'] : [];
+
+        sendResponse(true, compact('departments', 'programs', 'subjects', 'curriculum', 'periods', 'sections', 'classOfferings', 'fees', 'students', 'milestones'));
 
     } elseif ($action === 'fetch_dashboard_stats') {
         // 1. Overall counts (pre_enrollments + students)
@@ -334,12 +339,17 @@ try {
         $verified = (int)$pdo->query("SELECT COUNT(*) FROM `pre_enrollments` WHERE `status` IN ('VERIFIED', 'Approved')")->fetchColumn();
         $enrolled = $studentsCount;
 
-        // 2. Program distributions (pre_enrollments + students)
+        // 2. Program distributions (pre_enrollments + students, normalized to program code)
         $programsDist = $pdo->query("
-            SELECT program, SUM(count) as count FROM (
-                SELECT `course_code` as program, COUNT(*) as count FROM `pre_enrollments` GROUP BY `course_code`
+            SELECT program, SUM(cnt) as count FROM (
+                SELECT `course_code` as program, COUNT(*) as cnt
+                FROM `pre_enrollments`
+                GROUP BY `course_code`
                 UNION ALL
-                SELECT `program` as program, COUNT(*) as count FROM `students` GROUP BY `program`
+                SELECT COALESCE(pr.`code`, s.`program`) as program, COUNT(*) as cnt
+                FROM `students` s
+                LEFT JOIN `programs` pr ON (pr.`name` = s.`program` OR pr.`code` = s.`program`)
+                GROUP BY COALESCE(pr.`code`, s.`program`)
             ) t GROUP BY program
         ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -411,7 +421,34 @@ try {
             }
         }
 
-        sendResponse(true, compact('total', 'pending', 'verified', 'enrolled', 'programsDist', 'recent', 'stationQueues'));
+        // 5. 30-Day Registration Timeline trend (daily + cumulative)
+        $timelineRaw = $pdo->query("
+            SELECT DATE(`created_at`) as reg_date, COUNT(*) as cnt
+            FROM (
+                SELECT `created_at` FROM `pre_enrollments`
+                UNION ALL
+                SELECT `created_at` FROM `students`
+            ) u
+            WHERE `created_at` >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+            GROUP BY DATE(`created_at`)
+            ORDER BY reg_date ASC
+        ")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        $timeline30 = [];
+        $runningTotal = 0;
+        for ($i = 29; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-$i days"));
+            $cnt = (int)($timelineRaw[$d] ?? 0);
+            $runningTotal += $cnt;
+            $timeline30[] = [
+                'day' => (string)(30 - $i),
+                'date' => date('M d', strtotime($d)),
+                'daily' => $cnt,
+                'cumulative' => $runningTotal
+            ];
+        }
+
+        sendResponse(true, compact('total', 'pending', 'verified', 'enrolled', 'programsDist', 'timeline30', 'recent', 'stationQueues'));
 
     // ──────────────────────────────────────────────────────────────────
     // ACADEMIC CRUD (MIGRATED TO MODULAR SUBFILES: catalog.php, term.php, scheduling.php)
@@ -441,6 +478,24 @@ try {
         require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
         $res = AnnouncementService::uploadImage();
         sendResponse($res['success'], ['image_url' => $res['image_url'] ?? null], $res['message'] ?? '', $res['code'] ?? 200);
+
+    } elseif ($action === 'fetch_milestones') {
+        require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
+        $res = MilestoneService::getMilestones($pdo, $_GET);
+        sendResponse($res['success'], $res['data'] ?? [], $res['message'] ?? '');
+
+    } elseif ($action === 'save_milestone') {
+        require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
+        $payload = json_decode(file_get_contents('php://input'), true) ?? [];
+        $milestone = $payload['milestone'] ?? $payload;
+        $res = MilestoneService::saveMilestone($pdo, $milestone);
+        sendResponse($res['success'], $res['id'] ?? null, $res['message'] ?? '', $res['code'] ?? 200);
+
+    } elseif ($action === 'delete_milestone') {
+        require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
+        $payload = json_decode(file_get_contents('php://input'), true) ?? [];
+        $res = MilestoneService::deleteMilestone($pdo, $payload);
+        sendResponse($res['success'], null, $res['message'] ?? '', $res['code'] ?? 200);
 
     } else {
         // Delegate to modular sub-files

@@ -24,7 +24,40 @@ class RegistrarService {
         $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$record) {
-            return ['success' => false, 'message' => 'Pre-enrollment not found.', 'code' => 404];
+            // Check permanent students directory
+            $stmtStud = $pdo->prepare("SELECT * FROM `students` WHERE `id` = :r1 OR `temp_reference_no` = :r2");
+            $stmtStud->execute(['r1' => $refNum, 'r2' => $refNum]);
+            $studRecord = $stmtStud->fetch(PDO::FETCH_ASSOC);
+
+            if ($studRecord) {
+                $studRoadmap = json_decode((string)($studRecord['roadmap'] ?? ''), true) ?: [];
+                if (strcasecmp($status, 'Approved') === 0) {
+                    foreach ($studRoadmap as &$step) {
+                        if (($step['stepId'] ?? '') === 'registrar_verification') {
+                            $step['status'] = 'COMPLETED';
+                            $step['updatedAt'] = date('c');
+                        }
+                    }
+                }
+                $upStmt = $pdo->prepare("UPDATE `students` SET `roadmap` = :roadmap, `requirements_data` = :req_data WHERE `id` = :id");
+                $upStmt->execute([
+                    'roadmap'  => json_encode($studRoadmap),
+                    'req_data' => $reqData ? json_encode($reqData) : $studRecord['requirements_data'],
+                    'id'       => $studRecord['id']
+                ]);
+                return [
+                    'success' => true,
+                    'data' => [
+                        'referenceNumber' => $studRecord['temp_reference_no'] ?? $studRecord['id'],
+                        'applicantName'   => $studRecord['name'],
+                        'program'         => $studRecord['program'],
+                        'status'          => $studRecord['status'],
+                        'reviewedToday'   => true,
+                        'roadmap'         => $studRoadmap
+                    ]
+                ];
+            }
+            return ['success' => false, 'message' => 'Student record not found.', 'code' => 404];
         }
 
         if (strcasecmp($record['status'], 'Rejected') === 0) {
@@ -112,7 +145,32 @@ class RegistrarService {
         $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$record) {
-            return ['success' => false, 'message' => 'Pre-enrollment not found.', 'code' => 404];
+            $stmtStud = $pdo->prepare("SELECT * FROM `students` WHERE `id` = :r1 OR `temp_reference_no` = :r2");
+            $stmtStud->execute(['r1' => $refNum, 'r2' => $refNum]);
+            $studRecord = $stmtStud->fetch(PDO::FETCH_ASSOC);
+
+            if ($studRecord) {
+                $studRoadmap = json_decode((string)($studRecord['roadmap'] ?? ''), true) ?: [];
+                foreach ($studRoadmap as &$step) {
+                    if (($step['stepId'] ?? '') === $stepId) {
+                        $step['status'] = $status;
+                        $step['updatedAt'] = date('c');
+                    }
+                }
+                $upStmt = $pdo->prepare("UPDATE `students` SET `roadmap` = :roadmap WHERE `id` = :id");
+                $upStmt->execute([
+                    'roadmap' => json_encode($studRoadmap),
+                    'id'      => $studRecord['id']
+                ]);
+                return [
+                    'success' => true,
+                    'data' => [
+                        'referenceNumber' => $studRecord['temp_reference_no'] ?? $studRecord['id'],
+                        'roadmap'         => $studRoadmap
+                    ]
+                ];
+            }
+            return ['success' => false, 'message' => 'Student record not found.', 'code' => 404];
         }
 
         if (strcasecmp($record['status'], 'Rejected') === 0) {

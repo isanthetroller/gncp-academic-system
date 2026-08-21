@@ -23,7 +23,7 @@ PAGES = {
     "ADMIN":        f"{BASE_URL}/admin/index.html",
     "STUDENT_PORTAL": f"{BASE_URL}/student-portal/index.html",
     "STUDENT_PORTAL_LOGIN": f"{BASE_URL}/student-portal/login.html",
-    "PROFILE":      f"{BASE_URL}/shared/profile.html"
+    "PROFILE":      f"{BASE_URL}/admin/index.html"
 }
 
 # Artifact Directories

@@ -1,6 +1,6 @@
 /* ==========================================================================
-   GNCP Admin Portal — Sidebar Navigation Styles v1.3
-   Decoupled sidebar component stylesheet with unified 100% consistent top-level layout grid.
+   GNCP Admin Portal — Sidebar Navigation Styles v2.0
+   Unified 100% consistent top-level layout, dark-green gradient & gold theme.
    ========================================================================== */
 
 .sidebar {
@@ -46,7 +46,7 @@
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
     margin: 0;
     display: inline-block;
     padding: 2px 7px;
@@ -117,7 +117,7 @@
     cursor: pointer;
     text-align: left;
     border-radius: 8px;
-    transition: background var(--t), border-color var(--t), border-radius var(--t), color var(--t);
+    transition: background var(--t, 0.2s ease), border-color var(--t, 0.2s ease), border-radius var(--t, 0.2s ease), color var(--t, 0.2s ease);
 }
 
 .nav-cat-header:hover {
@@ -137,12 +137,12 @@
     text-align: center;
     flex-shrink: 0;
     font-size: .85rem;
-    transition: color var(--t);
+    transition: color var(--t, 0.2s ease);
 }
 
 /* Chevron icon smooth 90deg rotation */
 .nav-cat-header .fa-chevron-right {
-    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), color var(--t);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), color var(--t, 0.2s ease);
 }
 
 .nav-cat-header.expanded .fa-chevron-right {
@@ -158,23 +158,24 @@
 
 .nav-cat-header.expanded span i,
 .nav-cat-header.expanded > i {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
 }
 
 /* Active State for Single Top-Level Page Buttons & Active Parent Categories */
 .nav-cat-header.active,
 .nav-cat-header.has-active-child {
     background: rgba(212, 175, 55, 0.14);
-    border-left: 3px solid var(--gold);
+    border-left: 3px solid var(--gold, #D4AF37);
     border-radius: 3px 8px 8px 3px;
     color: #ffffff;
 }
 
 .nav-cat-header.active span i,
 .nav-cat-header.has-active-child span i {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
 }
 
+/* ── Sidebar Logout Action ─────────────────────────────────────────────── */
 .nav-logout {
     color: rgba(248, 113, 113, 0.9) !important;
 }
@@ -182,6 +183,7 @@
 .nav-logout:hover {
     background: rgba(239, 68, 68, 0.1) !important;
     border-color: rgba(239, 68, 68, 0.25) !important;
+    color: #ffffff !important;
 }
 
 .nav-logout span i {
@@ -220,7 +222,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    transition: border-color var(--t);
+    transition: border-color var(--t, 0.2s ease);
 }
 
 /* Top stem connecting parent button to vertical guide line */
@@ -232,17 +234,17 @@
     width: 1.5px;
     height: 5px;
     background: rgba(255, 255, 255, 0.2);
-    transition: background var(--t);
+    transition: background var(--t, 0.2s ease);
 }
 
 /* Connection stem & illuminated guide line for categories with an active child */
 .nav-category-wrapper.has-active-child .nav-cat-items {
-    border-left-color: var(--gold);
+    border-left-color: var(--gold, #D4AF37);
     box-shadow: -1px 0 8px rgba(212, 175, 55, 0.2);
 }
 
 .nav-category-wrapper.has-active-child .nav-cat-items::before {
-    background: var(--gold);
+    background: var(--gold, #D4AF37);
 }
 
 /* ── NAV ITEMS & SUB-ITEMS ── */
@@ -256,7 +258,7 @@
     font-size: .83rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background var(--t), color var(--t);
+    transition: background var(--t, 0.2s ease), color var(--t, 0.2s ease);
     border: none;
     background: none;
     width: 100%;
@@ -269,7 +271,7 @@
     text-align: center;
     font-size: .85rem;
     flex-shrink: 0;
-    transition: color var(--t);
+    transition: color var(--t, 0.2s ease);
 }
 
 .nav-item:hover {
@@ -278,19 +280,19 @@
 }
 
 .nav-item:hover i {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
 }
 
 .nav-item.active {
     color: #fff;
     background: linear-gradient(90deg, rgba(212, 175, 55, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
     font-weight: 700;
-    border-left: 3px solid var(--gold);
+    border-left: 3px solid var(--gold, #D4AF37);
     border-radius: 0 8px 8px 0;
 }
 
 .nav-item.active i {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
 }
 
 /* Sub-item specific layout & tight spacing */
@@ -323,7 +325,7 @@
     width: 8px;
     height: 1.5px;
     background: rgba(255, 255, 255, 0.18);
-    transition: background var(--t);
+    transition: background var(--t, 0.2s ease);
 }
 
 .nav-item.sub-item::after {
@@ -336,7 +338,7 @@
     height: 4px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.25);
-    transition: background var(--t), transform var(--t);
+    transition: background var(--t, 0.2s ease), transform var(--t, 0.2s ease);
 }
 
 .nav-item.sub-item:hover {
@@ -345,7 +347,7 @@
 }
 
 .nav-item.sub-item:hover i {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
 }
 
 /* Refined, integrated active state */
@@ -353,23 +355,23 @@
     color: #ffffff;
     font-weight: 700;
     background: rgba(212, 175, 55, 0.14);
-    border-left: 2.5px solid var(--gold) !important;
+    border-left: 2.5px solid var(--gold, #D4AF37) !important;
     border-radius: 3px 6px 6px 3px;
 }
 
 .nav-item.sub-item.active i {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
 }
 
 .nav-item.sub-item:hover::before,
 .nav-item.sub-item.active::before {
-    background: var(--gold);
+    background: var(--gold, #D4AF37);
 }
 
 .nav-item.sub-item:hover::after,
 .nav-item.sub-item.active::after {
-    background: var(--gold);
-    transform: translateY(-50%) scale(1.2);
+    background: var(--gold, #D4AF37);
+    transform: translateY(-50%);
 }
 
 /* ── SIDEBAR FOOTER ── */
@@ -387,15 +389,15 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    border: 2px solid var(--gold);
-    background: linear-gradient(135deg, var(--gold) 0%, #b89320 100%);
+    border: 2px solid var(--gold, #D4AF37);
+    background: linear-gradient(135deg, var(--gold, #D4AF37) 0%, #b89320 100%);
     color: #003d2b;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
     font-size: 0.85rem;
-    font-family: var(--font-head);
+    font-family: var(--font-head, 'Outfit', sans-serif);
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     overflow: hidden;
@@ -431,9 +433,436 @@
 }
 
 .footer-info span {
-    color: var(--gold);
+    color: var(--gold, #D4AF37);
     font-size: .65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+/* ── Mobile Off-Canvas Responsive Styles (<= 991.98px) ── */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        z-index: 1050 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0) !important;
+    }
+}
+
+
+/* ==========================================================================
+   IN-APP PROFILE VIEW STYLES
+   ========================================================================== */
+.profile-view-wrap {
+    animation: fadeIn 0.2s ease-in-out;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.profile-hero {
+    background: linear-gradient(135deg, #003D2B 0%, #006A4E 100%);
+    border-radius: 14px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 8px 24px rgba(0, 61, 43, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-left: 5px solid #D4AF37;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.avatar-wrap {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    background: #00261b;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.avatar-wrap:hover {
+    transform: scale(1.03);
+    border-color: #D4AF37;
+}
+
+.avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-initials {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.avatar-wrap:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.profile-hero-info h3 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    margin: 0 0 6px;
+    font-size: 1.45rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-hero-info p {
+    opacity: 0.9;
+    margin: 0;
+    font-size: 0.88rem;
+    color: #E2E8F0;
+    display: flex;
+    align-items: center;
+}
+
+.profile-hero-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    color: #FCD34D;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
+}
+
+@media (max-width: 860px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.f-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.f-input {
+    width: 100%;
+    background: #ffffff;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 9px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    color: #0F172A;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.f-input:focus {
+    border-color: #006A4E;
+    box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.1);
+}
+
+.f-input:disabled {
+    background: #F8FAFC;
+    cursor: not-allowed;
+    color: #64748B;
+    border-color: #E2E8F0;
+}
+
+.f-input.is-invalid {
+    border-color: #DC2626;
+}
+
+.pass-strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 6px;
+    transition: background 0.3s, width 0.3s;
+}
+
+.pass-strength-text {
+    font-size: 0.72rem;
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.btn-primary-save {
+    background: #006A4E;
+    color: #ffffff;
+    border: none;
+    border-radius: 9px;
+    padding: 11px 22px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary-save:hover:not(:disabled) {
+    background: #00523d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 106, 78, 0.2);
+}
+
+.btn-primary-save:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn-primary-save:hover {
+    opacity: 0.88;
+}
+
+.btn-primary-save:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ── SLEEK CONFIRMATION & LOGOUT MODAL ───────────────────────────────────── */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: confirmFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes confirmFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.confirm-card {
+    background: linear-gradient(145deg, #0e2419 0%, #08170f 100%);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 20px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    padding: 36px 32px 28px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    animation: confirmSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes confirmSlideUp {
+    from { transform: translateY(18px) scale(0.96); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.confirm-icon {
+    font-size: 2.6rem;
+    margin-bottom: 16px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.3));
+}
+
+.confirm-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    color: #ffffff;
+    font-size: 1.25rem;
+    margin: 0 0 10px;
+    letter-spacing: -0.2px;
+}
+
+.confirm-msg {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.88rem;
+    margin: 0 0 28px;
+    line-height: 1.55;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.confirm-btn-cancel {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirm-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.confirm-btn-danger {
+    flex: 1;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 12px;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    transition: all 0.2s ease;
+}
+
+.confirm-btn-danger:hover {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.55);
+    transform: translateY(-1px);
+}
+
+/* ── TOPBAR PROFILE & LOGOUT CHIPS ──────────────────────────────────────── */
+.topbar-profile-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    padding: 4px 10px 4px 6px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all var(--t);
+    text-decoration: none;
+}
+
+.topbar-profile-chip:hover {
+    background: #f1f5f9;
+    border-color: var(--primary);
+}
+
+.topbar-avatar-mini {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+}
+
+.topbar-chip-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-logout-btn {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    color: #b91c1c;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--t);
+}
+
+.topbar-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+/* ── ALERT BANNERS ───────────────────────────────────────────────────────── */
+.alert-ok {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.alert-err {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+}
+

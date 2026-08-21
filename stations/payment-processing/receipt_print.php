@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../shared/backend/config/database.php';
+require_once __DIR__ . '/../../shared/backend/services/AssessmentService.php';
 
 $ref = $_GET['ref'] ?? '';
 
@@ -45,9 +46,9 @@ try {
             FROM `students` s
             LEFT JOIN `programs` pr ON s.program = pr.code
             LEFT JOIN `academic_periods` ap ON ap.status = 'Active'
-            WHERE s.id = :ref OR s.temp_reference_no = :ref
+            WHERE s.id = :ref_id OR s.temp_reference_no = :ref_temp
         ");
-        $stmt->execute(['ref' => $ref]);
+        $stmt->execute(['ref_id' => $ref, 'ref_temp' => $ref]);
         $permStudent = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($permStudent) {
             $personal = json_decode($permStudent['personal_info'] ?? '{}', true);
@@ -87,72 +88,31 @@ try {
     $helpdesk = json_decode($student['helpdesk_data'] ?? '{}', true);
     $advisedSubjects = $helpdesk['advisedSubjects'] ?? [];
 
-    // Recalculate fees
-    $totalUnits = 0;
-    $totalLabFee = 0;
-    foreach ($advisedSubjects as $sub) {
-        $lec = isset($sub['lecture_units']) ? (float)$sub['lecture_units'] : (isset($sub['lectureUnits']) ? (float)$sub['lectureUnits'] : 3);
-        $lab = isset($sub['lab_units']) ? (float)$sub['lab_units'] : (isset($sub['labUnits']) ? (float)$sub['labUnits'] : 0);
-        $totalUnits += ($lec + $lab);
-        $totalLabFee += isset($sub['lab_fee']) ? (float)$sub['lab_fee'] : (isset($sub['labFee']) ? (float)$sub['labFee'] : 0);
-    }
-    if ($totalUnits === 0) {
-        $totalUnits = 18; // fallback
-    }
-
-    $tuitionRate = 650.00; // default fallback
-    $miscFee = 0.00;
-    $lmsFee = 2053.20; // default fallback
-    $omrFee = 278.40; // default fallback
-    $nstpFee = 0.00;
+    // Calculate fee assessment and payment balance via authoritative AssessmentService
     $nstpType = strtoupper($student['nstp'] ?? 'NONE');
-
-    $feeStmt = $pdo->query("SELECT * FROM `fee_schedule`");
-    if ($feeStmt) {
-        $feesList = $feeStmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($feesList as $f) {
-            $fType = strtoupper($f['type']);
-            $fLabel = strtoupper($f['label']);
-            $fAmt = (float)$f['amount'];
-
-            if ($fType === 'TUITION') {
-                $tuitionRate = $fAmt;
-            } elseif ($fLabel === 'LMS FEE') {
-                $lmsFee = $fAmt;
-            } elseif ($fLabel === 'OMR' || $fLabel === 'OMR FEE') {
-                $omrFee = $fAmt;
-            } elseif ($fLabel === 'NSTP' || $fLabel === 'NSTP FEE' || $fLabel === 'NSTP/ROTC') {
-                if ($nstpType !== 'NONE' && $nstpType !== 'N/A' && $nstpType !== '') {
-                    $nstpFee = $fAmt;
-                }
-            } elseif ($fType === 'MISCELLANEOUS') {
-                $miscFee += $fAmt;
-            }
-        }
-    }
-
-    // Default misc fallback if nothing was returned
-    if ($miscFee === 0.00) {
-        $miscFee = 2300.00; // 1500 Registration + 800 Library
-    }
-    
-    // Default NSTP fallback if they chose NSTP but fee_schedule didn't specify it
-    if ($nstpFee === 0.00 && $nstpType !== 'NONE' && $nstpType !== 'N/A' && $nstpType !== '') {
-        $nstpFee = 325.00;
-    }
-
-    $tuitionFee = $totalUnits * $tuitionRate;
-
     $scholarshipData = json_decode($student['scholarship_data'] ?? '{}', true);
     $discount = (float)($scholarshipData['discount'] ?? 0.00);
+    $snapshot = $payment['assessmentSnapshot'] ?? null;
 
-    $cashTotal = $tuitionFee + $totalLabFee + $miscFee + $lmsFee + $omrFee + $nstpFee - $discount;
-    
-    // Amount paid and balance
-    $amountPaid = isset($payment['amountPaid']) ? (float)$payment['amountPaid'] : $cashTotal;
-    $balance = isset($payment['balance']) ? (float)$payment['balance'] : 0.00;
+    $assessment = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstpType, $discount, $snapshot);
+
+    $tuitionRate = $assessment['tuitionRate'];
+    $tuitionFee  = $assessment['tuitionFee'];
+    $totalLabFee = $assessment['totalLabFee'];
+    $miscFee     = $assessment['miscFee'];
+    $lmsFee      = $assessment['lmsFee'];
+    $nstpFee     = $assessment['nstpFee'];
+    $omrFee      = $assessment['omrFee'];
+    $cashTotal   = $assessment['cashTotal'];
+    $totalUnits  = (float)$assessment['totalUnits'];
+
+    $rawPaid = isset($payment['amountPaid']) ? (float)$payment['amountPaid'] : $cashTotal;
+    $balInfo = AssessmentService::calculateBalance($cashTotal, $rawPaid);
+
+    $amountPaid  = $balInfo['amountPaid'];
+    $balance     = $balInfo['balance'];
     $paymentMode = $payment['paymentType'] ?? $student['payment_mode'] ?? 'Cash';
-    $txnRef = $payment['transactionRef'] ?? 'TXN-' . rand(100000, 999999);
+    $txnRef      = $payment['transactionRef'] ?? 'TXN-' . rand(100000, 999999);
 
 } catch (Exception $e) {
     die("<h1 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Database error: " . $e->getMessage() . "</h1>");

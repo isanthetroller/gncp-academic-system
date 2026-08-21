@@ -58,48 +58,48 @@ window.DataModel = {
                 category: "NEWS",
                 title: "GNCP Dasmariñas Campus Inaugurates State-of-the-Art Science and Robotics Lab",
                 excerpt: "GNCP officially opened its new laboratory building on Emilio Aguinaldo Highway, featuring advanced equipment for STEM research and student experiments.",
-                date: "Jun 24, 2026",
-                image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80"
+                date: "Aug 14, 2026",
+                image: "assets/images/about1.webp"
             },
             {
                 id: 2,
                 category: "EVENTS",
-                title: "First Semester Student Orientation Scheduled for This Coming Saturday",
-                excerpt: "New freshmen and transferees are invited to join the campus tours, student briefings, and academic department orientations this Saturday, June 27, at the main college auditorium.",
-                date: "Jun 22, 2026",
-                image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80"
+                title: "First Semester Student Orientation & Campus Briefing This Saturday",
+                excerpt: "New freshmen and transferees are invited to join the campus tours, student briefings, and academic department orientations at the main college amphitheater.",
+                date: "Aug 12, 2026",
+                image: "assets/images/about2.webp"
             },
             {
                 id: 3,
                 category: "FEATURES",
                 title: "Patriots Triumph: GNCP Varsity Clinches Regional Collegiate Cup Championship",
                 excerpt: "Our college basketball team dominated the tournament finals, securing a stellar victory for the green-and-gold in a thrilling match last weekend.",
-                date: "Jun 18, 2026",
-                image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80"
+                date: "Aug 08, 2026",
+                image: "assets/images/hero1.webp"
             },
             {
                 id: 4,
                 category: "NEWS",
-                title: "GNCP Board Exam Topnotchers Celebrated at General Assembly",
-                excerpt: "We congratulate the GNCP engineering and business education graduates for maintaining a 100% passing rate in the recent national licensure board examinations.",
-                date: "Jun 15, 2026",
-                image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80"
+                title: "GNCP Board Exam Topnotchers Celebrated at General Academic Assembly",
+                excerpt: "We congratulate the GNCP computing and nursing education graduates for maintaining a stellar passing rate in the recent national licensure board examinations.",
+                date: "Aug 04, 2026",
+                image: "assets/images/hero3.webp"
             },
             {
                 id: 5,
                 category: "EVENTS",
                 title: "Annual Arts and Cultural Festival Scheduled for Next Month",
-                excerpt: "Showcasing student talent in visual arts, theater performances, and traditional music. This year's festival highlights rich Filipino heritage.",
-                date: "Jun 10, 2026",
-                image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=600&q=80"
+                excerpt: "Showcasing student talent in visual arts, theater performances, and traditional music. This year's festival highlights rich Caviteño heritage.",
+                date: "Jul 28, 2026",
+                image: "assets/images/about2.webp"
             },
             {
                 id: 6,
                 category: "FEATURES",
-                title: "Bridging Technology and Learning: Python Coding Modules Integrated",
-                excerpt: "A feature on how GNCP is equipping high school and college students with modern software engineering skills to prepare them for technology careers.",
-                date: "Jun 05, 2026",
-                image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80"
+                title: "Bridging Technology and Learning: Python & Cloud Sandboxes Integrated",
+                excerpt: "A feature on how GNCP is equipping undergraduate students with modern software engineering skills to prepare them for global technology careers.",
+                date: "Jul 20, 2026",
+                image: "assets/images/hero2.webp"
             }
         ];
     },

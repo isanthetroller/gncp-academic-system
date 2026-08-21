@@ -17,6 +17,7 @@ window.StudentModel = {
                 photo: null,
                 yearLevel: '1st Year',
                 status: 'ENROLLED',
+                must_change_password: false,
                 sectionCode: null,
                 personalInfo: null
             },
@@ -27,7 +28,8 @@ window.StudentModel = {
             payment: null,
             helpdesk: null,
             enrollment: null,
-            subjects: []
+            subjects: [],
+            activePeriod: null
         };
     },
 
@@ -42,7 +44,11 @@ window.StudentModel = {
         targetProfile.email = sessionStudent.email || targetProfile.email || '';
         targetProfile.photo = sessionStudent.photo || targetProfile.photo || null;
         targetProfile.status = sessionStudent.status || targetProfile.status || 'ENROLLED';
-        targetProfile.yearLevel = sessionStudent.yearLevel || targetProfile.yearLevel || '1st Year';
+        targetProfile.must_change_password = (typeof sessionStudent.must_change_password !== 'undefined')
+            ? !!sessionStudent.must_change_password
+            : !!targetProfile.must_change_password;
+        targetProfile.address = sessionStudent.address || (sessionStudent.personalInfo && sessionStudent.personalInfo.address) || targetProfile.address || '';
+        targetProfile.phone = sessionStudent.phone || (sessionStudent.personalInfo && sessionStudent.personalInfo.phone) || targetProfile.phone || '';
         if (sessionStudent.personalInfo) {
             targetProfile.personalInfo = sessionStudent.personalInfo;
         }

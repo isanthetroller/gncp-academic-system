@@ -8,9 +8,22 @@
  * Fetches mapped curriculum subjects, units, and fees for a given program, year level, and semester.
  */
 function getCurriculumSubjects($pdo, $programCode, $yearLevel = '1st Year', $semester = '1st Semester', $curriculumVersion = null) {
-    $stmt = $pdo->prepare("SELECT name FROM `programs` WHERE `code` = :code");
-    $stmt->execute(['code' => $programCode]);
-    $programName = $stmt->fetchColumn() ?: $programCode;
+    $aliasMap = [
+        'BSCPE' => 'BS Computer Engineering',
+        'BSCOE' => 'BS Computer Engineering',
+        'BSCS'  => 'BS Computer Science',
+        'BSIT'  => 'BS Information Technology',
+        'BSN'   => 'BS Nursing',
+        'BSBA'  => 'BS Business Administration'
+    ];
+    $cleanCode = strtoupper(trim($programCode));
+    $programName = $aliasMap[$cleanCode] ?? null;
+
+    if (!$programName) {
+        $stmt = $pdo->prepare("SELECT name FROM `programs` WHERE `code` = :code OR `name` = :name");
+        $stmt->execute(['code' => $programCode, 'name' => $programCode]);
+        $programName = $stmt->fetchColumn() ?: $programCode;
+    }
 
     $versionClause = "";
     $params = [
@@ -123,8 +136,15 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
 
     try {
         $itData['temp_pin'] = $record['temp_pin'] ?? $itData['temp_pin'] ?? '';
-        if (!empty($record['section_code'])) {
-            $itData['assignedSection'] = $record['section_code'];
+        if (empty($itData['assignedSection'])) {
+            if (!empty($record['section_code'])) {
+                $itData['assignedSection'] = $record['section_code'];
+            } else {
+                $hData = json_decode($record['helpdesk_data'] ?? '{}', true) ?: [];
+                if (!empty($hData['section'])) {
+                    $itData['assignedSection'] = $hData['section'];
+                }
+            }
         }
         $studName = trim($record['first_name'] . ' ' . ($record['middle_name'] ? $record['middle_name'] . ' ' : '') . $record['last_name']);
         
@@ -182,7 +202,7 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
 
         if ($existingStudent) {
             $updateStudentStmt = $pdo->prepare("UPDATE `students` SET 
-                                                    `id` = :id,
+                                                    `id` = :set_id,
                                                     `program` = :program,
                                                     `email` = :email,
                                                     `password` = :password,
@@ -199,9 +219,10 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
                                                     `payment_data` = :payment,
                                                     `helpdesk_data` = :helpdesk,
                                                     `enrollment_data` = :enrollment
-                                                WHERE `id` = :id");
+                                                WHERE `id` = :where_id");
             $updateStudentStmt->execute([
-                'id'       => $permId,
+                'set_id'   => $permId,
+                'where_id' => $permId,
                 'program'  => $record['course_code'],
                 'email'    => $email,
                 'password' => $hashedPassword,
@@ -221,11 +242,11 @@ function promotePreEnrollmentToStudent($pdo, $record, $refNum, $roadmapJson, $it
         } else {
             $insertStmt = $pdo->prepare("INSERT INTO `students` (
                                             `id`, `name`, `program`, `email`, `password`, `photo`, `year_level`, `status`,
-                                            `temp_reference_no`, `personal_info`, `academic_info`, `roadmap`, `requirements_data`,
+                                            `must_change_password`, `temp_reference_no`, `personal_info`, `academic_info`, `roadmap`, `requirements_data`,
                                             `medical_data`, `scholarship_data`, `payment_data`, `helpdesk_data`, `enrollment_data`
                                          ) VALUES (
                                             :id, :name, :program, :email, :password, :photo, :year_level, 'Active',
-                                            :temp_ref, :personal, :academic, :roadmap, :requirements,
+                                            1, :temp_ref, :personal, :academic, :roadmap, :requirements,
                                             :medical, :scholarship, :payment, :helpdesk, :enrollment
                                          )");
             $insertStmt->execute([

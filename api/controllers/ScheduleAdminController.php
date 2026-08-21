@@ -20,7 +20,8 @@ class ScheduleAdminController {
     }
 
     public function saveSection(array $payload): array {
-        return ['success' => true, 'data' => $this->sectionModel->saveSection($payload['section'] ?? [])];
+        $sec = isset($payload['section']) ? $payload['section'] : $payload;
+        return ['success' => true, 'data' => $this->sectionModel->saveSection($sec)];
     }
 
     public function saveTerm(array $payload): array {

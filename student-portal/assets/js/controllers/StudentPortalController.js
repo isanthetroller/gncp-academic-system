@@ -12,7 +12,7 @@ window.StudentPortalController = {
         const currentStudent = ref(null);
 
         // Navigation & Layout
-        const activeTab = ref('dashboard');
+        const activeTab = ref('announcements');
         const showLogoutConfirm = ref(false);
         const isMobileMenuOpen = ref(false);
         const photoInput = ref(null);
@@ -133,6 +133,17 @@ window.StudentPortalController = {
                     StudentModel.hydrateProfileFromSession(state.profile, currentStudent.value);
                     syncStudentFormFromProfile();
                     fetchDashboardData();
+
+                    if (currentStudent.value && currentStudent.value.must_change_password) {
+                        if (typeof window.PasswordChangeGuard !== 'undefined') {
+                            window.PasswordChangeGuard.checkAndPrompt(currentStudent.value, (changed) => {
+                                if (changed) {
+                                    currentStudent.value.must_change_password = false;
+                                    state.profile.must_change_password = false;
+                                }
+                            });
+                        }
+                    }
                 } catch (e) {
                     console.error('[StudentPortal::Session] Invalid stored session JSON:', e);
                     sessionStorage.removeItem('gncp_portal_student');
@@ -169,6 +180,18 @@ window.StudentPortalController = {
                 if (res.data.profile) {
                     StudentModel.hydrateProfileFromSession(state.profile, res.data.profile);
                     syncStudentFormFromProfile();
+
+                    if (res.data.profile.must_change_password && (!currentStudent.value || !currentStudent.value.must_change_password)) {
+                        if (currentStudent.value) currentStudent.value.must_change_password = true;
+                        if (typeof window.PasswordChangeGuard !== 'undefined') {
+                            window.PasswordChangeGuard.checkAndPrompt(currentStudent.value || res.data.profile, (changed) => {
+                                if (changed) {
+                                    if (currentStudent.value) currentStudent.value.must_change_password = false;
+                                    state.profile.must_change_password = false;
+                                }
+                            });
+                        }
+                    }
                 }
                 state.roadmap = res.data.roadmap || [];
                 state.requirements = res.data.requirements || null;
@@ -179,6 +202,10 @@ window.StudentPortalController = {
                 state.enrollment = res.data.enrollment || null;
                 state.subjects = res.data.subjects || [];
                 state.corData = res.data.corData || null;
+                state.activePeriod = res.data.activePeriod || null;
+                if (res.data.milestones && Array.isArray(res.data.milestones)) {
+                    milestones.value = res.data.milestones;
+                }
 
                 if (!isBackgroundPoll) {
                     console.log('[StudentPortal::Dashboard] Data loaded successfully.', state);
@@ -268,6 +295,10 @@ window.StudentPortalController = {
             updatingPass.value = false;
 
             if (res.success) {
+                if (currentStudent.value) currentStudent.value.must_change_password = false;
+                if (state.profile) state.profile.must_change_password = false;
+                sessionStorage.setItem('gncp_portal_student', JSON.stringify(currentStudent.value));
+                localStorage.setItem('gncp_portal_student', JSON.stringify(currentStudent.value));
                 updateSuccessMsg.value = 'Password changed successfully.';
                 pass.value.current = '';
                 pass.value.newPass = '';
@@ -279,21 +310,24 @@ window.StudentPortalController = {
             }
         };
 
-        // Logout Handlers — Purges Session & Redirects to login.html with SweetAlert2 Confirmation
+        // Logout Handlers — Activates Branded Modal & Purges Session
         const handleLogout = () => {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Sign Out of Student Portal?',
-                    text: 'Are you sure you want to end your active portal session?',
-                    icon: 'question',
+                    title: 'Confirm Sign Out',
+                    text: 'Are you sure you want to sign out of the Student Portal?',
+                    icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#006A4E',
-                    cancelButtonColor: '#6B7280',
-                    confirmButtonText: '<i class="fas fa-right-from-bracket me-1"></i> Yes, Sign Out',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Sign Out',
                     cancelButtonText: 'Cancel',
                     reverseButtons: true,
                     customClass: {
-                        popup: 'rounded-4 shadow-lg border-0'
+                        popup: 'gncp-swal-card',
+                        title: 'gncp-swal-title',
+                        confirmButton: 'gncp-swal-confirm-btn',
+                        cancelButton: 'gncp-swal-cancel-btn'
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -301,12 +335,13 @@ window.StudentPortalController = {
                     }
                 });
             } else {
-                confirmLogout();
+                showLogoutConfirm.value = true;
             }
         };
 
         const confirmLogout = async () => {
             showLogoutConfirm.value = false;
+            stopLiveSync();
             try {
                 await StudentApiService.logout();
             } catch (e) {
@@ -315,14 +350,108 @@ window.StudentPortalController = {
             currentStudent.value = null;
             sessionStorage.removeItem('gncp_portal_student');
             localStorage.removeItem('gncp_portal_student');
-            window.location.href = 'login.html';
+            window.location.replace('login.html?clear=true&logout=true');
         };
 
         // Announcements State & Methods
         const announcements = ref([]);
+        const milestones = ref([]);
         const activeCategory = ref('ALL');
-        const likedPosts = reactive({});
+        const bulletinSearchQuery = ref('');
         const activeImageModal = ref('');
+        const showHandbookModal = ref(false);
+
+        // Persistent Acknowledgements & Bookmarks
+        const acknowledgedMemos = ref(JSON.parse(localStorage.getItem('gncp_acknowledged_memos') || '[]'));
+        const bookmarkedMemos = ref(JSON.parse(localStorage.getItem('gncp_bookmarked_memos') || '[]'));
+
+        const toggleAcknowledgeMemo = (id) => {
+            const idx = acknowledgedMemos.value.indexOf(id);
+            if (idx === -1) {
+                acknowledgedMemos.value.push(id);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Memorandum Acknowledged',
+                        text: 'Your acknowledgement has been recorded.',
+                        showConfirmButton: false,
+                        timer: 2500
+                    });
+                }
+            } else {
+                acknowledgedMemos.value.splice(idx, 1);
+            }
+            localStorage.setItem('gncp_acknowledged_memos', JSON.stringify(acknowledgedMemos.value));
+        };
+
+        const isMemoAcknowledged = (id) => acknowledgedMemos.value.includes(id);
+
+        const toggleBookmarkMemo = (id) => {
+            const idx = bookmarkedMemos.value.indexOf(id);
+            if (idx === -1) {
+                bookmarkedMemos.value.push(id);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'Saved to Reading List',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            } else {
+                bookmarkedMemos.value.splice(idx, 1);
+            }
+            localStorage.setItem('gncp_bookmarked_memos', JSON.stringify(bookmarkedMemos.value));
+        };
+
+        const isMemoBookmarked = (id) => bookmarkedMemos.value.includes(id);
+
+        const copyMemoLink = (post) => {
+            const refText = `GNCP Official Memorandum [Ref #${post.id}]: ${post.title} — Go-on National College of the Philippines`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(refText).then(() => {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Reference Copied to Clipboard',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    }
+                }).catch(() => {});
+            }
+        };
+
+        const isOfficeOpen = computed(() => {
+            const now = new Date();
+            const day = now.getDay(); // 0 is Sunday, 6 is Saturday
+            const hour = now.getHours();
+            return (day >= 1 && day <= 5 && hour >= 8 && hour < 17);
+        });
+
+        const categoryCounts = computed(() => {
+            const counts = {
+                ALL: announcements.value.length,
+                ACADEMIC: 0,
+                ENROLLMENT: 0,
+                EVENT: 0,
+                MEDICAL: 0,
+                FINANCIAL: 0,
+                BOOKMARKED: 0
+            };
+            announcements.value.forEach(p => {
+                const cat = (p.category || 'GENERAL').toUpperCase();
+                if (counts[cat] !== undefined) counts[cat]++;
+                if (bookmarkedMemos.value.includes(p.id)) counts.BOOKMARKED++;
+            });
+            return counts;
+        });
 
         const fetchAnnouncements = async () => {
             try {
@@ -330,18 +459,48 @@ window.StudentPortalController = {
                 const json = await res.json();
                 if (json.success && Array.isArray(json.data)) {
                     announcements.value = json.data;
+                } else {
+                    announcements.value = [];
                 }
             } catch (e) {
                 console.error('[StudentPortal] Failed to fetch announcements:', e);
+                announcements.value = [];
             }
         };
 
-        const toggleLikePost = (postId) => {
-            likedPosts[postId] = !likedPosts[postId];
+        const filteredAnnouncements = computed(() => {
+            let list = announcements.value;
+            if (activeCategory.value === 'BOOKMARKED') {
+                list = list.filter(p => bookmarkedMemos.value.includes(p.id));
+            } else if (activeCategory.value !== 'ALL') {
+                list = list.filter(p => p.category === activeCategory.value);
+            }
+            if (bulletinSearchQuery.value.trim()) {
+                const q = bulletinSearchQuery.value.toLowerCase().trim();
+                list = list.filter(p =>
+                    (p.title && p.title.toLowerCase().includes(q)) ||
+                    (p.content && p.content.toLowerCase().includes(q)) ||
+                    (p.author_name && p.author_name.toLowerCase().includes(q)) ||
+                    (p.category && p.category.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        });
+
+        const fetchMilestones = async () => {
+            try {
+                const res = await fetch('../api/index.php?action=milestones/list');
+                const json = await res.json();
+                if (json.success && Array.isArray(json.data)) {
+                    milestones.value = json.data;
+                }
+            } catch (e) {
+                console.error('[StudentPortal] Failed to fetch milestones:', e);
+            }
         };
 
         const formatTimeAgo = (dateStr) => {
-            if (!dateStr) return 'Just now';
+            if (!dateStr) return 'Recently';
             const date = new Date(dateStr);
             const now = new Date();
             const diffSec = Math.floor((now - date) / 1000);
@@ -352,12 +511,24 @@ window.StudentPortalController = {
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         };
 
+        const formatDateRange = (startStr, endStr) => {
+            if (!startStr || !endStr) return 'Schedule according to academic calendar';
+            try {
+                const s = new Date(startStr);
+                const e = new Date(endStr);
+                return s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' + e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch (err) {
+                return `${startStr} – ${endStr}`;
+            }
+        };
+
         let pollTimer = null;
         const startLiveSync = () => {
             stopLiveSync();
             pollTimer = setInterval(() => {
                 fetchDashboardData(true);
                 fetchAnnouncements();
+                fetchMilestones();
             }, 10000);
         };
 
@@ -371,12 +542,96 @@ window.StudentPortalController = {
         onMounted(() => {
             checkSession();
             fetchAnnouncements();
+            fetchMilestones();
             startLiveSync();
         });
 
         onUnmounted(() => {
             stopLiveSync();
         });
+
+        // Forgot Password Modal State
+        const showForgotPasswordModal = ref(false);
+        const forgotPasswordStep = ref(1);
+        const forgotIdentifier = ref('');
+        const forgotCode = ref('');
+        const forgotNewPassword = ref('');
+        const forgotConfirmPassword = ref('');
+        const forgotShowNewPass = ref(false);
+        const isRequestingCode = ref(false);
+        const isResettingPass = ref(false);
+        const forgotMsg = ref('');
+        const forgotError = ref('');
+        const maskedEmailSent = ref('');
+
+        const closeForgotPasswordModal = () => {
+            showForgotPasswordModal.value = false;
+            forgotError.value = '';
+            forgotMsg.value = '';
+            forgotCode.value = '';
+            forgotNewPassword.value = '';
+            forgotConfirmPassword.value = '';
+        };
+
+        const handleRequestResetCode = async () => {
+            if (!forgotIdentifier.value) return;
+            isRequestingCode.value = true;
+            forgotError.value = '';
+            forgotMsg.value = '';
+            try {
+                const res = await fetch('../api/index.php?action=student/request_password_reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier: forgotIdentifier.value })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    forgotPasswordStep.value = 2;
+                    forgotMsg.value = data.message || 'Verification code sent to your email.';
+                    maskedEmailSent.value = data.maskedEmail || '';
+                } else {
+                    forgotError.value = data.message || 'Account not found.';
+                }
+            } catch (e) {
+                forgotError.value = 'Failed to send reset code. Please try again.';
+            } finally {
+                isRequestingCode.value = false;
+            }
+        };
+
+        const handleVerifyAndResetPassword = async () => {
+            if (forgotNewPassword.value !== forgotConfirmPassword.value) {
+                forgotError.value = 'Passwords do not match.';
+                return;
+            }
+            isResettingPass.value = true;
+            forgotError.value = '';
+            forgotMsg.value = '';
+            try {
+                const res = await fetch('../api/index.php?action=student/verify_password_reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        identifier: forgotIdentifier.value,
+                        code: forgotCode.value,
+                        newPassword: forgotNewPassword.value
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    forgotMsg.value = 'Password reset successfully!';
+                    setTimeout(() => {
+                        closeForgotPasswordModal();
+                    }, 1500);
+                } else {
+                    forgotError.value = data.message || 'Invalid verification code.';
+                }
+            } catch (e) {
+                forgotError.value = 'Failed to reset password. Please try again.';
+            } finally {
+                isResettingPass.value = false;
+            }
+        };
 
         return {
             currentStudent,
@@ -386,10 +641,15 @@ window.StudentPortalController = {
             medical: computed(() => state.medical),
             scholarship: computed(() => state.scholarship),
             payment: computed(() => state.payment),
+            studentFinancials: computed(() => state.payment),
             helpdesk: computed(() => state.helpdesk),
             enrollment: computed(() => state.enrollment),
             subjects: computed(() => state.subjects),
+            enrolledSubjects: computed(() => state.subjects),
+            enrolledUnits: computed(() => totalUnits.value),
             corData: computed(() => state.corData),
+            activePeriod: computed(() => state.activePeriod),
+            state,
             activeTab,
             currentTabTitle,
             totalUnits,
@@ -421,14 +681,44 @@ window.StudentPortalController = {
             updatePassword,
             passError,
 
-            // Announcements
+            // Forgot Password Modal State & Handlers
+            showForgotPasswordModal,
+            forgotPasswordStep,
+            forgotIdentifier,
+            forgotCode,
+            forgotNewPassword,
+            forgotConfirmPassword,
+            forgotShowNewPass,
+            isRequestingCode,
+            isResettingPass,
+            forgotMsg,
+            forgotError,
+            maskedEmailSent,
+            closeForgotPasswordModal,
+            handleRequestResetCode,
+            handleVerifyAndResetPassword,
+
+            // Announcements & Campus Bulletins & Milestones
             announcements,
+            milestones,
+            filteredAnnouncements,
             activeCategory,
-            likedPosts,
+            bulletinSearchQuery,
             activeImageModal,
+            showHandbookModal,
+            acknowledgedMemos,
+            bookmarkedMemos,
+            toggleAcknowledgeMemo,
+            isMemoAcknowledged,
+            toggleBookmarkMemo,
+            isMemoBookmarked,
+            copyMemoLink,
+            isOfficeOpen,
+            categoryCounts,
             fetchAnnouncements,
-            toggleLikePost,
-            formatTimeAgo
+            fetchMilestones,
+            formatTimeAgo,
+            formatDateRange
         };
     }
 };

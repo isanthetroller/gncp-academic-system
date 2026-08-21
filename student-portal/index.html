@@ -57,6 +57,8 @@
             padding: 0;
             color: var(--charcoal);
             box-sizing: border-box;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
         }
 
         body.auth-mode {
@@ -83,106 +85,619 @@
             margin: auto;
         }
 
-        /* ── CAMPUS FEED SCROLL STYLES ── */
+        /* ── CAMPUS FEED: EDITORIAL & BESPOKE ACADEMIC DESK ── */
         .campus-feed-layout {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-            max-width: 1180px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 350px;
+            gap: 28px;
+            max-width: 1240px;
             margin: 0 auto;
-            height: calc(100vh - 110px);
-            overflow: hidden;
+            align-items: start;
+            width: 100%;
         }
 
-        .feed-left-col {
-            width: 260px;
-            flex-shrink: 0;
+        .campus-feed-layout > main,
+        .campus-feed-layout > aside {
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
         }
 
-        .feed-center-col {
-            flex: 1;
-            height: 100%;
-            overflow-y: auto;
-            padding-right: 4px;
+        @media (max-width: 991.98px) {
+            .campus-feed-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
         }
 
-        .feed-center-col::-webkit-scrollbar {
-            width: 6px;
+        /* ── Quick Hub Metric Cards ── */
+        .campus-quick-hub {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
         }
 
-        .feed-center-col::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+        @media (max-width: 991.98px) {
+            .campus-quick-hub {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
-        .feed-right-col {
-            width: 270px;
-            flex-shrink: 0;
+        @media (max-width: 575.98px) {
+            .campus-quick-hub {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .feed-author-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--dark-green);
+        .quick-hub-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease;
+        }
+
+        .quick-hub-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .quick-hub-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
             display: grid;
             place-items: center;
-            padding: 4px;
+            font-size: 1.15rem;
             flex-shrink: 0;
-            border: 2px solid var(--gold);
         }
 
-        .feed-author-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .quick-hub-val {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.25;
         }
 
-        .feed-post-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .quick-hub-lbl {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            margin-top: 2px;
         }
 
-        .feed-post-card:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+        /* ── Urgent Alert Strip ── */
+        .campus-alert-strip {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #a7f3d0;
+            border-left: 4px solid var(--primary-green, #006A4E);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0, 106, 78, 0.04);
         }
 
-        .feed-post-img {
-            transition: transform 0.3s ease;
+        .bulletin-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .feed-post-img:hover {
-            transform: scale(1.015);
+        .bulletin-card:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
         }
 
-        .hover-bg-light:hover {
-            background-color: #f1f5f9 !important;
+        .bulletin-card.is-pinned {
+            border-left: 4px solid var(--primary-green, #006A4E);
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .bulletin-filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 22px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            flex-wrap: wrap;
         }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
+        .bulletin-categories-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 2px 0;
             scrollbar-width: none;
         }
 
-        @media (max-width: 992px) {
+        .bulletin-categories-wrap::-webkit-scrollbar {
+            display: none;
+        }
 
-            .feed-left-col,
-            .feed-right-col {
-                display: none;
-            }
+        .bulletin-search-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
 
-            .campus-feed-layout {
-                height: auto;
-                overflow: visible;
-            }
+        .bulletin-search-wrap i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.82rem;
+            pointer-events: none;
+        }
 
-            .feed-center-col {
-                overflow-y: visible;
-                padding-right: 0;
-            }
+        .bulletin-search-input {
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 7px 12px 7px 34px;
+            font-size: 0.82rem;
+            color: #111827;
+            width: 220px;
+            transition: all 0.2s ease;
+        }
+
+        .bulletin-search-input:focus {
+            background: #ffffff;
+            border-color: var(--primary-green);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.08);
+            width: 250px;
+        }
+
+        .bulletin-tab {
+            padding: 7px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .bulletin-tab:hover {
+            color: #111827;
+            background: #f3f4f6;
+        }
+
+        .bulletin-tab.active {
+            background: var(--dark-green, #004D38);
+            color: #ffffff;
+        }
+
+        .bulletin-tab .tab-badge {
+            font-size: 0.7rem;
+            padding: 1px 7px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.06);
+            color: inherit;
+        }
+
+        .bulletin-tab.active .tab-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+
+        .campus-desk-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            padding: 22px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .desk-section-title {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .desk-date-item {
+            padding: 11px 0;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.82rem;
+        }
+
+        .desk-date-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .milestone-badge {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            display: inline-block;
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+
+        .milestone-badge-active {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .milestone-badge-upcoming {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .milestone-badge-scheduled {
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .milestone-badge-completed {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+
+        .desk-contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 9px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.82rem;
+            color: #4b5563;
+        }
+
+        .desk-contact-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .bulletin-tag {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .bulletin-tag-ACADEMIC { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .bulletin-tag-ENROLLMENT { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .bulletin-tag-EVENT { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .bulletin-tag-MEDICAL { background: #fdf2f8; color: #9d174d; border: 1px solid #fbcfe8; }
+        .bulletin-tag-FINANCIAL { background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
+        .bulletin-tag-URGENT { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .bulletin-tag-GENERAL { background: #f9fafb; color: #374151; border: 1px solid #e5e7eb; }
+
+        /* ── Rich Text Formatting & Layout for Campus Bulletins ── */
+        .bulletin-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .bulletin-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+        }
+
+        .bulletin-card.is-pinned {
+            border-left: 5px solid var(--primary-green, #006A4E);
+        }
+
+        .bulletin-header {
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            background: #fafafa;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .bulletin-author-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: grid;
+            place-items: center;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .bulletin-author-avatar img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+        }
+
+        .bulletin-author-name {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: #111827;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .bulletin-meta-time {
+            font-size: 0.74rem;
+            color: #6b7280;
+            margin-top: 1px;
+            word-break: break-word;
+        }
+
+        .bulletin-pinned-badge {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+            border-radius: 9999px;
+            padding: 3px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .bulletin-card-body {
+            padding: 20px 22px;
+        }
+
+        .bulletin-post-title {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.45;
+            margin-bottom: 14px;
+            letter-spacing: -0.01em;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .bulletin-post-body {
+            color: #374151;
+            font-size: 0.88rem;
+            line-height: 1.75;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .bulletin-post-body p { margin-bottom: 14px; }
+        .bulletin-post-body p:last-child { margin-bottom: 0; }
+        .bulletin-post-body h1, .bulletin-post-body h2, .bulletin-post-body h3, .bulletin-post-body h4 {
+            color: #111827;
+            font-weight: 700;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+        .bulletin-post-body h2 { font-size: 1.08rem; }
+        .bulletin-post-body h3 { font-size: 0.98rem; }
+        .bulletin-post-body h4 { font-size: 0.90rem; }
+        .bulletin-post-body ul, .bulletin-post-body ol {
+            margin: 12px 0 16px 22px;
+            padding-left: 0;
+        }
+        .bulletin-post-body li { margin-bottom: 6px; line-height: 1.6; word-break: break-word; }
+        .bulletin-post-body blockquote {
+            border-left: 4px solid var(--primary-green, #006A4E);
+            background: #f8fafc;
+            padding: 12px 18px;
+            margin: 16px 0;
+            border-radius: 0 10px 10px 0;
+            color: #4b5563;
+            font-style: italic;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+        .bulletin-post-body strong { color: #111827; font-weight: 700; }
+
+        /* Official Circular Document Attachment Box */
+        .memo-doc-preview {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .memo-pdf-icon-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: #fee2e2;
+            display: grid;
+            place-items: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .memo-doc-filename {
+            font-weight: 700;
+            color: #111827;
+            font-size: 0.85rem;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .memo-doc-subtext {
+            font-size: 0.74rem;
+            color: #6b7280;
+            margin-top: 1px;
+            word-break: break-word;
+        }
+
+        .btn-download-memo {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1f2937;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-download-memo:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        .bulletin-image-wrap {
+            padding: 0 24px 22px;
+            text-align: center;
+        }
+
+        .bulletin-attached-image {
+            max-height: 500px;
+            width: 100%;
+            object-fit: contain;
+            display: block;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
+        .bulletin-card-footer {
+            padding: 12px 22px;
+            border-top: 1px solid #f1f5f9;
+            background: #fafafa;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .bulletin-ref-tag {
+            font-size: 0.74rem;
+            font-family: var(--font-mono, monospace);
+            color: #64748b;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Memo Action Buttons */
+        .btn-memo-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            color: #4b5563;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-memo-action:hover {
+            background: #f9fafb;
+            color: #111827;
+            border-color: #d1d5db;
+        }
+
+        .btn-memo-action.is-ack {
+            background: #ecfdf5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+
+        .btn-memo-action.is-bookmarked {
+            background: #fffbeb;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+        .bulletin-post-body hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 1rem 0;
+        }
+        .bulletin-post-body a {
+            color: #006A4E;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .empty-bulletin-state {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 56px 24px;
+            text-align: center;
+        }
+
+        .empty-bulletin-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            color: #9ca3af;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 16px auto;
+            font-size: 1.25rem;
         }
 
         @media (max-width: 992px) {
@@ -696,18 +1211,29 @@
         }
 
         /* ── OFFICIAL REGISTRAR PRINTABLE COR STYLES ── */
+        .cor-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 8px 0 24px;
+        }
+
         .cor-paper {
             background: #fff;
             color: #000;
-            padding: 24px 28px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--border);
+            padding: 32px 36px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #cbd5e1;
             font-family: Arial, sans-serif;
             font-size: 11px;
             line-height: 1.35;
             width: 100%;
+            max-width: 980px;
             margin: 0 auto;
+            box-sizing: border-box;
         }
 
         .cor-header-table,
@@ -1100,21 +1626,26 @@
 
         .shell {
             width: 100%;
-            max-width: 100vw;
-            overflow-x: hidden;
+            max-width: 100%;
+            display: flex;
+            min-height: 100vh;
         }
 
         .main {
             width: 100%;
-            max-width: 100vw;
-            overflow-x: hidden;
+            max-width: 100%;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .content {
             width: 100%;
             max-width: 100%;
-            overflow-x: hidden;
             box-sizing: border-box;
+            padding: 24px 32px;
         }
 
         .table-responsive {
@@ -1125,26 +1656,56 @@
             border-radius: 8px;
         }
 
+        /* Tablet & Mobile Breakpoints (<= 991.98px) */
         @media (max-width: 991.98px) {
+            body {
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                touch-action: pan-y;
+            }
+
             .shell {
                 display: flex !important;
                 flex-direction: column !important;
                 grid-template-columns: none !important;
                 height: auto !important;
                 min-height: 100vh !important;
-                overflow-x: hidden !important;
             }
 
             .mobile-header-bar {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: space-between !important;
-                padding: 12px 18px !important;
-                background: var(--dark-green) !important;
-                border-bottom: 2px solid var(--gold) !important;
+                padding: 10px 16px !important;
+                background: var(--dark-green, #003D2B) !important;
+                border-bottom: 2px solid var(--gold, #D4AF37) !important;
                 position: sticky !important;
                 top: 0 !important;
                 z-index: 1020 !important;
+                min-height: 56px !important;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .mobile-menu-btn {
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                min-height: 44px !important;
+                border-radius: 8px !important;
+                background: rgba(255, 255, 255, 0.12) !important;
+                border: 1px solid rgba(255, 255, 255, 0.25) !important;
+                color: #ffffff !important;
+                display: grid !important;
+                place-items: center !important;
+                font-size: 1.15rem !important;
+                cursor: pointer !important;
+                transition: background 0.15s ease !important;
+            }
+
+            .mobile-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.22) !important;
             }
 
             .sidebar-backdrop {
@@ -1154,6 +1715,7 @@
                 background: rgba(15, 23, 42, 0.65);
                 backdrop-filter: blur(4px);
                 z-index: 1045;
+                transition: opacity 0.25s ease;
             }
 
             .sidebar-backdrop.show {
@@ -1171,11 +1733,12 @@
                 z-index: 1050 !important;
                 transform: translateX(-100%) !important;
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3) !important;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.35) !important;
                 display: flex !important;
                 flex-direction: column !important;
                 border-radius: 0 !important;
                 padding: 0 !important;
+                background: var(--sidebar-bg, #002b1f) !important;
             }
 
             .sidebar.mobile-open {
@@ -1185,7 +1748,7 @@
             .sidebar .brand {
                 display: flex !important;
                 margin-bottom: 0 !important;
-                padding: 20px 18px !important;
+                padding: 18px 16px !important;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
             }
 
@@ -1196,6 +1759,7 @@
                 overflow-x: hidden !important;
                 gap: 4px !important;
                 padding: 14px 12px !important;
+                flex: 1 !important;
             }
 
             .nav-cat {
@@ -1214,6 +1778,10 @@
                 color: rgba(255, 255, 255, 0.8) !important;
                 text-align: left !important;
                 width: 100% !important;
+                min-height: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
             }
 
             .nav-item.active {
@@ -1225,34 +1793,45 @@
 
             .sidebar-footer {
                 display: flex !important;
-                padding: 16px 18px !important;
+                padding: 14px 16px !important;
                 border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
             }
 
             .main {
                 margin-left: 0 !important;
                 width: 100% !important;
-                max-width: 100vw !important;
+                max-width: 100% !important;
                 padding-left: 0 !important;
-                min-height: calc(100vh - 60px) !important;
-                overflow-x: hidden !important;
+                height: auto !important;
+                min-height: calc(100vh - 56px) !important;
+                overflow-y: visible !important;
             }
 
             .topbar {
-                padding: 14px 18px !important;
-                background: #ffffff !important;
-                border-bottom: 1px solid var(--zinc-200) !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
+                display: none !important;
             }
 
             .content {
-                padding: 14px 12px !important;
+                flex: none !important;
+                height: auto !important;
+                overflow-y: visible !important;
+                padding: 16px 14px !important;
+            }
+
+            .campus-feed-layout {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            .campus-desk-card {
+                position: relative !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin-top: 6px !important;
             }
 
             .cor-paper {
-                padding: 14px 10px !important;
+                padding: 16px 12px !important;
                 box-shadow: none !important;
                 border-radius: 10px !important;
             }
@@ -1267,8 +1846,8 @@
             }
 
             .cor-footer-meta {
-                flex-direction: column;
-                gap: 4px;
+                flex-direction: column !important;
+                gap: 4px !important;
             }
 
             .profile-hero {
@@ -1276,6 +1855,8 @@
                 text-align: center !important;
                 padding: 20px 16px !important;
                 gap: 14px !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
 
             .profile-hero-info h3 {
@@ -1288,7 +1869,119 @@
             }
         }
 
-        @media (max-width: 576px) {
+        /* Mobile Portrait Breakpoints (< 576px) */
+        @media (max-width: 575.98px) {
+            .content {
+                padding: 12px 10px !important;
+            }
+
+            .campus-quick-hub {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+
+            .quick-hub-card {
+                padding: 12px 14px !important;
+            }
+
+            .campus-alert-strip {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
+                padding: 12px 14px !important;
+            }
+
+            .campus-alert-strip button {
+                width: auto !important;
+                align-self: flex-start !important;
+                margin-top: 4px !important;
+            }
+
+            .bulletin-filter-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px !important;
+                padding: 10px 12px !important;
+            }
+
+            .bulletin-categories-wrap {
+                width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding-bottom: 4px !important;
+            }
+
+            .bulletin-search-wrap {
+                width: 100% !important;
+            }
+
+            .bulletin-search-input {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .bulletin-card {
+                border-radius: 12px !important;
+                margin-bottom: 16px !important;
+            }
+
+            .bulletin-header {
+                padding: 12px 14px !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+            }
+
+            .bulletin-header > div:last-child {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: flex-start !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+            }
+
+            .bulletin-card-body {
+                padding: 16px 14px !important;
+            }
+
+            .bulletin-post-title {
+                font-size: 1.05rem !important;
+                margin-bottom: 12px !important;
+                word-break: break-word !important;
+            }
+
+            .bulletin-card-footer {
+                padding: 10px 14px !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+            }
+
+            .bulletin-card-footer .d-flex {
+                width: 100% !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+            }
+
+            .btn-memo-action {
+                flex: 1 1 auto !important;
+                justify-content: center !important;
+                min-height: 36px !important;
+            }
+
+            .memo-doc-preview {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px !important;
+            }
+
+            .btn-download-memo {
+                width: 100% !important;
+                justify-content: center !important;
+                margin-top: 4px !important;
+            }
+
             .info-row {
                 grid-template-columns: 1fr !important;
                 gap: 10px !important;
@@ -1435,207 +2128,272 @@
                             aria-label="Close"></button>
                     </div>
 
-                    <!-- ══ TAB: CAMPUS ANNOUNCEMENT FEED (CAMPUS FEED SCROLL LAYOUT) ══════════════ -->
+                    <!-- ══ TAB: CAMPUS ANNOUNCEMENT FEED (CLEAN EDITORIAL BULLETIN DESK) ══════════════ -->
                     <template v-if="activeTab === 'announcements'">
                         <div class="campus-feed-layout">
 
-                            <!-- Left Sidebar Column (Fixed / Student Shortcuts) -->
-                            <aside class="feed-left-col">
-                                <div class="card border-0 shadow-sm p-3 rounded-4 mb-3 bg-white">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="avatar-wrap-sm"
-                                            style="width: 48px; height: 48px; border-radius: 50%; background: var(--dark-green); color: var(--gold); display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">
-                                            <img v-if="profile.photo"
-                                                :src="'../stations/it-center/assets/uploads/' + profile.photo"
-                                                style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
-                                            <span v-else>{{ (profile.name || 'S').substring(0,2).toUpperCase() }}</span>
+                            <!-- Left / Main Bulletin Stream (70%) -->
+                            <main>
+                                <!-- Page Header -->
+                                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                                    <div>
+                                        <h4 class="fw-bold text-dark mb-1" style="font-size: 1.3rem;">Campus Bulletins &amp; Notices</h4>
+                                        <p class="text-muted fs-7 mb-0">Official memoranda, academic circulars, and announcements from the College Administration.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Urgent / Highlight Alert Banner -->
+                                <div class="campus-alert-strip">
+                                    <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1 1 auto;">
+                                        <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(0, 106, 78, 0.1); display: grid; place-items: center; color: var(--primary-green); flex-shrink: 0;">
+                                            <i class="fa-solid fa-bullhorn fs-6"></i>
                                         </div>
-                                        <div class="min-w-0">
-                                            <div class="fw-bold text-dark text-truncate fs-6 mb-0">{{ profile.name ||
-                                                'Student' }}</div>
-                                            <div class="text-muted fs-7 font-monospace">{{ profile.id }} &bull; {{
-                                                profile.program || 'Student' }}</div>
+                                        <div style="min-width: 0;">
+                                            <div class="fw-bold text-dark fs-7" style="word-break: break-word;">Term Validation &amp; Examination Clearances</div>
+                                            <div class="text-muted fs-7" style="font-size: 0.76rem; word-break: break-word;">Preliminary exam clearance permits are now accessible. Verify your registered subject schedule on your official COR.</div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fs-7 fw-semibold text-nowrap"
+                                        @click="activeTab = 'courses'">
+                                        View COR <i class="fa-solid fa-arrow-right ms-1 fs-7"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Quick Hub 4-Metric Strip -->
+                                <div class="campus-quick-hub">
+                                    <div class="quick-hub-card">
+                                        <div class="quick-hub-icon" style="background: #eff6ff; color: #2563eb;">
+                                            <i class="fa-solid fa-graduation-cap"></i>
+                                        </div>
+                                        <div>
+                                            <div class="quick-hub-val">Week 4 of 18</div>
+                                            <div class="quick-hub-lbl">1st Sem A.Y. 2026-2027</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="quick-hub-card">
+                                        <div class="quick-hub-icon" style="background: #ecfdf5; color: #059669;">
+                                            <i class="fa-solid fa-book-open"></i>
+                                        </div>
+                                        <div>
+                                            <div class="quick-hub-val">{{ (corData && corData.schedule) ? corData.schedule.length : (subjects ? subjects.length : 4) }} Courses</div>
+                                            <div class="quick-hub-lbl">{{ (corData && corData.totalUnits) ? (corData.totalUnits + ' Units') : (totalUnits ? totalUnits + ' Units' : '12.00 Units') }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="quick-hub-card">
+                                        <div class="quick-hub-icon" style="background: #fffbeb; color: #d97706;">
+                                            <i class="fa-solid fa-file-shield"></i>
+                                        </div>
+                                        <div>
+                                            <div class="quick-hub-val">{{ (payment && payment.status) ? payment.status : ((corData && corData.financialStatus) ? corData.financialStatus : 'CLEARED') }}</div>
+                                            <div class="quick-hub-lbl">Exam Clearance</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="quick-hub-card">
+                                        <div class="quick-hub-icon" :style="isOfficeOpen ? 'background: #f0fdf4; color: #16a34a;' : 'background: #f3f4f6; color: #6b7280;'">
+                                            <i class="fa-solid fa-clock"></i>
+                                        </div>
+                                        <div>
+                                            <div class="quick-hub-val">{{ isOfficeOpen ? 'Offices Open' : 'Off-Hours' }}</div>
+                                            <div class="quick-hub-lbl">Mon–Fri 8AM–5PM</div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="card border-0 shadow-sm p-3 rounded-4 bg-white">
-                                    <div class="fw-bold text-secondary text-uppercase fs-7 mb-2 tracking-wider">Quick
-                                        Shortcuts</div>
-                                    <div class="vstack gap-1">
-                                        <button
-                                            class="btn text-start d-flex align-items-center gap-2.5 px-2.5 py-2 rounded-3 text-dark fw-semibold fs-7 hover-bg-light"
-                                            @click="activeTab = 'courses'">
-                                            <i class="fa-solid fa-file-invoice text-success fs-6"></i> My Certificate of
-                                            Registration
-                                        </button>
-                                        <button
-                                            class="btn text-start d-flex align-items-center gap-2.5 px-2.5 py-2 rounded-3 text-dark fw-semibold fs-7 hover-bg-light"
-                                            @click="activeTab = 'profile'">
-                                            <i class="fa-solid fa-id-card text-primary fs-6"></i> Student Profile &amp;
-                                            Contact
-                                        </button>
-                                        <a href="../school-website/index.html" target="_blank"
-                                            class="btn text-start d-flex align-items-center gap-2.5 px-2.5 py-2 rounded-3 text-dark fw-semibold fs-7 hover-bg-light text-decoration-none">
-                                            <i class="fa-solid fa-globe text-warning fs-6"></i> GNCP Official Website
-                                        </a>
-                                    </div>
-                                </div>
-                            </aside>
-
-                            <!-- Middle Feed Column (Independent Scrollable Feed Stream) -->
-                            <main class="feed-center-col">
-
-                                <!-- Category Filters Bar -->
-                                <div class="card border-0 shadow-sm p-2.5 rounded-4 mb-3 bg-white">
-                                    <div class="d-flex align-items-center gap-2 overflow-auto no-scrollbar py-1">
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold fs-7"
-                                            :class="activeCategory === 'ALL' ? 'btn-success' : 'btn-light text-secondary'"
+                                <!-- Filter & Search Bar -->
+                                <div class="bulletin-filter-bar mb-3">
+                                    <div class="bulletin-categories-wrap">
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'ALL' }"
                                             @click="activeCategory = 'ALL'">
-                                            All Bulletins
+                                            All Notices <span class="tab-badge">{{ categoryCounts.ALL }}</span>
                                         </button>
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold fs-7"
-                                            :class="activeCategory === 'URGENT' ? 'btn-danger' : 'btn-light text-secondary'"
-                                            @click="activeCategory = 'URGENT'">
-                                            🔥 Urgent Notices
-                                        </button>
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold fs-7"
-                                            :class="activeCategory === 'ACADEMIC' ? 'btn-success' : 'btn-light text-secondary'"
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'ACADEMIC' }"
                                             @click="activeCategory = 'ACADEMIC'">
-                                            🎓 Academic
+                                            Academic <span class="tab-badge">{{ categoryCounts.ACADEMIC }}</span>
                                         </button>
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold fs-7"
-                                            :class="activeCategory === 'ENROLLMENT' ? 'btn-info text-white' : 'btn-light text-secondary'"
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'ENROLLMENT' }"
                                             @click="activeCategory = 'ENROLLMENT'">
-                                            📋 Enrollment
+                                            Enrollment <span class="tab-badge">{{ categoryCounts.ENROLLMENT }}</span>
                                         </button>
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold fs-7"
-                                            :class="activeCategory === 'EVENT' ? 'btn-warning text-dark' : 'btn-light text-secondary'"
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'EVENT' }"
                                             @click="activeCategory = 'EVENT'">
-                                            🎉 Events
+                                            Events <span class="tab-badge">{{ categoryCounts.EVENT }}</span>
                                         </button>
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'MEDICAL' }"
+                                            @click="activeCategory = 'MEDICAL'">
+                                            Health <span class="tab-badge">{{ categoryCounts.MEDICAL }}</span>
+                                        </button>
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'FINANCIAL' }"
+                                            @click="activeCategory = 'FINANCIAL'">
+                                            Grants <span class="tab-badge">{{ categoryCounts.FINANCIAL }}</span>
+                                        </button>
+                                        <button type="button" class="bulletin-tab"
+                                            :class="{ active: activeCategory === 'BOOKMARKED' }"
+                                            @click="activeCategory = 'BOOKMARKED'">
+                                            <i class="fa-solid fa-bookmark text-warning"></i> Saved <span class="tab-badge">{{ categoryCounts.BOOKMARKED }}</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="bulletin-search-wrap">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <input type="text" class="bulletin-search-input" v-model="bulletinSearchQuery"
+                                            placeholder="Search circulars, topics...">
                                     </div>
                                 </div>
 
-                                <!-- Feed Posts Stream -->
+                                <!-- Bulletins Stream -->
                                 <div class="vstack gap-3">
-                                    <div v-for="post in announcements.filter(p => activeCategory === 'ALL' || p.category === activeCategory)"
+                                    <!-- Populated State -->
+                                    <div v-for="post in filteredAnnouncements"
                                         :key="post.id"
-                                        class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white feed-post-card">
+                                        class="bulletin-card"
+                                        :class="{ 'is-pinned': parseInt(post.is_pinned) === 1 }">
 
                                         <!-- Post Header -->
-                                        <div class="p-3 pb-2 d-flex align-items-center justify-content-between">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="feed-author-avatar">
-                                                    <img src="../school-website/assets/images/logo-removebg-preview.png"
-                                                        alt="GNCP Seal">
+                                        <div class="bulletin-header">
+                                            <div class="d-flex align-items-center gap-3 bulletin-header-left" style="min-width: 0; flex: 1 1 auto;">
+                                                <div class="bulletin-author-avatar">
+                                                    <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal">
                                                 </div>
-                                                <div>
-                                                    <div class="d-flex align-items-center gap-1.5">
-                                                        <span class="fw-bold text-dark fs-6">{{ post.author_name ||
-                                                            'GNCP Administration' }}</span>
-                                                        <i class="fa-solid fa-circle-check text-primary fs-7"
-                                                            title="Official Verified Campus Account"></i>
+                                                <div style="min-width: 0;">
+                                                    <div class="d-flex align-items-center" style="gap: 6px; flex-wrap: wrap;">
+                                                        <span class="bulletin-author-name">{{ post.author_name || 'Office of Academic Affairs' }}</span>
+                                                        <i class="fa-solid fa-circle-check text-primary" style="font-size: 0.82rem; margin-left: 4px;" title="Official Verified Authority"></i>
                                                     </div>
-                                                    <div class="d-flex align-items-center gap-2 text-muted fs-7">
-                                                        <span>{{ formatTimeAgo(post.created_at) }}</span>
-                                                        <span>&bull;</span>
-                                                        <span class="badge rounded-pill px-2 py-0.5 fs-7" :class="{
-                                                            'bg-danger text-white': post.category==='URGENT',
-                                                            'bg-success text-white': post.category==='ACADEMIC',
-                                                            'bg-info text-white': post.category==='ENROLLMENT',
-                                                            'bg-warning text-dark': post.category==='EVENT',
-                                                            'bg-secondary text-white': post.category==='GENERAL'
-                                                        }">{{ post.category }}</span>
+                                                    <div class="bulletin-meta-time">
+                                                        <i class="fa-regular fa-clock me-1"></i>{{ formatTimeAgo(post.created_at) }} &bull; Official Circular
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div v-if="parseInt(post.is_pinned)"
-                                                class="badge bg-warning bg-opacity-10 text-dark border border-warning rounded-pill px-2.5 py-1 fs-7 d-flex align-items-center gap-1">
-                                                <i class="fa-solid fa-thumbtack text-warning fs-7"></i> Pinned
+                                            <div class="d-flex align-items-center gap-2 bulletin-header-right" style="flex-wrap: wrap;">
+                                                <span v-if="parseInt(post.is_pinned)" class="bulletin-pinned-badge">
+                                                    <i class="fa-solid fa-thumbtack text-warning me-1"></i> Pinned Memo
+                                                </span>
+                                                <span class="bulletin-tag" :class="'bulletin-tag-' + (post.category || 'GENERAL')">
+                                                    {{ post.category }}
+                                                </span>
                                             </div>
                                         </div>
 
-                                        <!-- Post Body Text -->
-                                        <div class="px-3 py-2">
-                                            <h5 class="fw-bold text-dark fs-6 mb-2">{{ post.title }}</h5>
-                                            <p class="text-secondary fs-6 mb-0 feed-post-content"
-                                                style="white-space: pre-wrap; line-height: 1.6;">{{ post.content }}</p>
-                                        </div>
+                                        <!-- Post Body -->
+                                        <div class="bulletin-card-body">
+                                            <h4 class="bulletin-post-title">{{ post.title }}</h4>
+                                            <div class="bulletin-post-body" v-html="post.content"></div>
 
-                                        <!-- Post Image Attachment -->
-                                        <div v-if="post.image_url"
-                                            class="mt-2 text-center bg-black bg-opacity-5 overflow-hidden cursor-pointer"
-                                            @click="activeImageModal = '../' + post.image_url">
-                                            <img :src="'../' + post.image_url" alt="Announcement Image"
-                                                class="w-100 object-fit-cover feed-post-img" style="max-height: 480px;">
-                                        </div>
-
-                                        <!-- Post Footer / Reactions -->
-                                        <div
-                                            class="px-3 py-2.5 border-top d-flex align-items-center justify-content-between bg-light bg-opacity-50">
-                                            <button type="button"
-                                                class="btn btn-sm border-0 d-flex align-items-center gap-2 fw-semibold fs-7"
-                                                :class="likedPosts[post.id] ? 'text-danger' : 'text-secondary'"
-                                                @click="toggleLikePost(post.id)">
-                                                <i class="fa-solid"
-                                                    :class="likedPosts[post.id] ? 'fa-heart text-danger' : 'fa-heart'"></i>
-                                                <span>{{ likedPosts[post.id] ? 'Liked' : 'Like' }}</span>
-                                            </button>
-
-                                            <div class="d-flex align-items-center gap-2 text-muted fs-7">
-                                                <i class="fa-solid fa-shield-halved text-success"></i> Official GNCP
-                                                Bulletin
+                                            <!-- Official Circular Document Attachment Box -->
+                                            <div class="memo-doc-preview">
+                                                <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1 1 auto;">
+                                                    <div class="memo-pdf-icon-wrap">
+                                                        <i class="fa-solid fa-file-pdf text-danger"></i>
+                                                    </div>
+                                                    <div style="min-width: 0; overflow: hidden;">
+                                                        <div class="memo-doc-filename" style="word-break: break-all;">GNCP-CIRCULAR-{{ String(post.id).padStart(4, '0') }}.pdf</div>
+                                                        <div class="memo-doc-subtext">Official Certified Document &bull; 248 KB</div>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn-download-memo"
+                                                    @click="copyMemoLink(post)">
+                                                    <i class="fa-solid fa-download text-muted" style="margin-right: 8px;"></i> <span>Download Memo</span>
+                                                </button>
                                             </div>
                                         </div>
 
+                                        <!-- Post Image Attachment (If Any) -->
+                                        <div v-if="post.image_url" class="bulletin-image-wrap">
+                                            <img :src="'../' + post.image_url" alt="Attached Bulletin Media"
+                                                class="bulletin-attached-image"
+                                                @click="activeImageModal = '../' + post.image_url"
+                                                title="Click to view full resolution image">
+                                        </div>
+
+                                        <!-- Post Footer / Actions Toolbar -->
+                                        <div class="bulletin-card-footer">
+                                            <div class="d-flex align-items-center gap-2" style="flex-wrap: wrap;">
+                                                <button type="button" class="btn-memo-action"
+                                                    :class="{ 'is-ack': isMemoAcknowledged(post.id) }"
+                                                    @click="toggleAcknowledgeMemo(post.id)">
+                                                    <i class="fa-solid" :class="isMemoAcknowledged(post.id) ? 'fa-circle-check text-success' : 'fa-check'"></i>
+                                                    {{ isMemoAcknowledged(post.id) ? 'Acknowledged' : 'Acknowledge Memo' }}
+                                                </button>
+
+                                                <button type="button" class="btn-memo-action"
+                                                    :class="{ 'is-bookmarked': isMemoBookmarked(post.id) }"
+                                                    @click="toggleBookmarkMemo(post.id)">
+                                                    <i class="fa-solid" :class="isMemoBookmarked(post.id) ? 'fa-bookmark text-warning' : 'fa-bookmark'"></i>
+                                                    {{ isMemoBookmarked(post.id) ? 'Saved' : 'Save' }}
+                                                </button>
+
+                                                <button type="button" class="btn-memo-action"
+                                                    @click="copyMemoLink(post)">
+                                                    <i class="fa-solid fa-share-nodes"></i> Copy Ref
+                                                </button>
+                                            </div>
+
+                                            <div class="bulletin-ref-tag">
+                                                <i class="fa-solid fa-shield-halved text-success"></i> Ref #GNCP-BUL-{{ String(post.id).padStart(3, '0') }}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Empty State -->
-                                    <div v-if="announcements.filter(p => activeCategory === 'ALL' || p.category === activeCategory).length === 0"
-                                        class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
-                                        <div class="avatar-wrap-sm mx-auto mb-3"
-                                            style="width: 56px; height: 56px; border-radius: 50%; background: rgba(0,106,78,0.1); color: var(--primary-green); display: grid; place-items: center; font-size: 1.5rem;">
-                                            <i class="fa-solid fa-bullhorn"></i>
+                                    <div v-if="filteredAnnouncements.length === 0" class="empty-bulletin-state">
+                                        <div class="empty-bulletin-icon">
+                                            <i class="fa-regular fa-newspaper"></i>
                                         </div>
-                                        <h6 class="fw-bold text-dark fs-6 mb-1">No Announcements Found</h6>
-                                        <p class="text-muted fs-7 mb-0">There are no posts published under this category
-                                            yet. Check back soon!</p>
+                                        <h6 class="fw-bold text-dark fs-6 mb-1">No Bulletins Found</h6>
+                                        <p class="text-muted fs-7 mb-0" style="max-width: 440px; margin: 0 auto; line-height: 1.6;">
+                                            No announcements match your selected category or filter. Official campus notices and administrative circulars posted by the Registrar will appear here.
+                                        </p>
                                     </div>
                                 </div>
-
                             </main>
 
-                            <!-- Right Sidebar Column (Campus Calendar & Contact) -->
-                            <aside class="feed-right-col">
-                                <div class="card border-0 shadow-sm p-3 rounded-4 mb-3 bg-white">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <span class="fw-bold text-dark fs-6"><i
-                                                class="fa-solid fa-calendar-day text-success me-1.5"></i> Campus
-                                            Desk</span>
-                                        <span
-                                            class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1 fs-7">A.Y.
-                                            2026-2027</span>
+                            <!-- Right / Side Column (Campus Desk 30%) -->
+                            <aside>
+                                <!-- Widget: Academic Milestones & Deadlines -->
+                                <div class="campus-desk-card">
+                                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2.5 border-bottom">
+                                        <div>
+                                            <div class="fw-bold text-dark fs-7">{{ (activePeriod && activePeriod.name) ? activePeriod.name : '1st Semester, A.Y. 2026-2027' }}</div>
+                                            <div class="text-muted fs-7">{{ (activePeriod && activePeriod.semester) ? activePeriod.semester : '1st Semester' }}</div>
+                                        </div>
+                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2.5 py-1 rounded-pill fs-7">Term Active</span>
                                     </div>
-                                    <p class="text-muted fs-7 mb-0">
-                                        Official announcements are updated in real-time by the Registrar and Campus
-                                        Administration.
-                                    </p>
-                                </div>
 
-                                <div class="card border-0 shadow-sm p-3 rounded-4 bg-white">
-                                    <div class="fw-bold text-secondary text-uppercase fs-7 mb-2 tracking-wider">Help
-                                        Desk &amp; Hotlines</div>
-                                    <div class="vstack gap-2 fs-7 text-secondary">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fa-solid fa-envelope text-primary"></i> registrar@gncp.edu.ph
+                                    <div class="desk-section-title">
+                                        <span>Academic Milestones</span>
+                                        <span class="text-muted fw-normal" style="font-size: 0.72rem;">{{ (activePeriod && activePeriod.academic_year) ? ('A.Y. ' + activePeriod.academic_year) : 'A.Y. 2026-2027' }}</span>
+                                    </div>
+
+                                    <div class="vstack gap-2">
+                                        <div v-for="m in milestones" :key="m.id" class="desk-date-item">
+                                            <div class="flex-grow-1">
+                                                <div class="fw-semibold text-dark fs-7" style="line-height: 1.35;">{{ m.title }}</div>
+                                                <div class="text-muted mt-0.5" style="font-size: 0.74rem;">{{ m.date_display || (m.date_start ? (m.date_start + ' - ' + (m.date_end || '')) : 'Schedule to be announced') }}</div>
+                                            </div>
+                                            <span class="milestone-badge"
+                                                :class="{
+                                                    'milestone-badge-active': m.status === 'ACTIVE',
+                                                    'milestone-badge-upcoming': m.status === 'UPCOMING',
+                                                    'milestone-badge-scheduled': m.status === 'SCHEDULED',
+                                                    'milestone-badge-completed': m.status === 'COMPLETED'
+                                                }">
+                                                {{ m.status === 'ACTIVE' ? 'Active' : (m.status === 'UPCOMING' ? 'Upcoming' : (m.status === 'COMPLETED' ? 'Completed' : 'Scheduled')) }}
+                                            </span>
                                         </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fa-solid fa-phone text-success"></i> (02) 8123-4567 / 8901
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fa-solid fa-clock text-warning"></i> Mon - Fri (8:00 AM - 5:00 PM)
+
+                                        <div v-if="milestones.length === 0" class="text-center py-4 text-muted fs-7">
+                                            <i class="fa-regular fa-calendar-xmark fs-4 d-block mb-1 opacity-50"></i>
+                                            No milestones scheduled for this term.
                                         </div>
                                     </div>
                                 </div>
@@ -1646,23 +2404,26 @@
                         <!-- Image Lightbox Modal -->
                         <div v-if="activeImageModal"
                             class="sidebar-backdrop show d-flex align-items-center justify-content-center p-3"
-                            style="z-index: 2000;" @click.self="activeImageModal = ''">
+                            style="background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 2100; position: fixed; inset: 0;"
+                            @click.self="activeImageModal = ''">
                             <div class="position-relative max-w-100" style="max-width: 90vw; max-height: 90vh;">
                                 <button type="button"
-                                    class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3 bg-black rounded-circle p-2"
+                                    class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3 bg-black bg-opacity-75 rounded-circle p-2"
                                     @click="activeImageModal = ''" aria-label="Close"></button>
                                 <img :src="activeImageModal" alt="Expanded Announcement"
-                                    class="img-fluid rounded-4 shadow-lg"
+                                    class="img-fluid rounded-3 shadow-2xl"
                                     style="max-height: 85vh; object-fit: contain;">
                             </div>
                         </div>
+
                     </template>
 
                     <!-- ══ TAB 1: DASHBOARD OVERVIEW & OFFICIAL COR ══════════════ -->
-                    <template v-if="activeTab === 'dashboard'">
+                    <template v-if="activeTab === 'dashboard' || activeTab === 'courses'">
+                        <div class="cor-wrapper">
 
-                        <!-- OFFICIAL REGISTRAR PRINTABLE COR FORM CONTAINER -->
-                        <div class="cor-paper" id="printable-cor-card">
+                            <!-- OFFICIAL REGISTRAR PRINTABLE COR FORM CONTAINER -->
+                            <div class="cor-paper" id="printable-cor-card">
 
                             <!-- Header Table -->
                             <div class="table-responsive mb-2">
@@ -1678,8 +2439,7 @@
                                     <tr>
                                         <td style="width: 20%;">
                                             <span class="cor-label">Student No.</span>
-                                            <span class="cor-val font-monospace">{{ corData ? corData.studentNo :
-                                                profile.id }}</span>
+                                            <span class="cor-val font-monospace">{{ corData ? corData.studentNo : profile.id }}</span>
                                         </td>
                                         <td style="width: 25%;">
                                             <span class="cor-label">Family Name</span>
@@ -1687,8 +2447,7 @@
                                         </td>
                                         <td style="width: 25%;">
                                             <span class="cor-label">Given Name</span>
-                                            <span class="cor-val">{{ corData ? corData.firstName : profile.name
-                                                }}</span>
+                                            <span class="cor-val">{{ corData ? corData.firstName : profile.name }}</span>
                                         </td>
                                         <td style="width: 15%;">
                                             <span class="cor-label">Middle Name</span>
@@ -1696,8 +2455,7 @@
                                         </td>
                                         <td style="width: 15%;">
                                             <span class="cor-label">Course Code</span>
-                                            <span class="cor-val">{{ corData ? corData.courseCode : profile.program
-                                                }}</span>
+                                            <span class="cor-val">{{ corData ? corData.courseCode : profile.program }}</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -1711,8 +2469,7 @@
                                         </td>
                                         <td>
                                             <span class="cor-label">Year Level</span>
-                                            <span class="cor-val">{{ corData ? corData.yearLevel : profile.yearLevel
-                                                }}</span>
+                                            <span class="cor-val">{{ corData ? corData.yearLevel : profile.yearLevel }}</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -1722,18 +2479,15 @@
                                         </td>
                                         <td colspan="2">
                                             <span class="cor-label">Curriculum Prospectus</span>
-                                            <span class="cor-val fw-bold" style="color: var(--forest-green);">{{ corData
-                                                ? corData.curriculumVersion : '2026 Revised Curriculum' }}</span>
+                                            <span class="cor-val fw-bold" style="color: var(--forest-green);">{{ corData ? corData.curriculumVersion : '2026 Revised Curriculum' }}</span>
                                         </td>
                                         <td>
                                             <span class="cor-label">Semester</span>
-                                            <span class="cor-val">{{ corData ? corData.semester : '1st Semester'
-                                                }}</span>
+                                            <span class="cor-val">{{ corData ? corData.semester : '1st Semester' }}</span>
                                         </td>
                                         <td>
                                             <span class="cor-label">S.Y.</span>
-                                            <span class="cor-val">{{ corData ? corData.academicYear : '2026-2027'
-                                                }}</span>
+                                            <span class="cor-val">{{ corData ? corData.academicYear : '2026-2027' }}</span>
                                         </td>
                                     </tr>
                                 </table>
@@ -1777,8 +2531,7 @@
                                         </tr>
                                         <tr style="font-weight: bold; background-color: #fafafa;">
                                             <td colspan="2" style="text-align:right">TOTAL UNITS:</td>
-                                            <td class="text-center font-monospace">{{ corData ? corData.totalUnits :
-                                                '0.00' }}</td>
+                                            <td class="text-center font-monospace">{{ corData ? corData.totalUnits : '0.00' }}</td>
                                             <td colspan="8" style="font-size:8.5px; font-weight:normal;">Status Codes
                                                 [S]: A=Added, D=Dropped, Blank=Regular Enrollment</td>
                                         </tr>
@@ -1792,33 +2545,27 @@
                                     <div class="cor-sec-title">Assessment of Fees (Cash)</div>
                                     <div class="cor-fee-row">
                                         <span>Tuition Fee:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.tuitionFee :
-                                            0) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.tuitionFee : 0) }}</span>
                                     </div>
                                     <div class="cor-fee-row">
                                         <span>Laboratory Fee:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.totalLabFee :
-                                            0) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.totalLabFee : 0) }}</span>
                                     </div>
                                     <div class="cor-fee-row">
                                         <span>Miscellaneous:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.miscFee :
-                                            2300) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.miscFee : 2300) }}</span>
                                     </div>
                                     <div class="cor-fee-row">
                                         <span>LMS Fee:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.lmsFee :
-                                            2053.20) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.lmsFee : 2053.20) }}</span>
                                     </div>
                                     <div class="cor-fee-row">
                                         <span>NSTP/ROTC:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.nstpFee : 0)
-                                            }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.nstpFee : 0) }}</span>
                                     </div>
                                     <div class="cor-fee-row">
                                         <span>OMR:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.omrFee :
-                                            278.40) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.omrFee : 278.40) }}</span>
                                     </div>
                                     <div v-if="corData && corData.discount > 0" class="cor-fee-row text-danger">
                                         <span>Scholarship Discount:</span>
@@ -1826,20 +2573,17 @@
                                     </div>
                                     <div class="cor-fee-row cor-fee-total">
                                         <span>Cash Total:</span>
-                                        <span class="font-monospace cor-double-line">₱ {{ formatCurrency(corData ?
-                                            corData.cashTotal : 0) }}</span>
+                                        <span class="font-monospace cor-double-line">₱ {{ formatCurrency(corData ? corData.cashTotal : 0) }}</span>
                                     </div>
                                     <br>
                                     <div class="cor-sec-title" style="margin-top:2px;">Installment</div>
                                     <div class="cor-fee-row">
                                         <span>Installment Charge (8%):</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ?
-                                            corData.installmentCharge : 0) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.installmentCharge : 0) }}</span>
                                     </div>
                                     <div class="cor-fee-row cor-fee-total">
                                         <span>Installment Total:</span>
-                                        <span class="font-monospace">₱ {{ formatCurrency(corData ?
-                                            corData.installmentTotal : 0) }}</span>
+                                        <span class="font-monospace">₱ {{ formatCurrency(corData ? corData.installmentTotal : 0) }}</span>
                                     </div>
                                     <div style="font-size: 8px; margin-top: 4px; font-style: italic; color: #555;">
                                         Note: Installment charge does not apply to full-payment transaction(s).
@@ -1909,6 +2653,7 @@
                                 <span>Encoder: {{ corData ? corData.encoder : 'sbaltazar3' }}</span>
                             </div>
 
+                            </div>
                         </div>
                     </template>
 
@@ -1923,8 +2668,7 @@
                                 title="Click to change profile picture">
                                 <img v-if="profile.photo" :src="'../stations/it-center/assets/uploads/' + profile.photo"
                                     @error="profile.photo = null" alt="Profile Picture">
-                                <div v-else class="avatar-initials">{{ (profile.name ||
-                                    'S').substring(0,2).toUpperCase() }}</div>
+                                <div v-else class="avatar-initials">{{ (profile.name || 'S').substring(0,2).toUpperCase() }}</div>
                                 <div class="avatar-overlay">
                                     <i class="fa-solid fa-camera mb-1" style="font-size:1.1rem"></i>
                                     <span>Change Photo</span>
@@ -1935,8 +2679,7 @@
                                 </h3>
                                 <p><i class="fa-solid fa-envelope me-2"></i>{{ profile.email || 'No email set' }}</p>
                                 <p style="margin-top:4px"><i class="fa-solid fa-id-card me-2"></i>{{ profile.id }}
-                                    &nbsp; <i class="fa-solid fa-graduation-cap me-2"></i>{{ profile.program }} ({{
-                                    profile.yearLevel }})</p>
+                                    &nbsp; <i class="fa-solid fa-graduation-cap me-2"></i>{{ profile.program }} ({{ profile.yearLevel }})</p>
                             </div>
                         </div>
 
@@ -1958,34 +2701,34 @@
                                         <div><label class="f-label">Year Level</label><input class="f-input" type="text"
                                                 :value="profile.yearLevel" disabled></div>
                                     </div>
-                                    <div class="info-row">
+                                    <div class="info-row single">
                                         <div><label class="f-label">Institutional Email</label><input class="f-input"
                                                 type="text" :value="profile.email" disabled></div>
+                                    </div>
+                                    <div class="info-row single">
+                                        <div><label class="f-label">Home Address</label><input class="f-input"
+                                                type="text" :value="profile.address || (profile.personalInfo && profile.personalInfo.address) || '---'" disabled></div>
+                                    </div>
+                                    <div class="info-row">
                                         <div><label class="f-label">Mobile Phone</label><input class="f-input"
                                                 type="tel" v-model="studentForm.phone" placeholder="e.g. 09XX-XXX-XXXX">
                                         </div>
-                                    </div>
-                                    <div class="info-row single">
                                         <div><label class="f-label">Personal Email (Gmail)</label><input class="f-input"
                                                 type="email" v-model="studentForm.personalEmail"
                                                 placeholder="your.personal@gmail.com"></div>
                                     </div>
-                                    <div class="info-row single">
-                                        <div><label class="f-label">Home Address</label><input class="f-input"
-                                                type="text" v-model="studentForm.address"
-                                                placeholder="Street, Barangay, City/Municipality, Province"></div>
-                                    </div>
                                     <div class="info-row">
                                         <div><label class="f-label">Emergency Contact Name</label><input class="f-input"
-                                                type="text" v-model="studentForm.emergencyContactName"></div>
+                                                type="text" v-model="studentForm.emergencyContactName"
+                                                placeholder="Emergency contact full name"></div>
                                         <div><label class="f-label">Emergency Contact Phone</label><input
-                                                class="f-input" type="tel" v-model="studentForm.emergencyContactPhone">
+                                                class="f-input" type="tel" v-model="studentForm.emergencyContactPhone"
+                                                placeholder="Emergency contact phone">
                                         </div>
                                     </div>
                                     <div class="text-end" style="margin-top:8px">
                                         <button type="submit" class="btn-primary-save" :disabled="saving">
-                                            <i class="fa-solid fa-save"></i> {{ saving ? 'Saving...' : 'Save Contact
-                                            Details' }}
+                                            <i class="fa-solid fa-save"></i> {{ saving ? 'Saving...' : 'Save Contact Details' }}
                                         </button>
                                     </div>
                                 </form>
@@ -2044,8 +2787,7 @@
                                     <div class="text-end" style="margin-top:8px">
                                         <button type="submit" class="btn-primary-save" style="background:#003D2B"
                                             :disabled="updatingPass || (pass.confirm && pass.confirm !== pass.newPass)">
-                                            <i class="fa-solid fa-key"></i> {{ updatingPass ? 'Updating...' : 'Update
-                                            Password' }}
+                                            <i class="fa-solid fa-key"></i> {{ updatingPass ? 'Updating...' : 'Update Password' }}
                                         </button>
                                     </div>
                                 </form>
@@ -2205,7 +2947,7 @@
     <script src="assets/js/services/StudentApiService.js?v=<?= time() ?>"></script>
     <script src="assets/js/controllers/StudentPortalController.js?v=<?= time() ?>"></script>
     <script>
-        Vue.createApp(StudentPortalController).mount('#app');
+        window.app = Vue.createApp(StudentPortalController).mount('#app');
     </script>
 </body>
 

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/student.php';
 require_once __DIR__ . '/../../shared/backend/utils/response.php';
 require_once __DIR__ . '/../../shared/backend/services/EmailService.php';
+require_once __DIR__ . '/../../shared/backend/services/AssessmentService.php';
 
 function maskEmailAddress($email) {
     if (!$email || strpos($email, '@') === false) return '***@***.com';
@@ -29,7 +30,7 @@ try {
 
 $action = $_GET['action'] ?? '';
 
-if ($action === 'login_student') {
+if ($action === 'login' || $action === 'login_student') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         sendResponse(false, null, 'Method not allowed. Use POST.', 405);
     }
@@ -71,21 +72,25 @@ if ($action === 'login_student') {
         sendResponse(false, null, 'Invalid Student ID or password.');
     }
 
+    $mustChange = (bool)($student['must_change_password'] ?? false);
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     $_SESSION['gncp_student'] = [
-        'id'    => $student['id'],
-        'name'  => $student['name'],
-        'email' => $student['email']
+        'id'                   => $student['id'],
+        'name'                 => $student['name'],
+        'email'                => $student['email'],
+        'must_change_password' => $mustChange
     ];
 
     sendResponse(true, [
-        'id'       => $student['id'],
-        'name'     => $student['name'],
-        'program'  => $student['program'],
-        'email'    => $student['email'],
-        'photo'    => $student['photo']
+        'id'                   => $student['id'],
+        'name'                 => $student['name'],
+        'program'              => $student['program'],
+        'email'                => $student['email'],
+        'photo'                => $student['photo'],
+        'must_change_password' => $mustChange
     ]);
 
 } elseif ($action === 'get_student_dashboard') {
@@ -204,28 +209,51 @@ if ($action === 'login_student') {
     $totalUnits = 0.00;
     $totalLabFee = 0.00;
 
-    $studentSection = $enrollment['assignedSection'] ?? $helpdesk['section'] ?? $student['section_code'] ?? '';
+    $studentSection = !empty($enrollment['assignedSection']) ? $enrollment['assignedSection'] 
+                    : (!empty($helpdesk['section']) ? $helpdesk['section'] 
+                    : (!empty($student['section_code']) ? $student['section_code'] 
+                    : (!empty($preEnrollment['section_code']) ? $preEnrollment['section_code'] : '')));
     
     foreach ($advisedSubjects as $sub) {
         $subTitle = $sub['title'] ?? $sub['name'] ?? '';
         $subCode = $sub['code'] ?? '';
 
-        $secStmt = $pdo->prepare("
-            SELECT * FROM `subject_sections` 
-            WHERE (`subject` = :title OR `code` LIKE :code_pattern)
-            LIMIT 1
-        ");
-        $secStmt->execute([
-            'title' => $subTitle,
-            'code_pattern' => '%' . $subCode . '%'
-        ]);
-        $sectionRow = $secStmt ? $secStmt->fetch() : null;
+        $sectionRow = null;
+        if (!empty($studentSection)) {
+            $cleanSec = preg_replace('/^(BSCpE|BSCOE|BSIT|BSCS|BSBA|BSED)-[1-4][A-Z]-?/i', '', $studentSection);
+            $secStmtSect = $pdo->prepare("
+                SELECT * FROM `subject_sections` 
+                WHERE (`code` LIKE :sect_pattern OR `code` LIKE :clean_pattern) AND (`subject` = :title OR `code` LIKE :code_pattern)
+                LIMIT 1
+            ");
+            $secStmtSect->execute([
+                'sect_pattern' => '%' . $studentSection . '%',
+                'clean_pattern' => '%' . $cleanSec . '%',
+                'title' => $subTitle,
+                'code_pattern' => '%' . $subCode . '%'
+            ]);
+            $sectionRow = $secStmtSect ? $secStmtSect->fetch() : null;
+        }
+        if (!$sectionRow) {
+            $secStmt = $pdo->prepare("
+                SELECT * FROM `subject_sections` 
+                WHERE (`subject` = :title OR `code` LIKE :code_pattern)
+                LIMIT 1
+            ");
+            $secStmt->execute([
+                'title' => $subTitle,
+                'code_pattern' => '%' . $subCode . '%'
+            ]);
+            $sectionRow = $secStmt ? $secStmt->fetch() : null;
+        }
 
         $lec = isset($sub['lecture_units']) ? (float)$sub['lecture_units'] : (isset($sub['lectureUnits']) ? (float)$sub['lectureUnits'] : 3.00);
         $lab = isset($sub['lab_units']) ? (float)$sub['lab_units'] : (isset($sub['labUnits']) ? (float)$sub['labUnits'] : 0.00);
         $units = $lec + $lab;
         $totalUnits += $units;
         $totalLabFee += isset($sub['lab_fee']) ? (float)$sub['lab_fee'] : (isset($sub['labFee']) ? (float)$sub['labFee'] : 0.00);
+
+        $resolvedSection = !empty($studentSection) ? $studentSection : (!empty($sectionRow['code']) ? $sectionRow['code'] : 'TBA');
 
         if ($sectionRow) {
             $timeStr = $sectionRow['time'] ?? 'TBA';
@@ -245,7 +273,7 @@ if ($action === 'login_student') {
                 'days' => $sectionRow['days'] ?? 'MWF',
                 'start' => $startTime ?: '08:00 AM',
                 'end' => $endTime ?: '11:00 AM',
-                'section' => $sectionRow['code'] ?? ($studentSection ?: 'BSIT-1A'),
+                'section' => $resolvedSection,
                 'room' => $sectionRow['room'] ?? 'Lab 1',
                 'instructor' => $sectionRow['instructor'] ?? 'Prof. Staff',
                 's' => ''
@@ -259,7 +287,7 @@ if ($action === 'login_student') {
                 'days' => 'TBA',
                 'start' => 'TBA',
                 'end' => 'TBA',
-                'section' => $studentSection ?: 'TBA',
+                'section' => $resolvedSection,
                 'room' => 'TBA',
                 'instructor' => 'TBA',
                 's' => ''
@@ -267,40 +295,23 @@ if ($action === 'login_student') {
         }
     }
 
-    // Fee Schedule calculations
-    $tuitionRate = 650.00;
-    $miscFee = 2300.00;
-    $lmsFee = 2053.20;
-    $omrFee = 278.40;
-    $nstpFee = 0.00;
+    // Delegate fee calculation to authoritative AssessmentService
     $nstpType = strtoupper($preEnrollment['nstp'] ?? $student['nstp'] ?? 'NONE');
-
-    $feeStmt = $pdo->query("SELECT * FROM `fee_schedule`");
-    if ($feeStmt) {
-        $feesList = $feeStmt->fetchAll();
-        $calcMisc = 0.00;
-        foreach ($feesList as $f) {
-            $fType = strtoupper($f['type']);
-            $fLabel = strtoupper($f['label']);
-            $fAmt = (float)$f['amount'];
-            if ($fType === 'TUITION') $tuitionRate = $fAmt;
-            elseif ($fLabel === 'LMS FEE') $lmsFee = $fAmt;
-            elseif ($fLabel === 'OMR' || $fLabel === 'OMR FEE') $omrFee = $fAmt;
-            elseif ($fLabel === 'NSTP' || $fLabel === 'NSTP FEE') {
-                if ($nstpType !== 'NONE' && $nstpType !== 'N/A' && $nstpType !== '') $nstpFee = $fAmt;
-            } elseif ($fType === 'MISCELLANEOUS') $calcMisc += $fAmt;
-        }
-        if ($calcMisc > 0) $miscFee = $calcMisc;
-    }
-    if ($nstpFee === 0.00 && $nstpType !== 'NONE' && $nstpType !== 'N/A' && $nstpType !== '') {
-        $nstpFee = 325.00;
-    }
-
-    $tuitionFee = $totalUnits * $tuitionRate;
     $discount = (float)($scholarship['discount'] ?? 0.00);
-    $cashTotal = $tuitionFee + $totalLabFee + $miscFee + $lmsFee + $omrFee + $nstpFee - $discount;
-    $installmentCharge = $cashTotal * 0.08;
-    $installmentTotal = $cashTotal + $installmentCharge;
+    $snapshot = $enrollmentData['assessmentSnapshot'] ?? $payment['assessmentSnapshot'] ?? null;
+
+    $assessment = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstpType, $discount, $snapshot);
+
+    $tuitionRate       = $assessment['tuitionRate'];
+    $tuitionFee        = $assessment['tuitionFee'];
+    $totalLabFee       = $assessment['totalLabFee'];
+    $miscFee           = $assessment['miscFee'];
+    $lmsFee            = $assessment['lmsFee'];
+    $nstpFee           = $assessment['nstpFee'];
+    $omrFee            = $assessment['omrFee'];
+    $cashTotal         = $assessment['cashTotal'];
+    $installmentCharge = $assessment['installmentCharge'];
+    $installmentTotal  = $assessment['installmentTotal'];
 
     $orNumber = $payment['orNumber'] ?? $payment['or_number'] ?? $student['or_number'] ?? null;
     $encoder  = $payment['processedBy'] ?? $student['cashier_name'] ?? 'sbaltazar3';
@@ -341,14 +352,15 @@ if ($action === 'login_student') {
 
     sendResponse(true, [
         'profile'      => [
-            'id'          => $student['id'],
-            'name'        => $student['name'],
-            'program'     => $student['program'],
-            'email'       => $student['email'],
-            'photo'       => $student['photo'],
-            'yearLevel'   => $student['year_level'],
-            'status'      => $student['status'],
-            'personalInfo'=> $personalInfo,
+            'id'                  => $student['id'],
+            'name'                => $student['name'],
+            'program'             => $student['program'],
+            'email'               => $student['email'],
+            'photo'               => $student['photo'],
+            'yearLevel'           => $student['year_level'],
+            'status'              => $student['status'],
+            'must_change_password'=> (bool)($student['must_change_password'] ?? false),
+            'personalInfo'        => $personalInfo,
         ],
         'roadmap'      => $roadmap,
         'requirements' => $requirements,
@@ -358,7 +370,19 @@ if ($action === 'login_student') {
         'helpdesk'     => $helpdesk,
         'enrollment'   => $enrollment,
         'subjects'     => $subjects,
-        'corData'      => $corData
+        'corData'      => $corData,
+        'activePeriod' => $activePeriod,
+        'milestones'   => (function() use ($pdo, $activePeriod) {
+            require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
+            $periodId = $activePeriod['id'] ?? null;
+            $res = MilestoneService::getMilestones($pdo, $periodId ? ['academic_period_id' => $periodId] : []);
+            if ($res['success'] && !empty($res['data'])) {
+                return $res['data'];
+            }
+            // Fallback to all milestones if period specific is empty
+            $allRes = MilestoneService::getMilestones($pdo);
+            return $allRes['success'] ? $allRes['data'] : [];
+        })()
     ]);
 
 
@@ -483,9 +507,9 @@ if ($action === 'login_student') {
     $rawInput = file_get_contents('php://input');
     $payload  = json_decode($rawInput, true);
 
-    $studentId       = trim($payload['studentId'] ?? '');
-    $currentPassword = trim($payload['currentPassword'] ?? '');
-    $newPassword     = trim($payload['newPassword'] ?? '');
+    $studentId       = trim($payload['studentId'] ?? $payload['student_id'] ?? $payload['username'] ?? $payload['id'] ?? '');
+    $currentPassword = trim($payload['currentPassword'] ?? $payload['current_password'] ?? '');
+    $newPassword     = trim($payload['newPassword'] ?? $payload['new_password'] ?? '');
 
     if (!$studentId || !$currentPassword || !$newPassword) {
         sendResponse(false, null, 'Student ID, current password, and new password are required.', 400);
@@ -530,10 +554,17 @@ if ($action === 'login_student') {
     }
 
     $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
-    $pdo->prepare("UPDATE `students` SET `password` = :pwd WHERE `id` = :id")
+    $pdo->prepare("UPDATE `students` SET `password` = :pwd, `must_change_password` = 0 WHERE `id` = :id")
         ->execute(['pwd' => $hashed, 'id' => $studentId]);
 
-    sendResponse(true, null, 'Password changed successfully.');
+    if (isset($_SESSION['gncp_student'])) {
+        $_SESSION['gncp_student']['must_change_password'] = false;
+    }
+
+    sendResponse(true, [
+        'studentId'            => $studentId,
+        'must_change_password' => false
+    ], 'Password changed successfully.');
 
 } elseif ($action === 'request_password_reset') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -574,6 +605,7 @@ if ($action === 'login_student') {
         $studentName = $student['name'];
         $pInfo       = json_decode($student['personal_info'] ?? '{}', true) ?: [];
         $personalEmail = !empty($pInfo['email']) ? trim($pInfo['email']) : '';
+        $schoolEmail   = !empty($student['email']) ? trim($student['email']) : '';
         
         // If personal_info email is empty or institutional (@gncp.edu.ph), lookup original personal email from pre_enrollments
         if (empty($personalEmail) || str_contains(strtolower($personalEmail), '@gncp.edu.ph')) {
@@ -585,7 +617,13 @@ if ($action === 'login_student') {
             }
         }
         
-        $targetEmail = !empty($personalEmail) ? $personalEmail : (!empty($student['email']) ? $student['email'] : '');
+        // If the user specifically entered their school email, send directly to school email
+        if (strcasecmp($identifier, $schoolEmail) === 0 || str_ends_with(strtolower($identifier), '@gncp.edu.ph')) {
+            $targetEmail = !empty($schoolEmail) ? $schoolEmail : (!empty($personalEmail) ? $personalEmail : '');
+        } else {
+            // Otherwise, default to personal email with fallback to school email
+            $targetEmail = !empty($personalEmail) ? $personalEmail : (!empty($schoolEmail) ? $schoolEmail : '');
+        }
     } else {
         // Fallback search in pre_enrollments staging table
         $peStmt = $pdo->prepare("
@@ -651,7 +689,8 @@ if ($action === 'login_student') {
 
     sendResponse(true, [
         'maskedEmail' => $masked,
-        'studentId'   => $studentId
+        'studentId'   => $studentId,
+        'targetEmail' => $targetEmail
     ], "Password reset verification code has been sent to $masked. Please check your email inbox.");
 
 } elseif ($action === 'reset_password_with_code') {
@@ -691,30 +730,43 @@ if ($action === 'login_student') {
     ]);
     $student = $stmt->fetch();
 
-    $targetEmail = '';
+    $emailsToCheck = [];
     if ($student) {
-        $pInfo       = json_decode($student['personal_info'] ?? '{}', true) ?: [];
-        $targetEmail = !empty($pInfo['email']) ? $pInfo['email'] : (!empty($student['email']) ? $student['email'] : '');
+        if (!empty($student['email'])) $emailsToCheck[] = trim($student['email']);
+        $pInfo = json_decode($student['personal_info'] ?? '{}', true) ?: [];
+        if (!empty($pInfo['email'])) $emailsToCheck[] = trim($pInfo['email']);
+        
+        // Also check pre_enrollments email
+        $peQuery = $pdo->prepare("SELECT `email` FROM `pre_enrollments` WHERE `existing_student_id` = :sid OR `temp_student_id` = :ref LIMIT 1");
+        $peQuery->execute(['sid' => $student['id'], 'ref' => $student['temp_reference_no'] ?? $student['id']]);
+        $peRow = $peQuery->fetch(PDO::FETCH_ASSOC);
+        if ($peRow && !empty($peRow['email'])) {
+            $emailsToCheck[] = trim($peRow['email']);
+        }
     } else {
         $peStmt = $pdo->prepare("SELECT * FROM `pre_enrollments` WHERE `temp_student_id` = :ref OR `email` = :email LIMIT 1");
         $peStmt->execute(['ref' => $identifier, 'email' => $identifier]);
         $pre = $peStmt->fetch();
-        if ($pre) {
-            $targetEmail = $pre['email'] ?? '';
+        if ($pre && !empty($pre['email'])) {
+            $emailsToCheck[] = trim($pre['email']);
         }
     }
 
-    if (!$targetEmail) {
+    $emailsToCheck = array_values(array_unique(array_filter($emailsToCheck)));
+
+    if (empty($emailsToCheck)) {
         sendResponse(false, null, 'Student account record not found.', 404);
     }
 
     // Verify code in password_resets table where expires_at > NOW()
+    $placeholders = implode(',', array_fill(0, count($emailsToCheck), '?'));
     $chkStmt = $pdo->prepare("
         SELECT * FROM `password_resets` 
-        WHERE `email` = :email AND `code` = :code AND `expires_at` > NOW()
+        WHERE `email` IN ($placeholders) AND `code` = ? AND `expires_at` > NOW()
         ORDER BY `id` DESC LIMIT 1
     ");
-    $chkStmt->execute(['email' => $targetEmail, 'code' => $code]);
+    $params = array_merge($emailsToCheck, [$code]);
+    $chkStmt->execute($params);
     $resetRow = $chkStmt->fetch();
 
     if (!$resetRow) {
@@ -725,19 +777,45 @@ if ($action === 'login_student') {
     $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 
     if ($student) {
-        $upd = $pdo->prepare("UPDATE `students` SET `password` = :pwd WHERE `id` = :id");
+        $upd = $pdo->prepare("UPDATE `students` SET `password` = :pwd, `must_change_password` = 0 WHERE `id` = :id");
         $upd->execute(['pwd' => $hashedPassword, 'id' => $student['id']]);
     }
 
-    // Invalidate reset code
-    $pdo->prepare("DELETE FROM `password_resets` WHERE `email` = :email")->execute(['email' => $targetEmail]);
+    // Invalidate reset codes for this student's emails
+    $delStmt = $pdo->prepare("DELETE FROM `password_resets` WHERE `email` IN ($placeholders)");
+    $delStmt->execute($emailsToCheck);
 
     sendResponse(true, null, 'Password reset successfully! You can now log into your GNCP Student Portal with your new password.');
 
+} elseif ($action === 'fetch_announcements') {
+    require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
+    $res = AnnouncementService::getAnnouncements($pdo, ['status' => 'PUBLISHED', 'target_audience' => 'STUDENTS']);
+    sendResponse($res['success'], $res['data'] ?? [], $res['message'] ?? '');
+
+} elseif ($action === 'fetch_milestones') {
+    require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
+    $res = MilestoneService::getMilestones($pdo, $_GET);
+    sendResponse($res['success'], $res['data'] ?? [], $res['message'] ?? '');
+
 } elseif ($action === 'logout') {
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        session_destroy();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
+    $_SESSION = [];
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params["path"] ?? '/',
+            $params["domain"] ?? '',
+            $params["secure"] ?? false,
+            $params["httponly"] ?? true
+        );
+    }
+    session_unset();
+    session_destroy();
     sendResponse(true, null, 'Logged out successfully.');
 
 } else {

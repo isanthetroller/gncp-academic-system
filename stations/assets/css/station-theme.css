@@ -274,6 +274,51 @@ h1, h2, h3, h4, h5, h6,
     color: var(--gold, #D4AF37);
 }
 
+/* ── Sidebar Logout Action ─────────────────────────────────────────────── */
+.nav-logout, 
+.sidebar-nav button.nav-logout, 
+.sidebar-nav a.nav-logout {
+    color: #fca5a5 !important;
+    background: rgba(239, 68, 68, 0.07) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    margin-top: 4px;
+    font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.nav-logout span,
+.nav-logout i {
+    color: #fca5a5 !important;
+    transition: all 0.25s ease !important;
+}
+
+.nav-logout:hover,
+.sidebar-nav button.nav-logout:hover,
+.sidebar-nav a.nav-logout:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.32) 100%) !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+.nav-logout:hover span,
+.nav-logout:hover i,
+.nav-logout:hover span i {
+    color: #ffffff !important;
+}
+
+.nav-logout:hover span i {
+    transform: translateX(3px) scale(1.12);
+}
+
+.nav-logout:active,
+.sidebar-nav button.nav-logout:active,
+.sidebar-nav a.nav-logout:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2) !important;
+}
+
 .sidebar-footer {
     padding: 14px 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -913,3 +958,41 @@ h1, h2, h3, h4, h5, h6,
     margin: 0;
     line-height: 1.45;
 }
+
+/* ── Station Responsive & Mobile Fallback Rules (<= 991.98px) ── */
+@media (max-width: 991.98px) {
+    body {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        touch-action: pan-y;
+    }
+
+    .dashboard-shell, .station-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh !important;
+    }
+
+    .main-content, .main-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+    }
+
+    .station-table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        gap: 12px !important;
+    }
+}
+

@@ -3,10 +3,12 @@ const ref = Vue.ref;
 const reactive = Vue.reactive;
 const computed = Vue.computed;
 const onMounted = Vue.onMounted;
+const onUnmounted = Vue.onUnmounted;
 
-createApp({
+window.app = createApp({
     components: {
-        'station-sidebar': window.StationSidebar
+        'employee-sidebar': window.EmployeeSidebar || window.StationSidebar,
+        'station-sidebar': window.StationSidebar || window.EmployeeSidebar
     },
     setup() {
         const currentView = ref('dashboard');
@@ -90,7 +92,13 @@ createApp({
                 if (user.role === 'HELPDESK' || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'REGISTRAR') {
                     currentUser.value = user;
                     fetchCurrentProfile();
-                    loadQueue();
+                    if (user.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
+                        window.PasswordChangeGuard.checkAndPrompt(user, function() {
+                            loadQueue();
+                        });
+                    } else {
+                        loadQueue();
+                    }
                     return;
                 }
             }
@@ -101,14 +109,50 @@ createApp({
 
 
 
+        let clockTimer = null;
+        const stopLiveSync = () => {
+            if (clockTimer) {
+                clearInterval(clockTimer);
+                clockTimer = null;
+            }
+            if (window.StationDataBus && typeof window.StationDataBus.stopPolling === 'function') {
+                window.StationDataBus.stopPolling();
+            }
+        };
+
         const showLogoutConfirm = ref(false);
 
         const handleLogout = () => {
-            showLogoutConfirm.value = true;
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Confirm Logout',
+                    text: 'Are you sure you want to log out of the TLC Helpdesk Workstation?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'gncp-swal-card',
+                        title: 'gncp-swal-title',
+                        confirmButton: 'gncp-swal-confirm-btn',
+                        cancelButton: 'gncp-swal-cancel-btn'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        confirmLogout();
+                    }
+                });
+            } else {
+                showLogoutConfirm.value = true;
+            }
         };
 
         const confirmLogout = () => {
             showLogoutConfirm.value = false;
+            stopLiveSync();
             currentUser.value = null;
             sessionStorage.removeItem('gncp_station_user');
             sessionStorage.removeItem('gncp_admin_user');
@@ -118,7 +162,7 @@ createApp({
             fetch('../../api/index.php?action=auth/logout', { method: 'POST' })
                 .catch(() => {})
                 .finally(() => {
-                    window.location.href = '../../index.html?clear=true';
+                    window.location.replace('../../index.html?clear=true&logout=true');
                 });
         };
 
@@ -348,7 +392,7 @@ createApp({
         onMounted(() => {
             checkSession();
             updateTime();
-            setInterval(updateTime, 1000);
+            clockTimer = setInterval(updateTime, 1000);
 
             document.addEventListener('hide.bs.modal', () => {
                 if (document.activeElement && typeof document.activeElement.blur === 'function') {
@@ -362,6 +406,10 @@ createApp({
                     loadQueue();
                 }
             });
+        });
+
+        onUnmounted(() => {
+            stopLiveSync();
         });
 
         const formatStatus = (status) => {
@@ -383,6 +431,154 @@ createApp({
             if (['flagged', 'discrepancy', 'unfit', 'rejected'].includes(s)) return 'flagged';
             if (['skipped'].includes(s)) return 'archived';
             return s;
+        };
+
+        // ── IN-APP ACCOUNT PROFILE & SECURITY MANAGEMENT ──────────────────────
+        const user = ref({ name: '', email: '', username: '', role: '', avatar: null });
+        const pass = ref({ current: '', newPass: '', confirm: '' });
+        const saving = ref(false);
+        const updatingPass = ref(false);
+        const showCurrentPass = ref(false);
+        const showNewPass = ref(false);
+        const fileInput = ref(null);
+        const passStrengthLevel = ref(0);
+        const avatarFailed = ref(false);
+
+        const initials = computed(() => {
+            const name = user.value.name || (currentUser.value ? currentUser.value.name : 'Helpdesk Staff');
+            const parts = name.trim().split(' ');
+            return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0][0].toUpperCase();
+        });
+
+        const formattedAvatar = computed(() => {
+            const avatar = user.value.avatar || (currentUser.value ? currentUser.value.avatar : null);
+            if (!avatar) return null;
+            if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:')) return avatar;
+            const filename = avatar.split('/').pop();
+            return '../../uploads/avatars/' + filename;
+        });
+
+        const passStrengthLabel = computed(() => {
+            const l = passStrengthLevel.value;
+            if (l <= 1) return 'Weak'; if (l === 2) return 'Fair'; if (l === 3) return 'Good'; return 'Strong';
+        });
+        const passStrengthColor = computed(() => {
+            const l = passStrengthLevel.value;
+            if (l <= 1) return '#ef4444'; if (l === 2) return '#f59e0b'; if (l === 3) return '#10b981'; return '#059669';
+        });
+        const passStrengthWidth = computed(() => (passStrengthLevel.value / 4 * 100) + '%');
+
+        function checkPassStrength() {
+            const p = pass.value.newPass;
+            let score = 0;
+            if (p.length >= 8) score++; if (/[A-Z]/.test(p)) score++; if (/[0-9]/.test(p)) score++; if (/[^A-Za-z0-9]/.test(p)) score++;
+            passStrengthLevel.value = Math.max(p.length >= 6 ? 1 : 0, score);
+        }
+
+        function triggerFileInput() { if (fileInput.value) fileInput.value.click(); }
+
+        const loadProfile = async () => {
+            if (currentUser.value) {
+                user.value.name = currentUser.value.name || '';
+                user.value.email = currentUser.value.email || '';
+                user.value.username = currentUser.value.username || 'helpdesk';
+                user.value.role = currentUser.value.role || 'HELPDESK';
+                user.value.avatar = currentUser.value.avatar || null;
+            }
+            try {
+                const username = user.value.username || 'helpdesk';
+                const res = await fetch('../../api/index.php?action=auth/profile&username=' + encodeURIComponent(username));
+                const data = await res.json();
+                if (data.success && data.data) {
+                    user.value = { ...user.value, ...data.data };
+                }
+            } catch (e) { console.error('[Profile] Staff fetch failed:', e); }
+        };
+
+        const onFileSelected = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) { Swal.fire('File Too Large', 'Please select an image smaller than 5MB.', 'warning'); return; }
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const b64 = ev.target.result;
+                try {
+                    const res = await fetch('../../api/index.php?action=auth/upload_avatar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: user.value.username || 'helpdesk', photoData: b64 })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.data) {
+                        const newFilename = data.data.avatar || data.data.photo;
+                        user.value.avatar = newFilename;
+                        if (currentUser.value) currentUser.value.avatar = newFilename;
+                        const raw = sessionStorage.getItem('gncp_station_user');
+                        if (raw) {
+                            const p = JSON.parse(raw);
+                            p.avatar = newFilename;
+                            sessionStorage.setItem('gncp_station_user', JSON.stringify(p));
+                        }
+                        Swal.fire('Success', 'Profile picture updated successfully.', 'success');
+                    } else { Swal.fire('Upload Failed', data.message || 'Unable to update profile picture.', 'error'); }
+                } catch (err) { Swal.fire('Error', 'Unable to process image upload.', 'error'); }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const saveStaffProfile = async () => {
+            saving.value = true;
+            try {
+                const avatarFilename = user.value.avatar ? user.value.avatar.split('/').pop() : null;
+                const res = await fetch('../../api/index.php?action=auth/update_profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: user.value.username,
+                        name: user.value.name,
+                        email: user.value.email,
+                        avatar: avatarFilename
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (currentUser.value) {
+                        currentUser.value.name = user.value.name;
+                        currentUser.value.email = user.value.email;
+                        currentUser.value.avatar = avatarFilename;
+                    }
+                    const raw = sessionStorage.getItem('gncp_station_user');
+                    if (raw) {
+                        const p = JSON.parse(raw);
+                        p.name = user.value.name;
+                        p.email = user.value.email;
+                        p.avatar = avatarFilename;
+                        sessionStorage.setItem('gncp_station_user', JSON.stringify(p));
+                    }
+                    Swal.fire('Success', 'Personal details updated successfully.', 'success');
+                } else { Swal.fire('Update Failed', data.message || 'Unable to update profile.', 'error'); }
+            } catch (e) { Swal.fire('Error', 'Server error while saving profile.', 'error'); }
+            finally { saving.value = false; }
+        };
+
+        const updatePassword = async () => {
+            if (pass.value.newPass !== pass.value.confirm) { Swal.fire('Password Mismatch', 'New password and confirm password do not match.', 'warning'); return; }
+            if (pass.value.newPass.length < 6) { Swal.fire('Weak Password', 'New password must be at least 6 characters.', 'warning'); return; }
+            updatingPass.value = true;
+            try {
+                const res = await fetch('../../api/index.php?action=auth/change_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user.value.username, current_password: pass.value.current, new_password: pass.value.newPass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    pass.value = { current: '', newPass: '', confirm: '' };
+                    passStrengthLevel.value = 0;
+                    Swal.fire('Success', 'Password changed successfully.', 'success');
+                } else { Swal.fire('Password Error', data.message || 'Unable to update password.', 'error'); }
+            } catch (e) { Swal.fire('Error', 'Server connection error while changing password.', 'error'); }
+            finally { updatingPass.value = false; }
         };
 
         return {
@@ -418,7 +614,12 @@ createApp({
             handleLogout,
             showLogoutConfirm,
             confirmLogout,
-            timeGreeting
+            timeGreeting,
+            // Profile & Security
+            user, pass, saving, updatingPass, showCurrentPass, showNewPass, fileInput,
+            passStrengthLevel, passStrengthLabel, passStrengthColor, passStrengthWidth,
+            initials, formattedAvatar, checkPassStrength, triggerFileInput, onFileSelected,
+            saveStaffProfile, updatePassword, loadProfile
         };
     }
 }).mount('#app');

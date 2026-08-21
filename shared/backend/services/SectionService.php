@@ -72,47 +72,56 @@ class SectionService {
             return ['success' => false, 'message' => 'Program code is required.', 'code' => 400];
         }
 
-        $stmt = $pdo->prepare("SELECT `name`, `code` FROM `programs` WHERE `code` = :code OR `name` = :name");
-        $stmt->execute(['code' => $prog, 'name' => $prog]);
+        $progInput = trim($prog);
+        $aliasCode = (strtoupper($progInput) === 'BSCPE' || strtoupper($progInput) === 'BSCOE') ? 'BSCOE' : $progInput;
+        $aliasAlt  = (strtoupper($progInput) === 'BSCPE' || strtoupper($progInput) === 'BSCOE') ? 'BSCpE' : $progInput;
+        $aliasName = (strtoupper($progInput) === 'BSCPE' || strtoupper($progInput) === 'BSCOE') ? 'BS Computer Engineering' : $progInput;
+
+        $stmt = $pdo->prepare("SELECT `name`, `code` FROM `programs` WHERE `code` = :code OR `name` = :name OR `code` = :aliasCode OR `name` = :aliasName OR `code` = :aliasAlt");
+        $stmt->execute(['code' => $progInput, 'name' => $progInput, 'aliasCode' => $aliasCode, 'aliasName' => $aliasName, 'aliasAlt' => $aliasAlt]);
         $progRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $progName = $progRow['name'] ?? $prog;
-        $progCode = $progRow['code'] ?? $prog;
+        $progName = $progRow['name'] ?? $aliasName;
+        $progCode = $progRow['code'] ?? $aliasCode;
 
+        $progLike = '%' . $progCode . '%';
         $stmt = $pdo->prepare("
             SELECT s.*,
-                   ap.semester,
-                   ap.academic_year AS school_year,
+                   COALESCE(ap.semester, '1st Semester') AS semester,
+                   COALESCE(ap.academic_year, '2026-2027') AS school_year,
                    (
                        COALESCE(
                            (SELECT COUNT(*) FROM `pre_enrollments` pe
                             WHERE pe.section_code = s.code
-                              AND (pe.course_code = :progCode1 OR pe.course_code = :progName1)
+                              AND (pe.course_code = :progCode1 OR pe.course_code = :progName1 OR pe.course_code = :progInput1 OR pe.course_code = :progAlt1)
                               AND pe.status NOT IN ('Rejected','PRE_REGISTERED')),
                            0
                        ) + COALESCE(
                            (SELECT COUNT(*) FROM `students` st
                              WHERE JSON_UNQUOTE(JSON_EXTRACT(st.enrollment_data, '$.assignedSection')) = s.code
-                               AND (st.program = :progName2 OR st.program = :progCode2)),
+                               AND (st.program = :progName2 OR st.program = :progCode2 OR st.program = :progInput2 OR st.program = :progAlt2)),
                             0
                        )
                    ) AS enrolled_count
             FROM `sections` s
-            JOIN `academic_periods` ap ON s.academic_period_id = ap.id
-            WHERE (s.program = :progName3 OR s.program = :progCode3)
-              AND (s.year_level = :year OR :year_fallback = '')
-              AND ap.status    = 'Active'
+            LEFT JOIN `academic_periods` ap ON s.academic_period_id = ap.id
+            WHERE (s.program = :progName3 OR s.program = :progCode3 OR s.program = :progInput3 OR s.program = :progAlt3 OR s.program LIKE :progLike3)
             ORDER BY s.code ASC
         ");
         $stmt->execute([
             'progName1'     => $progName,
             'progCode1'     => $progCode,
+            'progInput1'    => $progInput,
+            'progAlt1'      => $aliasAlt,
             'progName2'     => $progName,
             'progCode2'     => $progCode,
+            'progInput2'    => $progInput,
+            'progAlt2'      => $aliasAlt,
             'progName3'     => $progName,
             'progCode3'     => $progCode,
-            'year'          => $year,
-            'year_fallback' => $year
+            'progInput3'    => $progInput,
+            'progAlt3'      => $aliasAlt,
+            'progLike3'     => $progLike
         ]);
         $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

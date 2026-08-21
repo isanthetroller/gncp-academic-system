@@ -16,6 +16,9 @@
     const View = global.RegistrarView;
 
     const App = {
+        components: {
+            'employee-sidebar': global.EmployeeSidebar || (typeof window !== 'undefined' ? window.EmployeeSidebar : null)
+        },
         setup() {
             // ── Auth State ────────────────────────────────────────────────
             const currentUser = ref(null);
@@ -191,7 +194,31 @@
 
 
             const handleLogout = () => {
-                showLogoutConfirm.value = true;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Confirm Logout',
+                        text: 'Are you sure you want to log out of the Registrar Portal?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true,
+                        customClass: {
+                            popup: 'gncp-swal-card',
+                            title: 'gncp-swal-title',
+                            confirmButton: 'gncp-swal-confirm-btn',
+                            cancelButton: 'gncp-swal-cancel-btn'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            confirmLogout();
+                        }
+                    });
+                } else {
+                    showLogoutConfirm.value = true;
+                }
             };
 
             const confirmLogout = () => {
@@ -206,7 +233,7 @@
                 fetch('../api/index.php?action=auth/logout', { method: 'POST' })
                     .catch(() => {})
                     .finally(() => {
-                        window.location.href = '../index.html?clear=true';
+                        window.location.replace('../index.html?clear=true&logout=true');
                     });
             };
 
@@ -463,53 +490,95 @@
                 return ext === 'pdf';
             };
 
-            const isDocVerified = (item) => {
-                if (!selectedApplication.value || !selectedApplication.value.requirementsData) return false;
-                const key = getDocKey(item);
-                const docs = selectedApplication.value.requirementsData.docs || {};
-                return docs[key] === 'verified' || docs[key] === 'submitted';
+            const getDefaultDeadline = () => {
+                const d = new Date();
+                d.setDate(d.getDate() + 60); // 60 days from now
+                return d.toISOString().split('T')[0];
             };
 
-            const toggleDocStatus = (item, checked) => {
-                if (!selectedApplication.value) return;
-
-                const currentStatus = selectedApplication.value.status;
-                const isApproved = ['Approved', 'APPROVED', 'REGISTRAR_APPROVED'].includes(currentStatus);
-
-                if (['ENROLLED', 'Rejected', 'REJECTED'].includes(currentStatus)) {
-                    return;
+            const getDocEntry = (item, studentRecord = null) => {
+                const appRecord = studentRecord || selectedApplication.value;
+                if (!appRecord || !appRecord.requirementsData) return null;
+                const key = getDocKey(item);
+                const docs = appRecord.requirementsData.docs || {};
+                const val = docs[key];
+                if (!val) return null;
+                if (typeof val === 'string') {
+                    if (val === 'verified' || val === 'ORIGINAL') return { status: 'ORIGINAL' };
+                    if (val === 'submitted' || val === 'PHOTOCOPY') return { status: 'PHOTOCOPY' };
+                    if (val === 'UNDERTAKING') return { status: 'UNDERTAKING', deadline: getDefaultDeadline() };
+                    return { status: 'NOT_SUBMITTED' };
                 }
+                return val;
+            };
 
+            const getDocStatus = (item, studentRecord = null) => {
+                const entry = getDocEntry(item, studentRecord);
+                if (!entry) return 'NOT_SUBMITTED';
+                const st = (entry.status || '').toUpperCase();
+                if (st === 'VERIFIED' || st === 'ORIGINAL') return 'ORIGINAL';
+                if (st === 'SUBMITTED' || st === 'PHOTOCOPY') return 'PHOTOCOPY';
+                if (st === 'UNDERTAKING') return 'UNDERTAKING';
+                return 'NOT_SUBMITTED';
+            };
+
+            const getDocUndertakingDeadline = (item, studentRecord = null) => {
+                const entry = getDocEntry(item, studentRecord);
+                return (entry && entry.deadline) ? entry.deadline : getDefaultDeadline();
+            };
+
+            const getDocRemarks = (item, studentRecord = null) => {
+                const entry = getDocEntry(item, studentRecord);
+                return (entry && entry.remarks) ? entry.remarks : '';
+            };
+
+            const isDocVerified = (item, studentRecord = null) => {
+                const st = getDocStatus(item, studentRecord);
+                return ['ORIGINAL', 'PHOTOCOPY', 'UNDERTAKING'].includes(st);
+            };
+
+            const ensureReqDataInitialized = () => {
+                if (!selectedApplication.value) return;
                 if (!selectedApplication.value.requirementsData) {
                     selectedApplication.value.requirementsData = {
                         status: 'PENDING',
-                        docs: { psa: 'not-submitted', reportCard: 'not-submitted', goodMoral: 'not-submitted' }
+                        docs: {},
+                        transmittal: { form137Status: 'NOT_SENT', dateDispatched: '', originSchool: selectedApplication.value.seniorHighSchool || selectedApplication.value.previousCollege || '', remarks: '' }
                     };
                 }
                 if (!selectedApplication.value.requirementsData.docs) {
                     selectedApplication.value.requirementsData.docs = {};
                 }
-
-                const key = getDocKey(item);
-
-                if (isApproved && !checked) {
-                    Swal.fire({
-                        title: 'Action Blocked',
-                        text: 'Verified admission requirements cannot be unchecked once an application has been approved.',
-                        icon: 'error',
-                        confirmButtonColor: '#006A4E',
-                        confirmButtonText: 'OK'
-                    });
-                    if (selectedApplication.value.requirementsData && selectedApplication.value.requirementsData.docs) {
-                        selectedApplication.value.requirementsData.docs[key] = 'verified';
-                    }
-                    return;
+                if (!selectedApplication.value.requirementsData.transmittal) {
+                    selectedApplication.value.requirementsData.transmittal = {
+                        form137Status: 'NOT_SENT',
+                        dateDispatched: '',
+                        originSchool: selectedApplication.value.seniorHighSchool || selectedApplication.value.previousCollege || '',
+                        remarks: ''
+                    };
                 }
+            };
 
-                selectedApplication.value.requirementsData.docs[key] = checked ? 'verified' : 'not-submitted';
+            const setDocStatus = (item, newStatus) => {
+                if (!selectedApplication.value) return;
+                const currentStatus = selectedApplication.value.status;
+                if (['ENROLLED', 'Rejected', 'REJECTED'].includes(currentStatus)) return;
 
+                ensureReqDataInitialized();
+                const key = getDocKey(item);
+                const prev = getDocEntry(item);
+                const deadline = (prev && prev.deadline) ? prev.deadline : getDefaultDeadline();
+                const remarks = (prev && prev.remarks) ? prev.remarks : '';
+
+                selectedApplication.value.requirementsData.docs[key] = {
+                    status: newStatus,
+                    deadline: newStatus === 'UNDERTAKING' ? deadline : null,
+                    remarks: remarks,
+                    dateUpdated: new Date().toISOString()
+                };
+
+                const isApproved = ['Approved', 'APPROVED', 'REGISTRAR_APPROVED'].includes(currentStatus);
                 if (isApproved) {
-                    // Immediately save the requirements change
                     const refNum = selectedApplication.value.referenceNumber;
                     const notes = selectedApplication.value.registrarNotes || '';
                     const reqData = selectedApplication.value.requirementsData;
@@ -524,16 +593,85 @@
                         }
                     });
                 } else {
-                    // Dynamic recovery check: if validator is visible, auto-clear warning once all checked
                     if (showRequirementsValidation.value) {
                         const reqs = selectedApplication.value.requirements || [];
-                        const allChecked = reqs.every(r => isDocVerified(r));
-                        if (allChecked) {
+                        const allSatisfied = reqs.every(r => isDocVerified(r));
+                        if (allSatisfied) {
                             showRequirementsValidation.value = false;
                             requirementsError.value = '';
                         }
                     }
                 }
+            };
+
+            const setDocUndertakingDeadline = (item, dateVal) => {
+                if (!selectedApplication.value) return;
+                ensureReqDataInitialized();
+                const key = getDocKey(item);
+                const prev = getDocEntry(item) || { status: 'UNDERTAKING' };
+                selectedApplication.value.requirementsData.docs[key] = {
+                    ...prev,
+                    status: 'UNDERTAKING',
+                    deadline: dateVal,
+                    dateUpdated: new Date().toISOString()
+                };
+            };
+
+            const setDocRemarks = (item, remarksVal) => {
+                if (!selectedApplication.value) return;
+                ensureReqDataInitialized();
+                const key = getDocKey(item);
+                const prev = getDocEntry(item) || { status: 'ORIGINAL' };
+                selectedApplication.value.requirementsData.docs[key] = {
+                    ...prev,
+                    remarks: remarksVal,
+                    dateUpdated: new Date().toISOString()
+                };
+            };
+
+            const toggleDocStatus = (item, checked) => {
+                setDocStatus(item, checked ? 'ORIGINAL' : 'NOT_SUBMITTED');
+            };
+
+            const hasActiveUndertakings = (record = null) => {
+                const appRecord = record || selectedApplication.value;
+                if (!appRecord) return false;
+                const reqs = appRecord.requirements || (appRecord.requirementsData && appRecord.requirementsData.requirements) || [];
+                return reqs.some(r => getDocStatus(r, appRecord) === 'UNDERTAKING');
+            };
+
+            const getActiveUndertakings = (record = null) => {
+                const appRecord = record || selectedApplication.value;
+                if (!appRecord) return [];
+                const reqs = appRecord.requirements || (appRecord.requirementsData && appRecord.requirementsData.requirements) || [];
+                return reqs.filter(r => getDocStatus(r, appRecord) === 'UNDERTAKING').map(r => ({
+                    title: r,
+                    deadline: getDocUndertakingDeadline(r, appRecord),
+                    remarks: getDocRemarks(r, appRecord)
+                }));
+            };
+
+            const getTransmittalData = (record = null) => {
+                const appRecord = record || selectedApplication.value;
+                if (!appRecord || !appRecord.requirementsData || !appRecord.requirementsData.transmittal) {
+                    return { form137Status: 'NOT_SENT', dateDispatched: '', originSchool: (appRecord && (appRecord.seniorHighSchool || appRecord.previousCollege)) || '', remarks: '' };
+                }
+                return appRecord.requirementsData.transmittal;
+            };
+
+            const setTransmittalStatus = (form137Status) => {
+                if (!selectedApplication.value) return;
+                ensureReqDataInitialized();
+                selectedApplication.value.requirementsData.transmittal.form137Status = form137Status;
+                if (form137Status !== 'NOT_SENT' && !selectedApplication.value.requirementsData.transmittal.dateDispatched) {
+                    selectedApplication.value.requirementsData.transmittal.dateDispatched = new Date().toISOString().split('T')[0];
+                }
+            };
+
+            const setTransmittalDate = (dateVal) => {
+                if (!selectedApplication.value) return;
+                ensureReqDataInitialized();
+                selectedApplication.value.requirementsData.transmittal.dateDispatched = dateVal;
             };
 
             const updateApplicationStatus = async (status) => {
@@ -572,17 +710,18 @@
 
                 const refNum = selectedApplication.value.referenceNumber;
 
-                // Build confirmation messages, with a hard block when docs aren't all verified
+                // Build confirmation messages, with a hard block when docs aren't all satisfied
                 const reqs = selectedApplication.value.requirements || [];
                 const unverifiedCount = reqs.filter(item => !isDocVerified(item)).length;
+                const undertakingsCount = reqs.filter(item => getDocStatus(item) === 'UNDERTAKING').length;
 
-                // Show validation feedback in the form and hard-block approval
+                // Show validation feedback in the form and hard-block approval if any document is NOT_SUBMITTED
                 if (status === 'Approved' && unverifiedCount > 0) {
                     showRequirementsValidation.value = true;
-                    requirementsError.value = `${unverifiedCount} document(s) not yet checked. All required documents must be verified before approval.`;
+                    requirementsError.value = `${unverifiedCount} document(s) missing/unsubmitted. All required documents must be marked Original, Photocopy, or Promissory Undertaking before approval.`;
                     await Swal.fire({
                         title: 'Requirements Incomplete',
-                        text: `This application cannot be approved because ${unverifiedCount} required document(s) are not yet verified.`,
+                        text: `This application cannot be approved because ${unverifiedCount} required document(s) have not been submitted or placed under promissory undertaking.`,
                         icon: 'error',
                         confirmButtonColor: '#dc3545'
                     });
@@ -592,12 +731,18 @@
                     requirementsError.value = '';
                 }
 
-                const labels = {
-                    'Approved': `Approve application ${refNum}? This will mark the applicant as approved and advance their enrollment roadmap.`,
-                    'Rejected': `Reject application ${refNum}? This action is permanent and cannot be undone. The applicant must submit a completely new pre-registration application if they wish to apply again.`,
-                    'Pending': `Send application ${refNum} back for correction? The student will be asked to resubmit or update information.`
-                };
-                const msg = labels[status] || 'Are you sure?';
+                let msg = '';
+                if (status === 'Approved') {
+                    if (undertakingsCount > 0) {
+                        msg = `Approve application ${refNum} under <strong>Conditional Promissory Undertaking</strong>? (${undertakingsCount} document(s) pending promissory compliance). This will clear the applicant for station advising and medical checkup.`;
+                    } else {
+                        msg = `Approve application ${refNum}? All required documents are verified and complete. This will advance the enrollment roadmap.`;
+                    }
+                } else if (status === 'Rejected') {
+                    msg = `Reject application ${refNum}? This action is permanent and cannot be undone. The applicant must submit a completely new pre-registration application if they wish to apply again.`;
+                } else {
+                    msg = `Send application ${refNum} back for correction? The student will be asked to resubmit or update information.`;
+                }
 
                 const confirmRes = await Swal.fire({
                     title: 'Confirm Action',
@@ -610,7 +755,7 @@
                 });
                 if (!confirmRes.isConfirmed) return;
 
-                const notes = "";
+                const notes = undertakingsCount > 0 ? `Conditional Enrollment: ${undertakingsCount} document(s) under Promissory Undertaking.` : '';
                 const reqData = selectedApplication.value.requirementsData;
                 const sectionCode = selectedApplication.value.sectionCode;
                 Model.updateApplicationStatus(refNum, status, notes, reqData, sectionCode).then(res => {
@@ -619,8 +764,23 @@
                         if (index !== -1) {
                             pendingApplications.value[index] = res.data;
                         }
-                        hideModal('applicationModal');
                         loadData();
+                        hideModal('applicationModal');
+                        Swal.fire({
+                            title: 'Success',
+                            text: `Application ${refNum} has been ${status.toLowerCase()} successfully.`,
+                            icon: 'success',
+                            confirmButtonColor: '#198754',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Update Failed',
+                            text: res.error || 'Failed to update application status.',
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        });
                     }
                 });
             };
@@ -845,6 +1005,160 @@
                 return enrollments.value.filter(e => e.status === 'Enrolled').length;
             });
 
+            // ── IN-APP ACCOUNT PROFILE & SECURITY MANAGEMENT ──────────────────────
+            const user = ref({ name: '', email: '', username: '', role: '', avatar: null });
+            const pass = ref({ current: '', newPass: '', confirm: '' });
+            const saving = ref(false);
+            const updatingPass = ref(false);
+            const showCurrentPass = ref(false);
+            const showNewPass = ref(false);
+            const fileInput = ref(null);
+            const passStrengthLevel = ref(0);
+            const avatarFailed = ref(false);
+
+            const initials = computed(() => {
+                const name = user.value.name || (currentUser.value ? currentUser.value.name : 'Registrar Staff');
+                const parts = name.trim().split(' ');
+                return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0][0].toUpperCase();
+            });
+
+            const formattedAvatar = computed(() => {
+                const avatar = user.value.avatar || (currentUser.value ? currentUser.value.avatar : null);
+                if (!avatar) return null;
+                if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:')) return avatar;
+                const filename = avatar.split('/').pop();
+                return '../uploads/avatars/' + filename;
+            });
+
+            const passStrengthLabel = computed(() => {
+                const l = passStrengthLevel.value;
+                if (l <= 1) return 'Weak'; if (l === 2) return 'Fair'; if (l === 3) return 'Good'; return 'Strong';
+            });
+            const passStrengthColor = computed(() => {
+                const l = passStrengthLevel.value;
+                if (l <= 1) return '#ef4444'; if (l === 2) return '#f59e0b'; if (l === 3) return '#10b981'; return '#059669';
+            });
+            const passStrengthWidth = computed(() => (passStrengthLevel.value / 4 * 100) + '%');
+
+            function checkPassStrength() {
+                const p = pass.value.newPass;
+                let score = 0;
+                if (p.length >= 8) score++; if (/[A-Z]/.test(p)) score++; if (/[0-9]/.test(p)) score++; if (/[^A-Za-z0-9]/.test(p)) score++;
+                passStrengthLevel.value = Math.max(p.length >= 6 ? 1 : 0, score);
+            }
+
+            function triggerFileInput() { if (fileInput.value) fileInput.value.click(); }
+
+            const loadProfile = async () => {
+                if (currentUser.value) {
+                    user.value.name = currentUser.value.name || '';
+                    user.value.email = currentUser.value.email || '';
+                    user.value.username = currentUser.value.username || 'registrar';
+                    user.value.role = currentUser.value.role || 'REGISTRAR';
+                    user.value.avatar = currentUser.value.avatar || null;
+                }
+                try {
+                    const username = user.value.username || 'registrar';
+                    const res = await fetch('../api/index.php?action=auth/profile&username=' + encodeURIComponent(username));
+                    const data = await res.json();
+                    if (data.success && data.data) {
+                        user.value = { ...user.value, ...data.data };
+                    }
+                } catch (e) { console.error('[Profile] Staff fetch failed:', e); }
+            };
+
+            const onFileSelected = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { Swal.fire('File Too Large', 'Please select an image smaller than 5MB.', 'warning'); return; }
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    const b64 = ev.target.result;
+                    try {
+                        const res = await fetch('../api/index.php?action=auth/upload_avatar', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: user.value.username || 'registrar', photoData: b64 })
+                        });
+                        const data = await res.json();
+                        if (data.success && data.data) {
+                            const newFilename = data.data.avatar || data.data.photo;
+                            user.value.avatar = newFilename;
+                            if (currentUser.value) currentUser.value.avatar = newFilename;
+                            const raw = sessionStorage.getItem('gncp_station_user');
+                            if (raw) {
+                                const p = JSON.parse(raw);
+                                p.avatar = newFilename;
+                                sessionStorage.setItem('gncp_station_user', JSON.stringify(p));
+                            }
+                            Swal.fire('Success', 'Profile picture updated successfully.', 'success');
+                        } else { Swal.fire('Upload Failed', data.message || 'Unable to update profile picture.', 'error'); }
+                    } catch (err) { Swal.fire('Error', 'Unable to process image upload.', 'error'); }
+                };
+                reader.readAsDataURL(file);
+            };
+
+            const saveStaffProfile = async () => {
+                saving.value = true;
+                try {
+                    const avatarFilename = user.value.avatar ? user.value.avatar.split('/').pop() : null;
+                    const res = await fetch('../api/index.php?action=auth/update_profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: user.value.username,
+                            name: user.value.name,
+                            email: user.value.email,
+                            avatar: avatarFilename
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (currentUser.value) {
+                            currentUser.value.name = user.value.name;
+                            currentUser.value.email = user.value.email;
+                            currentUser.value.avatar = avatarFilename;
+                        }
+                        const raw = sessionStorage.getItem('gncp_station_user');
+                        if (raw) {
+                            const p = JSON.parse(raw);
+                            p.name = user.value.name;
+                            p.email = user.value.email;
+                            p.avatar = avatarFilename;
+                            sessionStorage.setItem('gncp_station_user', JSON.stringify(p));
+                        }
+                        Swal.fire('Success', 'Personal details updated successfully.', 'success');
+                    } else { Swal.fire('Update Failed', data.message || 'Unable to update profile.', 'error'); }
+                } catch (e) { Swal.fire('Error', 'Server error while saving profile.', 'error'); }
+                finally { saving.value = false; }
+            };
+
+            const updatePassword = async () => {
+                if (pass.value.newPass !== pass.value.confirm) { Swal.fire('Password Mismatch', 'New password and confirm password do not match.', 'warning'); return; }
+                if (pass.value.newPass.length < 6) { Swal.fire('Weak Password', 'New password must be at least 6 characters.', 'warning'); return; }
+                updatingPass.value = true;
+                try {
+                    const res = await fetch('../api/index.php?action=auth/change_password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: user.value.username, current_password: pass.value.current, new_password: pass.value.newPass })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        pass.value = { current: '', newPass: '', confirm: '' };
+                        passStrengthLevel.value = 0;
+                        Swal.fire('Success', 'Password changed successfully.', 'success');
+                    } else { Swal.fire('Password Error', data.message || 'Unable to update password.', 'error'); }
+                } catch (e) { Swal.fire('Error', 'Server connection error while changing password.', 'error'); }
+                finally { updatingPass.value = false; }
+            };
+
+            watch(currentView, (newV) => {
+                if (newV === 'profile') {
+                    loadProfile();
+                }
+            });
+
             return {
                 currentUser,
                 isLoggingIn,
@@ -884,6 +1198,18 @@
                 updateApplicationStatus,
                 updateRoadmapStep,
                 getDocKey,
+                getDocEntry,
+                getDocStatus,
+                setDocStatus,
+                getDocUndertakingDeadline,
+                setDocUndertakingDeadline,
+                getDocRemarks,
+                setDocRemarks,
+                hasActiveUndertakings,
+                getActiveUndertakings,
+                getTransmittalData,
+                setTransmittalStatus,
+                setTransmittalDate,
                 isDocVerified,
                 toggleDocStatus,
                 requirementsError,
@@ -898,6 +1224,12 @@
                 showLogoutConfirm,
                 handleLogout,
                 confirmLogout,
+
+                // Profile & Security Management
+                user, pass, saving, updatingPass, showCurrentPass, showNewPass, fileInput,
+                passStrengthLevel, passStrengthLabel, passStrengthColor, passStrengthWidth,
+                initials, formattedAvatar, checkPassStrength, triggerFileInput, onFileSelected,
+                saveStaffProfile, updatePassword, loadProfile,
 
                 activePreviewDoc,
                 getDocFile,
@@ -944,6 +1276,10 @@
 
     const app = createApp(App);
 
+    if (typeof window !== 'undefined' && window.EmployeeSidebar) {
+        app.component('employee-sidebar', window.EmployeeSidebar);
+    }
+
     // Component registration mapped to views
     if (typeof View !== 'undefined' && View) {
         if (View.SidebarNav) app.component('sidebar-nav', View.SidebarNav);
@@ -960,5 +1296,16 @@
         if (View.FeeScheduleView) app.component('fee-schedule-view', View.FeeScheduleView);
     }
 
-    app.mount('#app');
+    const mountApp = () => {
+        if (document.getElementById('app')) {
+            const vm = app.mount('#app');
+            if (typeof window !== 'undefined') window.app = vm;
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountApp);
+    } else {
+        mountApp();
+    }
 })(typeof window !== 'undefined' ? window : this);

@@ -6,6 +6,7 @@ require_once __DIR__ . '/CatalogAdminController.php';
 require_once __DIR__ . '/ScheduleAdminController.php';
 require_once __DIR__ . '/UserAdminController.php';
 require_once __DIR__ . '/../../shared/backend/services/AnnouncementService.php';
+require_once __DIR__ . '/../../shared/backend/services/MilestoneService.php';
 
 class AdminController {
     private $catalogCtrl;
@@ -37,5 +38,10 @@ class AdminController {
     public function saveAnnouncement($payload) { return AnnouncementService::saveAnnouncement($this->pdo, $payload); }
     public function deleteAnnouncement($payload) { return AnnouncementService::deleteAnnouncement($this->pdo, $payload); }
     public function uploadAnnouncementImage() { return AnnouncementService::uploadImage(); }
+
+    public function getMilestones($filters = []) { return MilestoneService::getMilestones($this->pdo, $filters); }
+    public function saveMilestone($payload) { return MilestoneService::saveMilestone($this->pdo, $payload); }
+    public function deleteMilestone($payload) { return MilestoneService::deleteMilestone($this->pdo, $payload); }
 }
+
 

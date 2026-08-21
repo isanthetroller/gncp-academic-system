@@ -12,17 +12,19 @@
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css">
+    <link rel="stylesheet" href="../shared/css/sidebar.css?v=9">
     <link rel="stylesheet" href="../shared/libs/login.css">
     <!-- Core Libraries -->
     <script src="../shared/libs/bootstrap.bundle.min.js" defer></script>
     <script src="../shared/libs/vue.global.js" defer></script>
     <script src="../shared/libs/sweetalert2.all.min.js" defer></script>
     <script src="../shared/js/PasswordChangeGuard.js" defer></script>
+    <script src="../shared/js/components/EmployeeSidebar.js?v=9" defer></script>
     <!-- Application MVC & Service Layer -->
-    <script src="assets/js/services/RegistrarApiService.js?v=14" defer></script>
-    <script src="assets/js/models/RegistrarModel.js?v=14" defer></script>
-    <script src="assets/js/views/RegistrarView.js?v=14" defer></script>
-    <script src="assets/js/controllers/RegistrarController.js?v=14" defer></script>
+    <script src="assets/js/services/RegistrarApiService.js?v=16" defer></script>
+    <script src="assets/js/models/RegistrarModel.js?v=16" defer></script>
+    <script src="assets/js/views/RegistrarView.js?v=16" defer></script>
+    <script src="assets/js/controllers/RegistrarController.js?v=16" defer></script>
     <style>
         [v-cloak] {
             display: none !important;
@@ -182,12 +184,30 @@
     <div id="app" v-cloak>
 
         <!-- ── DASHBOARD (shown when authenticated) ────────────────── -->
-        <div v-if="currentUser" class="shell">
+        <template v-if="currentUser">
+            <div class="shell">
 
             <!-- Sidebar Navigation -->
-            <sidebar-nav :nav-items="navItems" :current-view="currentView" :current-user="currentUser"
-                @set-view="setView">
-            </sidebar-nav>
+            <employee-sidebar 
+                station-name="Go-on National College"
+                station-tag="REGISTRAR PORTAL"
+                :nav-groups="[
+                    {
+                        title: 'Main Overview',
+                        items: [
+                            { id: 'pending-applications', label: 'Pending Applications', icon: 'fa-file-signature', badge: pendingApplications.filter(s => s.status !== 'ENROLLED').length || null },
+                            { id: 'students', label: 'Student Directory', icon: 'fa-users' },
+                            { id: 'enrollment-overview', label: 'Enrollment Overview', icon: 'fa-chart-pie' },
+                            { id: 'reports', label: 'Statistical Reports', icon: 'fa-file-invoice' }
+                        ]
+                    }
+                ]"
+                :current-view="currentView" 
+                :current-user="currentUser"
+                base-path="../"
+                @set-view="setView" 
+                @logout="handleLogout">
+            </employee-sidebar>
 
             <main class="main">
 
@@ -200,6 +220,81 @@
                 </top-bar>
 
                 <div class="content">
+                    <!-- Profile View -->
+                    <div v-if="currentView === 'profile'" class="profile-view-wrap">
+                        <div class="profile-hero">
+                            <div class="avatar-wrap" @click="triggerFileInput" title="Click to change profile picture">
+                                <img v-if="formattedAvatar" :src="formattedAvatar" alt="Profile Picture">
+                                <div v-else class="avatar-initials">{{ initials }}</div>
+                                <div class="avatar-overlay">
+                                    <i class="fa-solid fa-camera mb-1" style="font-size:1.1rem"></i>
+                                    <span>Change Photo</span>
+                                </div>
+                            </div>
+                            <input type="file" ref="fileInput" @change="onFileSelected" accept="image/*" style="display:none">
+                            <div class="profile-hero-info">
+                                <h3>{{ user.name || (currentUser ? currentUser.name : 'Registrar Staff') }}<span class="profile-hero-badge">{{ user.role || (currentUser ? currentUser.role : 'REGISTRAR') }}</span></h3>
+                                <p><i class="fa-solid fa-envelope me-2"></i>{{ user.email || (currentUser ? currentUser.email : 'registrar@gncp.edu.ph') }}</p>
+                                <p style="margin-top:4px"><i class="fa-solid fa-at me-2"></i>{{ user.username || (currentUser ? currentUser.username : 'registrar') }}</p>
+                            </div>
+                        </div>
+
+                        <div class="profile-grid">
+                            <div class="card p-4">
+                                <div class="card-title mb-3" style="font-weight:800; font-size:1.05rem; color:var(--primary, #006A4E);"><i class="fa-solid fa-user-edit me-2"></i> Personal Details</div>
+                                <form @submit.prevent="saveStaffProfile">
+                                    <div style="margin-bottom:14px"><label class="f-label">Full Name</label><input class="f-input" type="text" v-model="user.name" required></div>
+                                    <div style="margin-bottom:14px"><label class="f-label">Email Address</label><input class="f-input" type="email" v-model="user.email" required></div>
+                                    <div style="margin-bottom:14px"><label class="f-label">Username / Identity Code</label><input class="f-input" type="text" :value="user.username" disabled></div>
+                                    <div style="margin-bottom:14px"><label class="f-label">System Role</label><input class="f-input" type="text" :value="user.role" disabled></div>
+                                    <div class="text-end" style="margin-top:12px">
+                                        <button type="submit" class="btn-primary-save" :disabled="saving">
+                                            <i class="fa-solid fa-save"></i> {{ saving ? 'Saving...' : 'Save Personal Details' }}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="card p-4">
+                                <div class="card-title mb-3" style="font-weight:800; font-size:1.05rem; color:var(--primary, #006A4E);"><i class="fa-solid fa-shield-alt me-2"></i> Account Security &amp; Password</div>
+                                <form @submit.prevent="updatePassword">
+                                    <div style="margin-bottom:14px">
+                                        <label class="f-label">Current Password</label>
+                                        <div style="position:relative">
+                                            <input :type="showCurrentPass ? 'text' : 'password'" class="f-input" v-model="pass.current" placeholder="Enter your current password" required style="padding-right:42px">
+                                            <button type="button" @click="showCurrentPass = !showCurrentPass" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                                                <i :class="showCurrentPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom:14px">
+                                        <label class="f-label">New Password</label>
+                                        <div style="position:relative">
+                                            <input :type="showNewPass ? 'text' : 'password'" class="f-input" v-model="pass.newPass" @input="checkPassStrength" placeholder="At least 6 characters" required style="padding-right:42px">
+                                            <button type="button" @click="showNewPass = !showNewPass" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                                                <i :class="showNewPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        <div v-if="pass.newPass" class="pass-strength-bar" :style="{ background: passStrengthColor, width: passStrengthWidth }"></div>
+                                        <div v-if="pass.newPass" class="pass-strength-text" :style="{ color: passStrengthColor }">{{ passStrengthLabel }}</div>
+                                    </div>
+                                    <div style="margin-bottom:14px">
+                                        <label class="f-label">Confirm New Password</label>
+                                        <input type="password" class="f-input" v-model="pass.confirm" placeholder="Re-enter new password" :class="{ 'is-invalid': pass.confirm && pass.confirm !== pass.newPass }" required>
+                                        <div v-if="pass.confirm && pass.confirm !== pass.newPass" style="font-size:0.72rem;color:#dc2626;margin-top:4px;font-weight:600">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Passwords do not match.
+                                        </div>
+                                    </div>
+                                    <div class="text-end" style="margin-top:12px">
+                                        <button type="submit" class="btn-primary-save" style="background:#003D2B" :disabled="updatingPass || (pass.confirm && pass.confirm !== pass.newPass)">
+                                            <i class="fa-solid fa-key"></i> {{ updatingPass ? 'Updating...' : 'Update Password' }}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                     <div v-if="currentView === 'enrollment-overview' || currentView === 'pending-applications'"
                         class="greeting-banner mb-3 p-3 rounded text-white"
                         style="background: linear-gradient(135deg, #00553e 0%, #003d2b 100%); border-left: 4px solid var(--gold, #d4af37);">
@@ -279,6 +374,17 @@
                     </div>
                     <div class="modal-body" v-if="selectedApplication">
                         <div class="row g-4">
+                            <!-- Conditional Undertaking Promissory Banner -->
+                            <div class="col-12" v-if="hasActiveUndertakings()">
+                                <div class="alert alert-warning d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm border-warning-subtle mb-0" style="background: rgba(245,158,11,0.09); border-left: 4px solid #f59e0b;">
+                                    <i class="fa-solid fa-triangle-exclamation fs-4 text-warning flex-shrink-0"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size:0.88rem;">Conditional Admission: Student Has Documents Under Promissory Undertaking</div>
+                                        <div class="text-muted small">Student must comply with all promissory obligations on or before the agreed deadline. Approval grants conditional station clearance.</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="col-12">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -331,45 +437,139 @@
                                 </p>
                             </div>
 
-                            <!-- Admission Requirements List -->
+                            <!-- Admission Requirements List & Document Management -->
                             <div class="col-md-6">
-                                <h6 class="mb-3 d-flex align-items-center">
-                                    <i class="fas fa-file-shield text-success me-2"></i>
-                                    Admission Requirements
-                                </h6>
-                                <div class="card p-3 border border-light-subtle rounded-3 bg-light bg-opacity-50"
-                                    style="max-height: 280px; overflow-y: auto; min-height: 280px;">
-                                    <div v-if="requirementsError"
-                                        class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-2 border-danger-subtle rounded-3 small text-danger bg-danger-subtle bg-opacity-25"
-                                        style="border-width: 1.5px;">
-                                        <i class="fas fa-triangle-exclamation"></i>
-                                        <span>{{ requirementsError }}</span>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 d-flex align-items-center">
+                                        <i class="fas fa-file-shield text-success me-2"></i>
+                                        Admission Requirements Checklist
+                                    </h6>
+                                    <span class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.68rem;">
+                                        {{ selectedApplication.requirements ? selectedApplication.requirements.filter(r => isDocVerified(r)).length : 0 }} / {{ selectedApplication.requirements ? selectedApplication.requirements.length : 0 }} Satisfied
+                                    </span>
+                                </div>
+
+                                <div v-if="requirementsError"
+                                    class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-2 border-danger-subtle rounded-3 small text-danger bg-danger-subtle bg-opacity-25"
+                                    style="border-width: 1.5px;">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    <span>{{ requirementsError }}</span>
+                                </div>
+
+                                <div class="card p-3 border border-light-subtle rounded-3 bg-light bg-opacity-50 mb-3"
+                                    style="max-height: 380px; overflow-y: auto;">
+                                    <div class="mb-2 text-muted small" style="font-size:0.75rem;">
+                                        <i class="fas fa-info-circle me-1"></i> Verify physical hard copies or assign promissory undertaking:
                                     </div>
-                                    <div class="mb-2 text-muted small"><i class="fas fa-info-circle me-1"></i> Check
-                                        verified/submitted documents:</div>
-                                    <ul class="list-unstyled mb-0">
-                                        <li v-for="(item, idx) in selectedApplication.requirements" :key="idx"
-                                            class="mb-2">
-                                            <div class="form-check d-flex align-items-center justify-content-between gap-2 mb-0">
-                                                <div class="d-flex align-items-start gap-2">
-                                                    <input class="form-check-input mt-1 cursor-pointer" type="checkbox"
-                                                        style="width: 1.15rem; height: 1.15rem; flex-shrink: 0;"
-                                                        :class="{'border-danger bg-danger bg-opacity-10': !isDocVerified(item) && showRequirementsValidation}"
-                                                        :id="'req-' + idx" :checked="isDocVerified(item)"
-                                                        :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status) || (['Approved', 'APPROVED'].includes(selectedApplication.status) && isDocVerified(item))"
-                                                        @change="toggleDocStatus(item, $event.target.checked)">
-                                                    <label class="form-check-label small cursor-pointer select-none mb-0"
-                                                        :class="[isDocVerified(item) ? 'text-dark' : (showRequirementsValidation ? 'text-danger fw-bold' : 'text-dark')]"
-                                                        :for="'req-' + idx">
-                                                        {{ item }}
-                                                    </label>
-                                                </div>
-                                                <button v-if="getDocFile(item)" type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill flex-shrink-0" @click.stop="openDocumentModal(getDocFile(item))" title="View uploaded soft copy">
-                                                    <i class="fas fa-eye me-1"></i>Soft Copy
-                                                </button>
+                                    <div v-for="(item, idx) in selectedApplication.requirements" :key="idx"
+                                        class="p-2 mb-2 rounded-3 border bg-white shadow-sm"
+                                        :class="{'border-danger': !isDocVerified(item) && showRequirementsValidation, 'border-light-subtle': isDocVerified(item) || !showRequirementsValidation}">
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1.5">
+                                            <div class="d-flex align-items-center gap-1.5 min-w-0">
+                                                <i class="fa-solid" :class="{
+                                                    'fa-circle-check text-success': getDocStatus(item) === 'ORIGINAL',
+                                                    'fa-file-lines text-info': getDocStatus(item) === 'PHOTOCOPY',
+                                                    'fa-clock-rotate-left text-warning': getDocStatus(item) === 'UNDERTAKING',
+                                                    'fa-circle-xmark text-danger': getDocStatus(item) === 'NOT_SUBMITTED'
+                                                }" style="font-size:0.85rem; flex-shrink:0;"></i>
+                                                <span class="small fw-semibold text-dark text-truncate" :title="item" style="font-size:0.82rem;">
+                                                    {{ item }}
+                                                </span>
                                             </div>
-                                        </li>
-                                    </ul>
+                                            <button v-if="getDocFile(item)" type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill flex-shrink-0" @click.stop="openDocumentModal(getDocFile(item))" title="View uploaded soft copy" style="font-size:0.7rem;">
+                                                <i class="fas fa-eye me-1"></i>Soft Copy
+                                            </button>
+                                        </div>
+
+                                        <!-- Document Status Segment Controls -->
+                                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill font-monospace"
+                                                    :class="getDocStatus(item) === 'ORIGINAL' ? 'btn-success text-white' : 'btn-outline-secondary'"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'ORIGINAL')"
+                                                    style="font-size:0.68rem;">
+                                                <i class="fa-solid fa-check me-1"></i>Original
+                                            </button>
+                                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill font-monospace"
+                                                    :class="getDocStatus(item) === 'PHOTOCOPY' ? 'btn-info text-white' : 'btn-outline-secondary'"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'PHOTOCOPY')"
+                                                    style="font-size:0.68rem;">
+                                                <i class="fa-solid fa-copy me-1"></i>Photocopy
+                                            </button>
+                                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill font-monospace"
+                                                    :class="getDocStatus(item) === 'UNDERTAKING' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'UNDERTAKING')"
+                                                    style="font-size:0.68rem;">
+                                                <i class="fa-solid fa-file-contract me-1"></i>Undertaking
+                                            </button>
+                                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill font-monospace ms-auto"
+                                                    :class="getDocStatus(item) === 'NOT_SUBMITTED' ? 'btn-outline-danger' : 'btn-link text-muted py-0'"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'NOT_SUBMITTED')"
+                                                    style="font-size:0.68rem;">
+                                                Missing
+                                            </button>
+                                        </div>
+
+                                        <!-- Promissory Note Sub-drawer -->
+                                        <div v-if="getDocStatus(item) === 'UNDERTAKING'" class="mt-2 pt-2 border-top border-warning-subtle" style="background: rgba(245,158,11,0.05); padding: 8px; border-radius: 6px;">
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <label class="d-block text-uppercase text-muted" style="font-size:0.65rem; font-weight:700;">Promissory Deadline</label>
+                                                    <input type="date" class="form-control form-control-sm py-0 px-2" style="font-size:0.75rem;"
+                                                           :value="getDocUndertakingDeadline(item)"
+                                                           :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                           @change="setDocUndertakingDeadline(item, $event.target.value)">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="d-block text-uppercase text-muted" style="font-size:0.65rem; font-weight:700;">Undertaking Note</label>
+                                                    <input type="text" class="form-control form-control-sm py-0 px-2" placeholder="e.g. Due before midterms" style="font-size:0.75rem;"
+                                                           :value="getDocRemarks(item)"
+                                                           :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                           @input="setDocRemarks(item, $event.target.value)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Form 137 / SF10 High School Transmittal Tracking Box -->
+                                <div class="p-3 rounded-3 border border-light-subtle bg-white shadow-sm">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="fw-bold text-dark small text-uppercase font-monospace d-flex align-items-center" style="font-size:0.75rem;">
+                                            <i class="fa-solid fa-paper-plane text-success me-1.5"></i>
+                                            Form 137 / SF10 Transmittal
+                                        </span>
+                                        <span class="badge font-monospace" style="font-size:0.65rem;" :class="{
+                                            'bg-secondary-subtle text-secondary': getTransmittalData().form137Status === 'NOT_SENT',
+                                            'bg-warning-subtle text-dark border border-warning-subtle': ['1ST_REQUEST_SENT', '2ND_REQUEST_SENT'].includes(getTransmittalData().form137Status),
+                                            'bg-success-subtle text-success border border-success-subtle': getTransmittalData().form137Status === 'RECEIVED_ARCHIVED'
+                                        }">
+                                            {{ (getTransmittalData().form137Status || 'NOT_SENT').replace(/_/g, ' ') }}
+                                        </span>
+                                    </div>
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-7">
+                                            <select class="form-select form-select-sm py-1" style="font-size:0.75rem;"
+                                                    :value="getTransmittalData().form137Status || 'NOT_SENT'"
+                                                    @change="setTransmittalStatus($event.target.value)"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)">
+                                                <option value="NOT_SENT">Not Sent / Pending</option>
+                                                <option value="1ST_REQUEST_SENT">1st Request Dispatched</option>
+                                                <option value="2ND_REQUEST_SENT">2nd Follow-up Dispatched</option>
+                                                <option value="RECEIVED_ARCHIVED">Received &amp; Archived in Vault</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="date" class="form-control form-control-sm py-1" style="font-size:0.75rem;"
+                                                   :value="getTransmittalData().dateDispatched"
+                                                   @change="setTransmittalDate($event.target.value)"
+                                                   :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                   title="Transmittal Dispatched or Received Date">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -708,25 +908,55 @@
                                     </div>
                                 </div>
 
-                                <!-- Required Documents Checklist (Read Only) -->
+                                <!-- Required Documents Checklist & Compliance -->
                                 <h6 class="mb-3 fw-bold text-dark d-flex align-items-center">
-                                    <i class="fa-solid fa-folder-closed text-success me-2"></i> Verified Documents
-                                    Checklist
+                                    <i class="fa-solid fa-folder-closed text-success me-2"></i> Verified Documents &amp; Compliance
                                 </h6>
-                                <div class="card p-3 border border-light-subtle rounded-3 bg-white shadow-sm"
+                                <div class="card p-3 border border-light-subtle rounded-3 bg-white shadow-sm mb-3"
                                     v-if="selectedStudent.requirementsData">
                                     <ul class="list-unstyled mb-0">
-                                        <li class="d-flex align-items-center justify-content-between mb-2"
-                                            v-for="doc in selectedStudent.requirementsData.requirements" :key="doc">
-                                            <div class="d-flex align-items-center me-2">
-                                                <i class="fa-solid fa-circle-check text-success me-2"></i>
-                                                <span class="small text-muted">{{ doc }}</span>
+                                        <li class="p-2 mb-2 rounded-2 border border-light-subtle bg-light bg-opacity-25"
+                                            v-for="doc in (selectedStudent.requirementsData.requirements || ['Form 138 (Original SHS Report Card)', 'Certificate of Good Moral', 'PSA Birth Certificate', '2x2 Photos'])" :key="doc">
+                                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                                <div class="d-flex align-items-center gap-2 min-w-0">
+                                                    <i class="fa-solid" :class="{
+                                                        'fa-circle-check text-success': getDocStatus(doc, selectedStudent) === 'ORIGINAL',
+                                                        'fa-file-lines text-info': getDocStatus(doc, selectedStudent) === 'PHOTOCOPY',
+                                                        'fa-clock-rotate-left text-warning': getDocStatus(doc, selectedStudent) === 'UNDERTAKING',
+                                                        'fa-circle-xmark text-danger': getDocStatus(doc, selectedStudent) === 'NOT_SUBMITTED'
+                                                    }" style="font-size:0.85rem;"></i>
+                                                    <span class="small fw-semibold text-dark text-truncate" style="font-size:0.8rem;">{{ doc }}</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                                                    <span class="badge font-monospace" style="font-size:0.65rem;" :class="{
+                                                        'bg-success-subtle text-success border border-success-subtle': getDocStatus(doc, selectedStudent) === 'ORIGINAL',
+                                                        'bg-info-subtle text-dark border border-info-subtle': getDocStatus(doc, selectedStudent) === 'PHOTOCOPY',
+                                                        'bg-warning-subtle text-dark border border-warning-subtle': getDocStatus(doc, selectedStudent) === 'UNDERTAKING',
+                                                        'bg-danger-subtle text-danger border border-danger-subtle': getDocStatus(doc, selectedStudent) === 'NOT_SUBMITTED'
+                                                    }">
+                                                        {{ getDocStatus(doc, selectedStudent) === 'UNDERTAKING' ? ('Promissory: Due ' + getDocUndertakingDeadline(doc, selectedStudent)) : getDocStatus(doc, selectedStudent) }}
+                                                    </span>
+                                                    <button v-if="getDocFile(doc, selectedStudent)" type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill" @click="openDocumentModal(getDocFile(doc, selectedStudent))" title="View uploaded soft copy" style="font-size:0.68rem;">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button v-if="getDocFile(doc, selectedStudent)" type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill flex-shrink-0" @click="openDocumentModal(getDocFile(doc, selectedStudent))" title="View uploaded soft copy">
-                                                <i class="fas fa-eye me-1"></i>Soft Copy
-                                            </button>
                                         </li>
                                     </ul>
+                                </div>
+
+                                <!-- Form 137 High School Transmittal Badge in Student Profile -->
+                                <div class="card p-2.5 border border-light-subtle rounded-3 bg-white shadow-sm" v-if="selectedStudent.requirementsData">
+                                    <div class="d-flex align-items-center justify-content-between" style="font-size:0.75rem;">
+                                        <span class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-paper-plane text-success me-1"></i> Form 137 / SF10:</span>
+                                        <span class="badge font-monospace" :class="{
+                                            'bg-secondary-subtle text-secondary': getTransmittalData(selectedStudent).form137Status === 'NOT_SENT',
+                                            'bg-warning-subtle text-dark': ['1ST_REQUEST_SENT', '2ND_REQUEST_SENT'].includes(getTransmittalData(selectedStudent).form137Status),
+                                            'bg-success-subtle text-success': getTransmittalData(selectedStudent).form137Status === 'RECEIVED_ARCHIVED'
+                                        }">
+                                            {{ (getTransmittalData(selectedStudent).form137Status || 'NOT_SENT').replace(/_/g, ' ') }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -793,23 +1023,25 @@
             </div>
         </div>
 
-    </div> <!-- close v-if="currentUser" shell -->
+        </template>
 
-    <!-- ── UNAUTHENTICATED FALLBACK VIEW ────────────────── -->
-    <div v-else class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
-        <div class="text-center p-5 rounded-4 shadow-lg bg-white" style="max-width: 460px; border: 1px solid rgba(0,0,0,0.08);">
-            <div class="mb-4">
-                <i class="fa-solid fa-lock text-warning" style="font-size: 3.5rem;"></i>
+        <!-- ── UNAUTHENTICATED FALLBACK VIEW ────────────────── -->
+        <template v-else>
+            <div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+                <div class="text-center p-5 rounded-4 shadow-lg bg-white" style="max-width: 460px; border: 1px solid rgba(0,0,0,0.08);">
+                    <div class="mb-4">
+                        <i class="fa-solid fa-lock text-warning" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-2" style="font-family: 'Outfit', sans-serif;">Session Expired or Unauthorized</h3>
+                    <p class="text-muted small mb-4">You must be logged in with a valid Registrar or Administrator account to access this workstation.</p>
+                    <a href="../index.html?clear=true" class="btn fw-bold text-white shadow-sm w-100" style="background: var(--primary-green, #006A4E); border-radius: 10px; padding: 12px;">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i> Return to Employee Gateway
+                    </a>
+                </div>
             </div>
-            <h3 class="fw-bold text-dark mb-2" style="font-family: 'Outfit', sans-serif;">Session Expired or Unauthorized</h3>
-            <p class="text-muted small mb-4">You must be logged in with a valid Registrar or Administrator account to access this workstation.</p>
-            <a href="../index.html?clear=true" class="btn fw-bold text-white shadow-sm w-100" style="background: var(--primary-green, #006A4E); border-radius: 10px; padding: 12px;">
-                <i class="fa-solid fa-right-to-bracket me-2"></i> Return to Employee Gateway
-            </a>
-        </div>
-    </div>
+        </template>
 
-</div> <!-- close #app -->
+    </div> <!-- close #app -->
 
 </body>
 

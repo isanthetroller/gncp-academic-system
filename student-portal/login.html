@@ -6,47 +6,32 @@
     <title>Student Portal Gateway — Go-on National College of the Philippines</title>
     <meta name="description" content="Official student and applicant portal gateway for Go-on National College of the Philippines.">
 
-    <!-- Google Fonts & Icons (Identical to Staff Portal Gateway) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts & Shared Libraries -->
+    <link rel="stylesheet" href="../shared/libs/fonts/fonts.css">
     <link rel="stylesheet" href="../shared/libs/bootstrap.min.css">
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css">
 
-    <!-- Vue 3 Progressive Framework (Self-Hosted Local) -->
+    <!-- Vue 3 Progressive Framework -->
     <script src="../shared/libs/vue.global.js"></script>
 
     <style>
         :root {
-            /* Branding colors identical to Staff Gateway */
             --primary-green: #006A4E;
             --dark-green: #003D2B;
             --accent-green: #3E9B6C;
-            --light-accent-green: #e6f4ed;
             --gold: #D4AF37;
             --gold-light: #FCD34D;
             --light-bg: #F8FAFC;
             --white: #FFFFFF;
-            
-            /* Text & UI Gray Colors */
             --charcoal: #1F2937;
-            --muted-grey: #4B5563;
-            --zinc-200: #E4E4E7;
-            --zinc-300: #D4D4D8;
-            --zinc-400: #A1A1AA;
-            
-            /* Grid Radius */
+            --muted-grey: #64748B;
+            --zinc-200: #E2E8F0;
+            --zinc-300: #CBD5E1;
             --radius-lg: 16px;
-            --radius-md: 8px;
-            
-            /* Transition Curve */
+            --radius-md: 10px;
             --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            
-            /* Layered Shadows */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 106, 78, 0.04), 0 8px 10px -6px rgba(0, 106, 78, 0.02);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 61, 43, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
         }
 
         body {
@@ -59,7 +44,7 @@
             align-items: center;
             justify-content: center;
             margin: 0;
-            padding: 32px 24px;
+            padding: 32px 20px;
             color: var(--charcoal);
             box-sizing: border-box;
         }
@@ -70,7 +55,7 @@
 
         .portal-container {
             width: 100%;
-            max-width: 1080px;
+            max-width: 1040px;
             background: var(--white);
             border: 1px solid var(--zinc-200);
             border-radius: var(--radius-lg);
@@ -78,14 +63,14 @@
             box-shadow: var(--shadow-xl);
             display: grid;
             grid-template-columns: 1fr 1.15fr;
-            min-height: 640px;
+            min-height: 580px;
             transition: var(--transition-smooth);
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 900px) {
             .portal-container {
                 grid-template-columns: 1fr;
-                max-width: 520px;
+                max-width: 480px;
                 min-height: auto;
             }
             .info-pane {
@@ -93,10 +78,10 @@
             }
         }
 
-        /* --- Info Pane Layout (Left Banner - Staff Gateway Matching) --- */
+        /* ── Left Info Pane ── */
         .info-pane {
             background: linear-gradient(135deg, var(--dark-green) 0%, var(--primary-green) 100%);
-            padding: 48px;
+            padding: 44px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -111,18 +96,18 @@
         }
 
         .school-logo {
-            width: 56px;
-            height: 56px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.3);
             background-color: var(--white);
             padding: 2px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .school-title {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
+            font-family: 'Outfit', 'Montserrat', sans-serif;
+            font-weight: 800;
             font-size: 1.25rem;
             line-height: 1.2;
             color: var(--white);
@@ -131,7 +116,7 @@
 
         .school-sub {
             color: var(--gold-light);
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 700;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -139,16 +124,16 @@
         }
 
         .info-body {
-            margin: 48px 0;
+            margin: 40px 0;
         }
 
         .welcome-title {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Outfit', 'Montserrat', sans-serif;
             font-size: 2rem;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--white);
-            line-height: 1.25;
-            margin-bottom: 16px;
+            line-height: 1.2;
+            margin-bottom: 14px;
         }
 
         .welcome-title span {
@@ -157,65 +142,51 @@
 
         .welcome-text {
             color: rgba(255, 255, 255, 0.85);
-            font-size: 0.875rem;
-            line-height: 1.6;
-            margin-bottom: 32px;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            margin-bottom: 28px;
         }
 
         .info-features-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .info-feature-item {
             display: flex;
-            align-items: flex-start;
-            gap: 16px;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.84rem;
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .info-feature-icon {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--gold-light);
+            font-size: 0.8rem;
             flex-shrink: 0;
-            font-size: 0.9rem;
-        }
-
-        .info-feature-text h4 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin: 0 0 4px 0;
-            letter-spacing: 0.3px;
-        }
-
-        .info-feature-text p {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.75);
-            margin: 0;
-            line-height: 1.4;
         }
 
         .info-footer {
             font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.6);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid rgba(255, 255, 255, 0.15);
-            padding-top: 24px;
+            padding-top: 20px;
         }
 
-        /* --- Right Content Pane --- */
+        /* ── Right Content Pane ── */
         .right-pane {
-            padding: 48px;
+            padding: 44px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -223,32 +194,34 @@
         }
 
         .login-header {
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
         .login-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-family: 'Outfit', 'Montserrat', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
             color: var(--primary-green);
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.3px;
         }
 
         .login-subtitle {
             color: var(--muted-grey);
-            font-size: 0.875rem;
+            font-size: 0.86rem;
+            margin: 0;
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: var(--charcoal);
+            color: #475569;
             margin-bottom: 8px;
             display: block;
         }
@@ -259,23 +232,23 @@
 
         .input-icon {
             position: absolute;
-            left: 16px;
+            left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--muted-grey);
-            font-size: 0.95rem;
+            color: #94A3B8;
+            font-size: 0.92rem;
             pointer-events: none;
             transition: var(--transition-smooth);
         }
 
         .form-input {
             width: 100%;
-            background: #F9FAFB;
-            border: 1px solid var(--zinc-300);
+            background: #FFFFFF;
+            border: 1.5px solid var(--zinc-300);
             border-radius: var(--radius-md);
             color: var(--charcoal);
-            padding: 14px 16px 14px 44px;
-            font-size: 0.875rem;
+            padding: 12px 16px 12px 42px;
+            font-size: 0.88rem;
             outline: none;
             transition: var(--transition-smooth);
             box-sizing: border-box;
@@ -283,8 +256,7 @@
 
         .form-input:focus {
             border-color: var(--primary-green);
-            box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.12);
-            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.1);
         }
 
         .form-input:focus + .input-icon {
@@ -298,10 +270,10 @@
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: var(--muted-grey);
+            color: #94A3B8;
             cursor: pointer;
             padding: 4px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .password-toggle-btn:hover {
@@ -315,28 +287,22 @@
             border-radius: var(--radius-md);
             color: var(--white);
             font-weight: 700;
-            padding: 14px;
-            font-size: 0.875rem;
+            padding: 13px;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: var(--transition-smooth);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 10px rgba(0, 106, 78, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            letter-spacing: 0.5px;
-            font-family: 'Montserrat', sans-serif;
-            text-transform: uppercase;
+            gap: 8px;
+            letter-spacing: 0.3px;
         }
 
-        .login-btn:hover {
+        .login-btn:hover:not(:disabled) {
             background: var(--dark-green);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 6px 14px rgba(0, 106, 78, 0.25);
             transform: translateY(-1px);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
         }
 
         .login-btn:disabled {
@@ -346,24 +312,30 @@
             box-shadow: none;
         }
 
-        .error-banner {
-            background: #FEE2E2;
-            border: 1px solid #FCA5A5;
+        .alert-custom-err {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
             border-radius: var(--radius-md);
-            padding: 12px 16px;
+            padding: 12px 14px;
             color: #B91C1C;
-            font-size: 0.8125rem;
-            margin-bottom: 24px;
+            font-size: 0.82rem;
+            margin-bottom: 20px;
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            animation: shake 0.4s ease;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+        .alert-custom-ok {
+            background: #F0FDF4;
+            border: 1px solid #BBF7D0;
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            color: #15803D;
+            font-size: 0.82rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
         }
     </style>
 </head>
@@ -371,7 +343,8 @@
     <div id="app" v-cloak style="width: 100%; display: flex; justify-content: center;">
         
         <div class="portal-container">
-            <!-- Left Info Pane (Identical to Staff Portal Gateway) -->
+            
+            <!-- Left Info Pane -->
             <div class="info-pane">
                 <div class="info-header">
                     <img src="../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Logo" class="school-logo">
@@ -383,11 +356,29 @@
 
                 <div class="info-body">
                     <h1 class="welcome-title">Student &amp; <span>Applicant Portal</span></h1>
+                    <p class="welcome-text">
+                        Access your academic roadmap, enrollment clearance status, official class schedule, and tuition assessments in one centralized dashboard.
+                    </p>
+
+                    <div class="info-features-list">
+                        <div class="info-feature-item">
+                            <div class="info-feature-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Real-time enrollment station clearance tracking</span>
+                        </div>
+                        <div class="info-feature-item">
+                            <div class="info-feature-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Digital Certificate of Registration (COR) download</span>
+                        </div>
+                        <div class="info-feature-item">
+                            <div class="info-feature-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Campus announcements &amp; academic milestones</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="info-footer">
                     <span>Go-on National College of the Philippines</span>
-                    <span>Student Portal Gateway</span>
+                    <span>Student Gateway</span>
                 </div>
             </div>
 
@@ -398,13 +389,20 @@
                     <p class="login-subtitle">Please enter your Student ID or Reference Code</p>
                 </div>
 
+                <!-- Reset Success Banner -->
+                <div v-if="resetSuccessMsg" class="alert-custom-ok">
+                    <i class="fa-solid fa-circle-check mt-1"></i>
+                    <div>{{ resetSuccessMsg }}</div>
+                </div>
+
                 <!-- Error Banner -->
-                <div v-if="loginError" class="error-banner">
-                    <i class="fas fa-exclamation-triangle" style="margin-top: 2px;"></i>
+                <div v-if="loginError" class="alert-custom-err">
+                    <i class="fa-solid fa-triangle-exclamation mt-1"></i>
                     <div>{{ loginError }}</div>
                 </div>
 
                 <form @submit.prevent="handleLogin">
+                    
                     <div class="form-group">
                         <label class="form-label" for="studentIdInput">Student ID / Reference Code</label>
                         <div class="input-wrapper">
@@ -416,8 +414,9 @@
                                 required 
                                 placeholder="e.g. GNCP-2026-1011 or REF-2026-XXXX"
                                 :disabled="isLoggingIn"
+                                autocomplete="username"
                             >
-                            <i class="fas fa-user-graduate input-icon"></i>
+                            <i class="fa-solid fa-user-graduate input-icon"></i>
                         </div>
                     </div>
 
@@ -433,8 +432,9 @@
                                 placeholder="••••••••"
                                 :disabled="isLoggingIn"
                                 style="padding-right: 44px;"
+                                autocomplete="current-password"
                             >
-                            <i class="fas fa-lock input-icon"></i>
+                            <i class="fa-solid fa-lock input-icon"></i>
                             <button 
                                 type="button" 
                                 class="password-toggle-btn" 
@@ -442,7 +442,7 @@
                                 tabindex="-1"
                                 :title="showPassword ? 'Hide password' : 'Show password'"
                             >
-                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
                             </button>
                         </div>
                     </div>
@@ -453,147 +453,29 @@
                             <span style="font-size:0.83rem; font-weight:600; color:var(--charcoal);">Remember login</span>
                         </label>
                         <div class="d-flex align-items-center gap-3">
-                            <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-secondary cursor-pointer fw-medium" style="font-size:0.81rem;"><i class="fas fa-eraser me-1"></i>Clear saved</span>
-                            <button type="button" @click="openForgotPasswordModal" class="btn btn-link p-0 text-decoration-none fw-bold" style="font-size:0.82rem; color:var(--primary-green);"><i class="fas fa-key me-1"></i>Forgot Password?</button>
+                            <span v-if="hasSavedCredentials" @click="clearSavedCredentials" class="text-secondary cursor-pointer fw-medium" style="font-size:0.81rem;">
+                                <i class="fa-solid fa-eraser me-1"></i>Clear
+                            </span>
+                            <a href="forgot-password.html" class="fw-bold text-decoration-none" style="font-size:0.82rem; color:var(--primary-green);">
+                                <i class="fa-solid fa-key me-1"></i>Forgot Password?
+                            </a>
                         </div>
                     </div>
 
                     <button type="submit" class="login-btn" :disabled="isLoggingIn">
                         <span v-if="isLoggingIn">
-                            <i class="fas fa-spinner fa-spin me-2"></i> Authenticating...
+                            <i class="fa-solid fa-spinner fa-spin me-2"></i> Authenticating...
                         </span>
                         <span v-else>
-                            <i class="fas fa-right-to-bracket me-2"></i> Sign In to Student Portal
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In to Student Portal
                         </span>
                     </button>
                 </form>
-            </div>
-        </div>
 
-        <!-- ── FORGOT PASSWORD MODAL ── -->
-        <div v-if="showForgotPasswordModal" class="custom-smtp-overlay" style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 99999; position: fixed; inset: 0; padding: 20px; box-sizing: border-box;">
-            <div style="width: 100%; max-width: 480px; background: #ffffff; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; border: 1px solid rgba(212, 175, 55, 0.3);">
-                
-                <div style="background: linear-gradient(135deg, var(--dark-green) 0%, var(--primary-green) 100%); padding: 20px 24px; border-bottom: 3px solid var(--gold); display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h5 class="fw-bold mb-0 text-white" style="font-family: 'Montserrat', sans-serif; font-size: 1.15rem;">
-                            <i class="fas fa-key me-2 text-warning"></i>Reset Account Password
-                        </h5>
-                        <p class="mb-0 text-white-50" style="font-size: 0.8rem;">GNCP Student Portal</p>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white" @click="closeForgotPasswordModal"></button>
-                </div>
-
-                <div class="p-4" style="background: #ffffff;">
-                    
-                    <!-- Feedback Alerts -->
-                    <div v-if="forgotError" class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-3 fs-7 border-0 rounded-3">
-                        <i class="fas fa-exclamation-circle text-danger flex-shrink-0"></i>
-                        <div>{{ forgotError }}</div>
-                    </div>
-                    <div v-if="forgotMsg" class="alert alert-success d-flex align-items-center gap-2 py-2 px-3 mb-3 fs-7 border-0 rounded-3">
-                        <i class="fas fa-check-circle text-success flex-shrink-0"></i>
-                        <div>{{ forgotMsg }}</div>
-                    </div>
-
-                    <!-- STEP 1: Enter Student ID / Email -->
-                    <form v-if="forgotPasswordStep === 1" @submit.prevent="handleRequestResetCode">
-                        <p class="text-muted fs-7 mb-3">
-                            Enter your <strong>Student ID</strong> or <strong>Personal Email Address</strong>. We will send a 6-digit verification code to your registered personal email.
-                        </p>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold fs-7 text-dark">Student ID or Personal Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-secondary"><i class="fas fa-id-card"></i></span>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    v-model="forgotIdentifier" 
-                                    required 
-                                    placeholder="e.g. GNCP-2026-1011 or student@email.com"
-                                    :disabled="isRequestingCode"
-                                >
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-light btn-sm fw-semibold" @click="closeForgotPasswordModal" :disabled="isRequestingCode">Cancel</button>
-                            <button type="submit" class="btn btn-success btn-sm fw-bold px-3" style="background: var(--primary-green); border-color: var(--primary-green);" :disabled="isRequestingCode">
-                                <span v-if="isRequestingCode"><i class="fas fa-spinner fa-spin me-1"></i>Sending Code...</span>
-                                <span v-else><i class="fas fa-paper-plane me-1"></i>Send Verification Code</span>
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- STEP 2: Enter Verification Code & New Password -->
-                    <form v-else @submit.prevent="handleResetPassword">
-                        <div class="p-3 bg-light rounded-3 mb-3 border border-emerald-100">
-                            <div class="d-flex align-items-center gap-2 text-success fw-bold fs-7 mb-1">
-                                <i class="fas fa-envelope-circle-check"></i> Verification Code Sent
-                            </div>
-                            <p class="mb-0 text-secondary fs-7">
-                                We sent a 6-digit code to <strong>{{ maskedEmailSent }}</strong>. Please check your inbox and enter the code below.
-                            </p>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold fs-7 text-dark">6-Digit Verification Code</label>
-                            <input 
-                                type="text" 
-                                class="form-control text-center fw-bold tracking-wider" 
-                                style="font-size: 1.25rem; letter-spacing: 4px;" 
-                                v-model="forgotCode" 
-                                maxlength="6" 
-                                required 
-                                placeholder="123456"
-                                :disabled="isResettingPass"
-                            >
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold fs-7 text-dark">New Password</label>
-                            <div class="position-relative">
-                                <input 
-                                    :type="forgotShowNewPass ? 'text' : 'password'" 
-                                    class="form-control" 
-                                    v-model="forgotNewPassword" 
-                                    required 
-                                    placeholder="Minimum 6 characters"
-                                    :disabled="isResettingPass"
-                                    style="padding-right: 40px;"
-                                >
-                                <button type="button" class="btn btn-link p-0 position-absolute end-0 top-50 translate-middle-y me-3 text-secondary text-decoration-none" @click="forgotShowNewPass = !forgotShowNewPass" tabindex="-1">
-                                    <i :class="forgotShowNewPass ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold fs-7 text-dark">Confirm New Password</label>
-                            <input 
-                                type="password" 
-                                class="form-control" 
-                                v-model="forgotConfirmPassword" 
-                                required 
-                                placeholder="Repeat new password"
-                                :disabled="isResettingPass"
-                            >
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-between mt-4">
-                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-secondary fw-semibold" @click="forgotPasswordStep = 1" :disabled="isResettingPass">
-                                <i class="fas fa-arrow-left me-1"></i>Back
-                            </button>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-light btn-sm fw-semibold" @click="closeForgotPasswordModal" :disabled="isResettingPass">Cancel</button>
-                                <button type="submit" class="btn btn-success btn-sm fw-bold px-3" style="background: var(--primary-green); border-color: var(--primary-green);" :disabled="isResettingPass">
-                                    <span v-if="isResettingPass"><i class="fas fa-spinner fa-spin me-1"></i>Updating...</span>
-                                    <span v-else><i class="fas fa-check-double me-1"></i>Reset Password</span>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-
+                <div class="mt-4 pt-3 text-center border-top border-light">
+                    <a href="../school-website/index.html" class="text-secondary text-decoration-none" style="font-size: 0.82rem;">
+                        <i class="fa-solid fa-house me-1"></i> Return to GNCP Main Website
+                    </a>
                 </div>
             </div>
         </div>
@@ -601,7 +483,6 @@
     </div>
 
     <!-- Modular System Architecture Scripts -->
-    <script src="assets/js/models/StudentModel.js?v=2"></script>
     <script src="assets/js/services/StudentApiService.js?v=2"></script>
     <script src="assets/js/controllers/StudentLoginController.js?v=2"></script>
     <script>

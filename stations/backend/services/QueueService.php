@@ -7,6 +7,8 @@
  * to eliminate N+1 query patterns (was ~3N+2 queries, now ~7 queries total).
  */
 
+require_once __DIR__ . '/../../../shared/backend/services/AssessmentService.php';
+
 class QueueService {
     public static function getQueueHash(PDO $pdo): string {
         try {
@@ -14,23 +16,35 @@ class QueueService {
                 SELECT 
                     COUNT(*) AS cnt,
                     COALESCE(MAX(`id`), 0) AS max_id,
-                    COALESCE(SUM(CHAR_LENGTH(CONCAT_WS(':', `status`, COALESCE(`section_code`,''), COALESCE(`or_number`,''), COALESCE(`medical_conditions`,''), COALESCE(`scholarship`,'')))), 0) AS d_hash
+                    COALESCE(SUM(CRC32(CONCAT(
+                        `id`, ':', `status`, ':', 
+                        IFNULL(`section_code`,''), ':', 
+                        IFNULL(`or_number`,''), ':', 
+                        IFNULL(SUBSTRING(`roadmap`, 1, 80),''), ':',
+                        IFNULL(SUBSTRING(`medical_data`, 1, 80),''), ':',
+                        IFNULL(SUBSTRING(`payment_data`, 1, 80),'')
+                    ))), 0) AS pe_checksum
                 FROM `pre_enrollments`
-                WHERE UPPER(`status`) NOT IN ('PRE_REGISTERED', 'REJECTED', 'PROMOTED')
+                WHERE `status` IN ('VERIFIED', 'MEDICAL_CLEARED', 'ADVISED', 'PAID', 'ENROLLED', 'APPROVED', 'IN_PROGRESS', 'PROMOTED')
             ");
-            $pe = $peStmt ? $peStmt->fetch(PDO::FETCH_ASSOC) : ['cnt'=>0, 'max_id'=>0, 'd_hash'=>0];
+            $pe = $peStmt ? $peStmt->fetch(PDO::FETCH_ASSOC) : ['cnt' => 0, 'max_id' => 0, 'pe_checksum' => 0];
 
             $stStmt = $pdo->query("
                 SELECT 
                     COUNT(*) AS cnt,
-                    COALESCE(SUM(CHAR_LENGTH(CONCAT_WS(':', `status`, COALESCE(`section_code`,''), COALESCE(`academic_year`,'')))), 0) AS d_hash
+                    COALESCE(SUM(CRC32(CONCAT(
+                        `id`, ':', `status`, ':', 
+                        IFNULL(SUBSTRING(`roadmap`, 1, 80),''), ':',
+                        IFNULL(SUBSTRING(`medical_data`, 1, 80),''), ':',
+                        IFNULL(SUBSTRING(`payment_data`, 1, 80),'')
+                    ))), 0) AS st_checksum
                 FROM `students`
             ");
-            $st = $stStmt ? $stStmt->fetch(PDO::FETCH_ASSOC) : ['cnt'=>0, 'd_hash'=>0];
+            $st = $stStmt ? $stStmt->fetch(PDO::FETCH_ASSOC) : ['cnt' => 0, 'st_checksum' => 0];
 
-            $seed = sprintf("pe:%d:%d:%d-st:%d:%d", 
-                $pe['cnt'] ?? 0, $pe['max_id'] ?? 0, $pe['d_hash'] ?? 0, 
-                $st['cnt'] ?? 0, $st['d_hash'] ?? 0
+            $seed = sprintf("pe:%d:%d:%u-st:%d:%u", 
+                $pe['cnt'] ?? 0, $pe['max_id'] ?? 0, $pe['pe_checksum'] ?? 0, 
+                $st['cnt'] ?? 0, $st['st_checksum'] ?? 0
             );
             return '"' . md5($seed) . '"';
         } catch (Exception $e) {
@@ -51,8 +65,22 @@ class QueueService {
             }
         }
 
-        // 2. Fetch staging pre_enrollments (exclude pre-registered, rejected, promoted)
-        $stmt = $pdo->query("SELECT * FROM `pre_enrollments` WHERE UPPER(`status`) NOT IN ('PRE_REGISTERED', 'REJECTED', 'PROMOTED') ORDER BY `id` DESC");
+        // 2. Fetch staging pre_enrollments using indexed status lookup
+        $stmt = $pdo->query("
+            SELECT 
+                `id`, `temp_student_id`, `temp_pin`, `student_type`, `course_code`, `nstp`,
+                `first_name`, `middle_name`, `last_name`, `email`, `phone`, `birth_date`, `gender`,
+                `address`, `shs_track`, `previous_college`, `health_status`, `medical_conditions`,
+                `allergies`, `current_medication`, `medication_details`, `fitness_participation`,
+                `emergency_contact_name`, `emergency_contact_phone`, `payment_mode`, `scholarship`,
+                `registrar_notes`, `status`, `roadmap`, `requirements_data`, `medical_data`,
+                `scholarship_data`, `payment_data`, `helpdesk_data`, `enrollment_data`,
+                `section_code`, `or_number`, `enrolled_at`, `cashier_name`, `year_level_applied`,
+                `curriculum_version`, `created_at`
+            FROM `pre_enrollments` 
+            WHERE `status` IN ('VERIFIED', 'MEDICAL_CLEARED', 'ADVISED', 'PAID', 'ENROLLED', 'APPROVED', 'Approved', 'IN_PROGRESS')
+            ORDER BY `id` DESC
+        ");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // 3. Fetch permanent student directory records and index by reference ID/Email for seamless merging
@@ -60,7 +88,16 @@ class QueueService {
         $existingRefs = [];
         $studRows = [];
         try {
-            $studStmt = $pdo->query("SELECT * FROM `students` ORDER BY `id` DESC");
+            $studStmt = $pdo->query("
+                SELECT 
+                    `id`, `name`, `program`, `email`, `year_level`, `curriculum_version`, `status`,
+                    `temp_reference_no`, `personal_info`, `academic_info`, `roadmap`, `requirements_data`,
+                    `medical_data`, `scholarship_data`, `payment_data`, `helpdesk_data`, `enrollment_data`,
+                    `created_at`
+                FROM `students` 
+                ORDER BY `created_at` DESC
+                LIMIT 500
+            ");
             $studRows = $studStmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($studRows as $sr) {
                 if (!empty($sr['temp_reference_no'])) {
@@ -254,6 +291,7 @@ class QueueService {
                 'id'                 => (int)$row['id'],
                 'referenceNumber'    => $row['temp_student_id'],
                 'tempPin'            => $row['temp_pin'],
+                'status'             => $row['status'] ?? 'PRE_REGISTERED',
                 'lastName'           => $row['last_name'],
                 'firstName'          => $row['first_name'],
                 'middleName'         => $row['middle_name'] ?? '',
@@ -349,10 +387,22 @@ class QueueService {
 
     private static function getCurriculumSubjects(PDO $pdo, string $courseCode, string $yearLevel, string $semester): array {
         try {
-            // Resolve program code to program name for curriculum lookup
-            $progStmt = $pdo->prepare("SELECT `name` FROM `programs` WHERE `code` = :code");
-            $progStmt->execute([':code' => $courseCode]);
-            $programName = $progStmt->fetchColumn() ?: $courseCode;
+            $aliasMap = [
+                'BSCPE' => 'BS Computer Engineering',
+                'BSCOE' => 'BS Computer Engineering',
+                'BSCS'  => 'BS Computer Science',
+                'BSIT'  => 'BS Information Technology',
+                'BSN'   => 'BS Nursing',
+                'BSBA'  => 'BS Business Administration'
+            ];
+            $cleanCode = strtoupper(trim($courseCode));
+            $programName = $aliasMap[$cleanCode] ?? null;
+
+            if (!$programName) {
+                $progStmt = $pdo->prepare("SELECT `name` FROM `programs` WHERE `code` = :code OR `name` = :name");
+                $progStmt->execute([':code' => $courseCode, ':name' => $courseCode]);
+                $programName = $progStmt->fetchColumn() ?: $courseCode;
+            }
 
             $stmt = $pdo->prepare("
                 SELECT s.code, s.title, s.lecture_units, s.lab_units, s.lab_fee, s.prerequisites

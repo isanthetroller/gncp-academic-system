@@ -82,7 +82,7 @@ class AnnouncementService {
         $targetAudience = strtoupper(trim($payload['target_audience'] ?? 'ALL'));
         $isPinned       = !empty($payload['is_pinned']) ? 1 : 0;
         $status         = strtoupper(trim($payload['status'] ?? 'PUBLISHED'));
-        $authorName     = !empty($admin['name']) ? $admin['name'] : ($admin['username'] ?? 'GNCP Administration');
+        $authorName     = !empty($payload['author_name']) ? trim($payload['author_name']) : (!empty($admin['name']) ? $admin['name'] : ($admin['username'] ?? 'Office of Academic Affairs'));
         $authorId       = $admin['id'] ?? null;
 
         if (empty($title) || empty($content)) {
@@ -93,6 +93,7 @@ class AnnouncementService {
             if ($id > 0) {
                 $sql = "UPDATE announcements 
                         SET title = :title, category = :category, content = :content, image_url = :image_url, 
+                            author_name = :author_name,
                             target_audience = :target_audience, is_pinned = :is_pinned, status = :status, updated_at = NOW() 
                         WHERE id = :id";
                 $stmt = $pdo->prepare($sql);
@@ -101,6 +102,7 @@ class AnnouncementService {
                     ':category'        => $category,
                     ':content'         => $content,
                     ':image_url'       => !empty($imageUrl) ? $imageUrl : null,
+                    ':author_name'     => $authorName,
                     ':target_audience' => $targetAudience,
                     ':is_pinned'       => $isPinned,
                     ':status'          => $status,

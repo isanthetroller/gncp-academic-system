@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../../shared/libs/fonts/fonts.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="../../shared/css/admin_workstation_theme.css">
+    <link rel="stylesheet" href="../../shared/css/sidebar.css?v=9">
     <link rel="stylesheet" href="../../shared/libs/login.css">
     <script src="../../shared/libs/sweetalert2.all.min.js"></script>
     <script src="../../shared/js/PasswordChangeGuard.js"></script>
@@ -57,7 +58,7 @@
 <body>
     <div id="app" class="dashboard-shell" v-cloak>
         <template v-if="currentUser">
-            <station-sidebar 
+            <employee-sidebar 
                 station-name="Go-on National College" 
                 station-tag="CASHIER STATION"
                 :nav-groups="[
@@ -71,9 +72,10 @@
                 ]"
                 :current-view="currentView"
                 :current-user="currentUser"
+                base-path="../../"
                 @set-view="setView"
                 @logout="handleLogout">
-            </station-sidebar>
+            </employee-sidebar>
 
         <main class="main-panel">
             <div class="top-bar">
@@ -83,6 +85,81 @@
                 </div>
                 <div class="top-bar-actions">
                     <button class="btn-pill btn-pill-green" @click="setView('queue')"><i class="fa-solid fa-users-line"></i> Open Queue</button>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div v-if="currentView === 'profile'" class="profile-view-wrap p-3">
+                <div class="profile-hero">
+                    <div class="avatar-wrap" @click="triggerFileInput" title="Click to change profile picture">
+                        <img v-if="formattedAvatar" :src="formattedAvatar" alt="Profile Picture">
+                        <div v-else class="avatar-initials">{{ initials }}</div>
+                        <div class="avatar-overlay">
+                            <i class="fa-solid fa-camera mb-1" style="font-size:1.1rem"></i>
+                            <span>Change Photo</span>
+                        </div>
+                    </div>
+                    <input type="file" ref="fileInput" @change="onFileSelected" accept="image/*" style="display:none">
+                    <div class="profile-hero-info">
+                        <h3>{{ user.name || (currentUser ? currentUser.name : 'Cashier Staff') }}<span class="profile-hero-badge">{{ user.role || (currentUser ? currentUser.role : 'CASHIER') }}</span></h3>
+                        <p><i class="fa-solid fa-envelope me-2"></i>{{ user.email || (currentUser ? currentUser.email : 'cashier@gncp.edu.ph') }}</p>
+                        <p style="margin-top:4px"><i class="fa-solid fa-at me-2"></i>{{ user.username || (currentUser ? currentUser.username : 'cashier') }}</p>
+                    </div>
+                </div>
+
+                <div class="profile-grid">
+                    <div class="card p-4">
+                        <div class="card-title mb-3" style="font-weight:800; font-size:1.05rem; color:var(--primary, #006A4E);"><i class="fa-solid fa-user-edit me-2"></i> Personal Details</div>
+                        <form @submit.prevent="saveStaffProfile">
+                            <div style="margin-bottom:14px"><label class="f-label">Full Name</label><input class="f-input" type="text" v-model="user.name" required></div>
+                            <div style="margin-bottom:14px"><label class="f-label">Email Address</label><input class="f-input" type="email" v-model="user.email" required></div>
+                            <div style="margin-bottom:14px"><label class="f-label">Username / Identity Code</label><input class="f-input" type="text" :value="user.username" disabled></div>
+                            <div style="margin-bottom:14px"><label class="f-label">System Role</label><input class="f-input" type="text" :value="user.role" disabled></div>
+                            <div class="text-end" style="margin-top:12px">
+                                <button type="submit" class="btn-primary-save" :disabled="saving">
+                                    <i class="fa-solid fa-save"></i> {{ saving ? 'Saving...' : 'Save Personal Details' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card p-4">
+                        <div class="card-title mb-3" style="font-weight:800; font-size:1.05rem; color:var(--primary, #006A4E);"><i class="fa-solid fa-shield-alt me-2"></i> Account Security &amp; Password</div>
+                        <form @submit.prevent="updatePassword">
+                            <div style="margin-bottom:14px">
+                                <label class="f-label">Current Password</label>
+                                <div style="position:relative">
+                                    <input :type="showCurrentPass ? 'text' : 'password'" class="f-input" v-model="pass.current" placeholder="Enter your current password" required style="padding-right:42px">
+                                    <button type="button" @click="showCurrentPass = !showCurrentPass" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                                        <i :class="showCurrentPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:14px">
+                                <label class="f-label">New Password</label>
+                                <div style="position:relative">
+                                    <input :type="showNewPass ? 'text' : 'password'" class="f-input" v-model="pass.newPass" @input="checkPassStrength" placeholder="At least 6 characters" required style="padding-right:42px">
+                                    <button type="button" @click="showNewPass = !showNewPass" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                                        <i :class="showNewPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                    </button>
+                                </div>
+                                <div v-if="pass.newPass" class="pass-strength-bar" :style="{ background: passStrengthColor, width: passStrengthWidth }"></div>
+                                <div v-if="pass.newPass" class="pass-strength-text" :style="{ color: passStrengthColor }">{{ passStrengthLabel }}</div>
+                            </div>
+                            <div style="margin-bottom:14px">
+                                <label class="f-label">Confirm New Password</label>
+                                <input type="password" class="f-input" v-model="pass.confirm" placeholder="Re-enter new password" :class="{ 'is-invalid': pass.confirm && pass.confirm !== pass.newPass }" required>
+                                <div v-if="pass.confirm && pass.confirm !== pass.newPass" style="font-size:0.72rem;color:#dc2626;margin-top:4px;font-weight:600">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i>Passwords do not match.
+                                </div>
+                            </div>
+                            <div class="text-end" style="margin-top:12px">
+                                <button type="submit" class="btn-primary-save" style="background:#003D2B" :disabled="updatingPass || (pass.confirm && pass.confirm !== pass.newPass)">
+                                    <i class="fa-solid fa-key"></i> {{ updatingPass ? 'Updating...' : 'Update Password' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -630,7 +707,7 @@
 
     <script src="../../shared/libs/bootstrap.bundle.min.js"></script>
     <script src="../../shared/libs/vue.global.js"></script>
-    <script src="../../shared/js/components/StationSidebar.js?v=1"></script>
+    <script src="../../shared/js/components/EmployeeSidebar.js?v=9"></script>
     <script src="../../shared/libs/sweetalert2.all.min.js"></script>
     <script src="../assets/js/DataBus.js?v=2.2"></script>
     <script src="assets/js/app.js?v=2.2.2"></script>

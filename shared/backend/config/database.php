@@ -9,7 +9,7 @@ class Database {
     private $conn;
 
     private function __construct() {
-        $host = 'localhost';
+        $host = '127.0.0.1';
         $db   = 'gncp_portal';
         $user = 'root';
         $pass = '';

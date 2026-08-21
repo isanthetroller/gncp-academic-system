@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/student.php';
+require_once __DIR__ . '/../../shared/backend/services/AssessmentService.php';
 
 $ref = $_GET['ref'] ?? '';
 $pin = $_GET['pin'] ?? '';
@@ -30,9 +31,9 @@ try {
             FROM `students` s
             LEFT JOIN `programs` pr ON s.program = pr.code
             LEFT JOIN `academic_periods` ap ON ap.status = 'Active'
-            WHERE s.id = :ref OR s.temp_reference_no = :ref
+            WHERE s.id = :ref_id OR s.temp_reference_no = :ref_temp
         ");
-        $stmt->execute(['ref' => $ref]);
+        $stmt->execute(['ref_id' => $ref, 'ref_temp' => $ref]);
         $permStudent = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($permStudent) {
             $personal = json_decode($permStudent['personal_info'] ?? '{}', true);
@@ -273,57 +274,25 @@ try {
         }
     }
 
-    // Fee Calculations
-    $tuitionRate = 650.00; // default fallback
-    $miscFee = 0.00;
-    $lmsFee = 2053.20; // default fallback
-    $omrFee = 278.40; // default fallback
-    $nstpFee = 0.00;
+    // Calculate fee assessment via authoritative AssessmentService
     $nstpType = strtoupper($student['nstp'] ?? 'NONE');
-
-    $feeStmt = $pdo->query("SELECT * FROM `fee_schedule`");
-    if ($feeStmt) {
-        $feesList = $feeStmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($feesList as $f) {
-            $fType = strtoupper($f['type']);
-            $fLabel = strtoupper($f['label']);
-            $fAmt = (float)$f['amount'];
-
-            if ($fType === 'TUITION') {
-                $tuitionRate = $fAmt;
-            } elseif ($fLabel === 'LMS FEE') {
-                $lmsFee = $fAmt;
-            } elseif ($fLabel === 'OMR' || $fLabel === 'OMR FEE') {
-                $omrFee = $fAmt;
-            } elseif ($fLabel === 'NSTP' || $fLabel === 'NSTP FEE' || $fLabel === 'NSTP/ROTC') {
-                if ($nstpType !== 'NONE' && $nstpType !== 'N/A' && $nstpType !== '') {
-                    $nstpFee = $fAmt;
-                }
-            } elseif ($fType === 'MISCELLANEOUS') {
-                $miscFee += $fAmt;
-            }
-        }
-    }
-
-    // Default misc fallback if nothing was returned
-    if ($miscFee === 0.00) {
-        $miscFee = 2300.00; // 1500 Registration + 800 Library
-    }
-    
-    // Default NSTP fallback if they chose NSTP but fee_schedule didn't specify it
-    if ($nstpFee === 0.00 && $nstpType !== 'NONE' && $nstpType !== 'N/A' && $nstpType !== '') {
-        $nstpFee = 325.00;
-    }
-
-    $tuitionFee = $totalUnits * $tuitionRate;
-    
-    // Check scholarship discount
     $scholarshipData = json_decode($student['scholarship_data'] ?? '{}', true);
     $discount = (float)($scholarshipData['discount'] ?? 0.00);
+    $paymentData = json_decode($student['payment_data'] ?? '{}', true);
+    $snapshot = $paymentData['assessmentSnapshot'] ?? null;
 
-    $cashTotal = $tuitionFee + $totalLabFee + $miscFee + $lmsFee + $omrFee + $nstpFee - $discount;
-    $installmentCharge = $cashTotal * 0.08;
-    $installmentTotal = $cashTotal + $installmentCharge;
+    $assessment = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstpType, $discount, $snapshot);
+
+    $tuitionRate       = $assessment['tuitionRate'];
+    $tuitionFee        = $assessment['tuitionFee'];
+    $totalLabFee       = $assessment['totalLabFee'];
+    $miscFee           = $assessment['miscFee'];
+    $lmsFee            = $assessment['lmsFee'];
+    $nstpFee           = $assessment['nstpFee'];
+    $omrFee            = $assessment['omrFee'];
+    $cashTotal         = $assessment['cashTotal'];
+    $installmentCharge = $assessment['installmentCharge'];
+    $installmentTotal  = $assessment['installmentTotal'];
 
 } catch (Exception $e) {
     die("<h1 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Database error: " . $e->getMessage() . "</h1>");
@@ -338,7 +307,7 @@ try {
         body {
             font-family: Arial, sans-serif;
             color: #000;
-            background-color: #fff;
+            background-color: #f8fafc;
             margin: 0;
             padding: 20px;
             font-size: 11px;
@@ -348,6 +317,11 @@ try {
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
+            background-color: #fff;
+            padding: 28px 32px;
+            border: 1px solid #d1d5db;
+            border-radius: 0 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .header-table, .schedule-table, .assessment-table {
             width: 100%;

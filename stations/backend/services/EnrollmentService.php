@@ -4,13 +4,15 @@
  * Handles transactional student updates, IT center finalization, and photo uploads.
  */
 
+require_once __DIR__ . '/../../../shared/backend/services/AssessmentService.php';
+
 class EnrollmentService {
     public static function updateStudent(PDO $pdo, array $payload) {
         $refNo = $payload['referenceNumber'] ?? '';
         $updateData = $payload['updateData'] ?? null;
 
         if (!$refNo || !$updateData) {
-            sendResponse(false, null, 'Invalid payload or missing update details.', 400);
+            throw new InvalidArgumentException('Invalid payload or missing update details.');
         }
 
         // Fetch existing record first
@@ -60,12 +62,11 @@ class EnrollmentService {
                 }
                 return ['referenceNumber' => $refNo, 'status' => $studentInfo['status']];
             }
-            sendResponse(false, null, "Student record not found for: $refNo", 404);
+            throw new RuntimeException("Student record not found for: $refNo");
         }
 
         if (strcasecmp($existingRecord['status'], 'Rejected') === 0) {
-            sendResponse(false, null, 'This application has been permanently rejected.', 403);
-            exit;
+            throw new DomainException('This application has been permanently rejected.');
         }
 
         // Validate payment eligibility if payment update is provided
@@ -83,7 +84,7 @@ class EnrollmentService {
             foreach ($roadmapSteps as $idx => $step) {
                 $statusVal = strtoupper($step['status'] ?? '');
                 if ($statusVal === 'COMPLETED' && !$prevDone) {
-                    sendResponse(false, null, "Roadmap step '" . ($step['stepId'] ?? $idx) . "' cannot be completed out of order.", 400);
+                    throw new DomainException("Roadmap step '" . ($step['stepId'] ?? $idx) . "' cannot be completed out of order.");
                 }
                 if ($statusVal !== 'COMPLETED' && $statusVal !== 'SKIPPED') {
                     $prevDone = false;
@@ -128,6 +129,17 @@ class EnrollmentService {
                 $params['scholarship_data'] = json_encode($updateData['scholarship']);
             }
             if (isset($updateData['payment'])) {
+                $paymentPayload = $updateData['payment'];
+                if (empty($paymentPayload['assessmentSnapshot'])) {
+                    $helpdesk = json_decode($existingRecord['helpdesk_data'] ?? '{}', true) ?: [];
+                    $advisedSubjects = $helpdesk['advisedSubjects'] ?? [];
+                    $nstp = strtoupper($existingRecord['nstp'] ?? 'NONE');
+                    $scholarshipData = json_decode($existingRecord['scholarship_data'] ?? '{}', true) ?: [];
+                    $discount = (float)($scholarshipData['discount'] ?? 0.00);
+
+                    $paymentPayload['assessmentSnapshot'] = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstp, $discount);
+                    $updateData['payment'] = $paymentPayload;
+                }
                 $sets[] = "`payment_data` = :payment_data";
                 $params['payment_data'] = json_encode($updateData['payment']);
             }
@@ -138,6 +150,19 @@ class EnrollmentService {
                 $scholarshipName = $updateData['helpdesk']['scholarshipName'] ?? 'NONE';
                 $sets[] = "`scholarship` = :scholarship";
                 $params['scholarship'] = $scholarshipName;
+
+                // Freeze assessment snapshot immediately upon Academic Advising (Pre-Payment Protection)
+                $advisedSubjects = $updateData['helpdesk']['advisedSubjects'] ?? [];
+                $nstp = strtoupper($existingRecord['nstp'] ?? 'NONE');
+                $scholarshipData = json_decode($existingRecord['scholarship_data'] ?? '{}', true) ?: [];
+                $discount = (float)($scholarshipData['discount'] ?? 0.00);
+
+                $existingPayment = json_decode($existingRecord['payment_data'] ?? '{}', true) ?: [];
+                if (empty($existingPayment['assessmentSnapshot']) && !empty($advisedSubjects)) {
+                    $existingPayment['assessmentSnapshot'] = AssessmentService::calculateAssessment($pdo, $advisedSubjects, $nstp, $discount);
+                    $sets[] = "`payment_data` = :payment_data";
+                    $params['payment_data'] = json_encode($existingPayment);
+                }
             }
             if (isset($updateData['enrollment'])) {
                 $sets[] = "`enrollment_data` = :enrollment_data";
@@ -254,7 +279,7 @@ class EnrollmentService {
         $fileName    = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $payload['fileName'] ?? 'portrait.png');
 
         if (!$refNo || !$base64Data) {
-            sendResponse(false, null, 'referenceNumber and photoData are required.', 400);
+            throw new InvalidArgumentException('referenceNumber and photoData are required.');
         }
 
         if (preg_match('/^data:image\/\w+;base64,/', $base64Data)) {
@@ -263,7 +288,7 @@ class EnrollmentService {
 
         $imageData = base64_decode($base64Data);
         if ($imageData === false) {
-            sendResponse(false, null, 'Invalid base64 image data.', 400);
+            throw new InvalidArgumentException('Invalid base64 image data.');
         }
 
         $uploadDir = __DIR__ . '/../../../uploads/portraits/';
@@ -276,7 +301,7 @@ class EnrollmentService {
         $filePath  = $uploadDir . $finalName;
 
         if (file_put_contents($filePath, $imageData) === false) {
-            sendResponse(false, null, 'Failed to write portrait file to disk.', 500);
+            throw new RuntimeException('Failed to write portrait file to disk.');
         }
 
         $webPath = '/systemtest/uploads/portraits/' . $finalName;

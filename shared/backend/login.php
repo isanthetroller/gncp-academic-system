@@ -11,6 +11,19 @@ if (($_GET['action'] ?? '') === 'logout') {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    $_SESSION = [];
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params["path"] ?? '/',
+            $params["domain"] ?? '',
+            $params["secure"] ?? false,
+            $params["httponly"] ?? true
+        );
+    }
     session_unset();
     session_destroy();
     sendResponse(true, null, 'Logged out successfully.', 200);

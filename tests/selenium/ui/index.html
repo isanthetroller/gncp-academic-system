@@ -8,9 +8,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Self-Hosted Local FontAwesome & Vue 3 -->
-    <link rel="stylesheet" href="/shared/libs/font-awesome/css/all.min.css">
-    <script src="/shared/libs/vue.global.js"></script>
+    <!-- Self-Hosted Local FontAwesome & Vue 3 with resilient fallback -->
+    <link rel="stylesheet" href="../../../shared/libs/font-awesome/css/all.min.css" onerror="this.onerror=null;this.href='/shared/libs/font-awesome/css/all.min.css';">
+    <script src="../../../shared/libs/vue.global.js"></script>
+    <script>
+      if (typeof Vue === 'undefined') {
+        document.write('<script src="/shared/libs/vue.global.js"><\/script>');
+      }
+    </script>
     <style>
         :root {
             --bg:             #f4f6f8;
@@ -43,6 +48,8 @@
             overflow-x: hidden;
         }
 
+        [v-cloak] { display: none !important; }
+
         .app {
             display: flex;
             flex-direction: column;
@@ -51,7 +58,7 @@
             gap: 16px;
         }
 
-        /* ── HEADER TOOLBAR (Matching GNCP Topbar Aesthetic) ── */
+        /* ── HEADER TOOLBAR ── */
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -136,7 +143,7 @@
         .panel-title { font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
         .panel-body { padding: 16px; flex: 1; overflow-y: auto; }
 
-        /* Sleek custom scrollbars */
+        /* Custom Scrollbars */
         .panel-body::-webkit-scrollbar,
         .terminal::-webkit-scrollbar { width: 6px; }
         .panel-body::-webkit-scrollbar-track,
@@ -219,10 +226,10 @@
 <body>
 <div id="app" class="app" v-cloak>
 
-    <!-- HEADER TOOLBAR (Matching GNCP Primary Portal Theme) -->
+    <!-- HEADER TOOLBAR -->
     <header class="topbar">
         <div class="brand-block">
-            <img src="/school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo" onError="this.onerror=null;this.src='../school-website/assets/images/logo-removebg-preview.png';">
+            <img src="../../../school-website/assets/images/logo-removebg-preview.png" alt="GNCP Seal" class="brand-logo" onError="this.onerror=null;this.src='/school-website/assets/images/logo-removebg-preview.png';">
             <div class="brand-titles">
                 <h1>Go-on National College</h1>
                 <p>Selenium Automated System Testing Suite</p>
@@ -252,6 +259,17 @@
             </button>
         </div>
     </header>
+
+    <!-- SERVER OFFLINE HELPER BANNER -->
+    <div v-if="!isServerOnline" style="background:#fee2e2; border:1px solid #fecaca; border-radius:var(--radius-sm); padding:12px 18px; color:#b91c1c; font-size:0.84rem; display:flex; align-items:center; justify-content:space-between; font-weight:600;">
+        <div>
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            Selenium Python Test Server is currently offline. Please run <code>run_selenium_ui.bat</code> in your project directory to start the test backend.
+        </div>
+        <button @click="pollStatus" class="log-filter-btn" style="background:#b91c1c; color:#fff; border:none; padding:5px 12px; cursor:pointer;">
+            <i class="fa-solid fa-rotate me-1"></i> Retry Connection
+        </button>
+    </div>
 
     <!-- SUMMARY METRICS BAR -->
     <div class="metrics-grid">
@@ -301,7 +319,7 @@
                             <span class="step-badge" :class="getStepBadge(s.key)">{{ getStepStatus(s.key) }}</span>
                         </div>
                         <div v-if="expandedSteps[s.key] || (findResult(s.key) && findResult(s.key).status === 'FAILED')" class="step-traceback">
-                            <strong><i class="fa-solid fa-bug"></i> Traceback / Failure Details:</strong><br>
+                            <strong><i class="fa-solid fa-bug"></i> Traceback / Execution Details:</strong><br>
                             {{ getStepDetail(s.key) || 'Step completed successfully with 0 assertions failed.' }}
                         </div>
                     </div>
@@ -406,7 +424,7 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            testServer: 'http://localhost:8090',
+            testServer: (window.location.port === '8090' ? '' : 'http://localhost:8090'),
             isServerOnline: true,
             headless: false,
             mode: 'all',
@@ -423,16 +441,18 @@ createApp({
             logSearch: '',
             expandedSteps: {},
             allSteps: [
-                { num: '0', key: '0. DB Cleanup',                          label: '0. Purge Stale Test Data',        sub: 'Database Purge & Reset',       icon: 'fa-database' },
-                { num: '1', key: '1. Student Pre-Registration',             label: '1. Online Application Form',      sub: 'Applicant Pre-Registration',   icon: 'fa-user-pen' },
-                { num: '2', key: '2. Registrar Verification',               label: '2. Registrar Document Check',     sub: 'Document Approval State',      icon: 'fa-clipboard-check' },
-                { num: '3', key: '3. Academic Advising',                    label: '3. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',  icon: 'fa-graduation-cap' },
-                { num: '4', key: '4. Medical Clearance',                    label: '4. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',   icon: 'fa-stethoscope' },
-                { num: '5', key: '5. Cashier Payment',                      label: '5. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',    icon: 'fa-wallet' },
-                { num: '6', key: '6. IT Center Promotion',                  label: '6. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',     icon: 'fa-id-card' },
-                { num: '7', key: '7. Student Portal Verification',          label: '7. Student Portal Live Login',    sub: 'Portal Credential Verification', icon: 'fa-desktop' },
-                { num: '8', key: '8. Admin Student Accounts Check',         label: '8. Admin Directory Audit',        sub: 'Admin Directory Verification', icon: 'fa-shield-halved' },
-                { num: '9', key: '9. Profile UI & Audit Logs Verification', label: '9. Staff Profile & Log Audit',    sub: 'Profile UI Audit Verification', icon: 'fa-user-gear' }
+                { num: '0',  key: '0. Cleanup',                           label: '0. Purge Stale Test Data',        sub: 'Database Purge & Reset',       icon: 'fa-database' },
+                { num: '1',  key: '1. Admin Section Creation',            label: '1. Admin Section Creation',       sub: 'Course & Section Allocation',  icon: 'fa-layer-group' },
+                { num: '2',  key: '2. Student Pre-Registration',          label: '2. Online Application Form',      sub: 'Applicant Pre-Registration',   icon: 'fa-user-pen' },
+                { num: '3',  key: '3. Registrar Verification',            label: '3. Registrar Document Check',     sub: 'Document Approval State',      icon: 'fa-clipboard-check' },
+                { num: '4',  key: '4. Academic Advising',                 label: '4. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',  icon: 'fa-graduation-cap' },
+                { num: '5',  key: '5. Medical Clearance',                 label: '5. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',   icon: 'fa-stethoscope' },
+                { num: '6',  key: '6. Cashier Payment',                   label: '6. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',    icon: 'fa-wallet' },
+                { num: '7',  key: '7. IT Center Promotion',               label: '7. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',     icon: 'fa-id-card' },
+                { num: '8',  key: '8. Student Portal Login',              label: '8. Student Portal Live Login',    sub: 'Portal Credential Verification', icon: 'fa-desktop' },
+                { num: '9',  key: '9. Admin Student Accounts Check',      label: '9. Admin Directory Audit',        sub: 'Admin Directory Verification', icon: 'fa-shield-halved' },
+                { num: '10', key: '10. Profile UI & Audit Logs',          label: '10. Staff Profile & Log Audit',   sub: 'Profile UI Audit Verification', icon: 'fa-user-gear' },
+                { num: '11', key: '11. Super Admin Sign Out',             label: '11. Interactive Logout Audit',    sub: 'Session Destruction & Redirect', icon: 'fa-right-from-bracket' }
             ],
             galleryThumbs: [
                 { file: 'step01_registration.png', label: '1. Pre-Registration' },
@@ -442,7 +462,8 @@ createApp({
                 { file: 'step05_cashier.png',      label: '5. Cashier' },
                 { file: 'step06_it_center.png',    label: '6. IT Center' },
                 { file: 'step07_student_portal_dashboard.png', label: '7. Student Portal' },
-                { file: 'step08_admin_loaded.png',   label: '8. Admin Audit' }
+                { file: 'step08_admin_loaded.png',   label: '8. Admin Audit' },
+                { file: 'step11_logout02_confirm_modal.png', label: '9. Logout Modal' }
             ]
         };
     },
@@ -486,7 +507,7 @@ createApp({
             } catch (err) {
                 this.status = 'FAILED'; this.isRunning = false;
                 this.isServerOnline = false;
-                this.logs.push({ timestamp: new Date().toTimeString().slice(0,8), level: 'ERROR', message: 'Cannot connect to Selenium server at http://localhost:8090. Please launch: python tests/selenium/server.py' });
+                this.logs.push({ timestamp: new Date().toTimeString().slice(0,8), level: 'ERROR', message: 'Cannot connect to Selenium server at http://localhost:8090. Please launch: run_selenium_suite.bat or python tests/selenium/server.py' });
             }
         },
         async stopTest() {
@@ -537,7 +558,11 @@ createApp({
             }
         },
         findResult(key) {
-            return this.results.find(r => r.step && r.step === key);
+            const k = (key || '').toLowerCase();
+            return this.results.find(r => {
+                const s = (r.step || r.feature || '').toLowerCase();
+                return s === k || s.includes(k) || k.includes(s);
+            });
         },
         getStepClass(key) {
             const r = this.findResult(key);
@@ -601,9 +626,37 @@ createApp({
             if (src && !src.includes('null') && !src.includes('undefined')) {
                 this.modalSrc = src; 
             }
+        },
+        sendHeartbeat() {
+            fetch((this.testServer || '') + '/api/heartbeat', { method: 'POST' })
+                .then(() => { this.isServerOnline = true; })
+                .catch(() => {});
         }
     },
-    mounted() { this.pollStatus(); }
+    mounted() {
+        this.pollStatus();
+        this.sendHeartbeat();
+
+        // Send heartbeat every 3s to keep test server alive
+        this.heartbeatInterval = setInterval(() => {
+            this.sendHeartbeat();
+        }, 3000);
+
+        this._onFocus = () => { this.sendHeartbeat(); this.pollStatus(); };
+        this._onVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                this.sendHeartbeat();
+                this.pollStatus();
+            }
+        };
+        window.addEventListener('focus', this._onFocus);
+        document.addEventListener('visibilitychange', this._onVisibility);
+    },
+    beforeUnmount() {
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        if (this._onFocus) window.removeEventListener('focus', this._onFocus);
+        if (this._onVisibility) document.removeEventListener('visibilitychange', this._onVisibility);
+    }
 }).mount('#app');
 </script>
 </body>

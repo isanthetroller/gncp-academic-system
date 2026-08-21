@@ -14,6 +14,7 @@ class StationDataBus {
     static _consecutiveFailures = 0;
     static _pollTimer = null;
     static _lastEtag = null;
+    static _memoryQueue = null;
 
     static getApiUrl(action) {
         return `/systemtest/api/index.php?action=${action}`;
@@ -21,12 +22,22 @@ class StationDataBus {
 
     static getQueue() {
         this.syncWithBackend();
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {
+            console.warn('[DataBus] LocalStorage read failed; using in-memory queue fallback:', e);
+        }
+        return this._memoryQueue || [];
     }
 
     static saveQueue(queue) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+        this._memoryQueue = queue;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+        } catch (e) {
+            console.warn('[DataBus] LocalStorage write failed (quota exceeded or storage disabled); retained in memory:', e);
+        }
     }
 
     static getStudentByRef(refNo) {
@@ -80,10 +91,20 @@ class StationDataBus {
                 }
                 const result = await response.json();
                 if (result.success && Array.isArray(result.data)) {
+                    this._memoryQueue = result.data;
                     const dbRaw = JSON.stringify(result.data);
-                    const localRaw = localStorage.getItem(STORAGE_KEY);
-                    if (localRaw !== dbRaw) {
-                        localStorage.setItem(STORAGE_KEY, dbRaw);
+                    let hasChanged = true;
+                    try {
+                        const localRaw = localStorage.getItem(STORAGE_KEY);
+                        if (localRaw === dbRaw) {
+                            hasChanged = false;
+                        } else {
+                            localStorage.setItem(STORAGE_KEY, dbRaw);
+                        }
+                    } catch (e) {
+                        console.warn('[DataBus] LocalStorage update bypassed; synchronized in memory:', e);
+                    }
+                    if (hasChanged) {
                         window.dispatchEvent(new Event('storage'));
                     }
                 }
@@ -142,6 +163,13 @@ class StationDataBus {
         localStorage.removeItem(STORAGE_KEY);
         this.syncWithBackend();
         return [];
+    }
+
+    static stopPolling() {
+        if (StationDataBus._pollTimer) {
+            clearTimeout(StationDataBus._pollTimer);
+            StationDataBus._pollTimer = null;
+        }
     }
 }
 

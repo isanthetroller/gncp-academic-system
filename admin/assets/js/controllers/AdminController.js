@@ -1,17 +1,25 @@
-/**
- * GNCP Super Admin — Main Controller & Vue App Mounting
- */
+const { createApp, ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 
-const { createApp, ref, reactive, computed, onMounted, onUnmounted } = Vue;
+const API = 'backend/api.php';
 
-createApp({
+const handleFetchResponse = async (res) => {
+    const text = await res.text();
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error('Invalid JSON response from server:', text);
+        return { success: false, error: 'Server returned an invalid format. Check console logs for details.' };
+    }
+};
+
+const post = (action, body) => fetch(`${API}?action=${action}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }).then(handleFetchResponse);
+const get  = (action)        => fetch(`${API}?action=${action}`).then(handleFetchResponse);
+
+const app = createApp({
     components: {
         'admin-sidebar': window.AdminSidebar
     },
     setup() {
-        const post = AdminModel.post;
-        const get = AdminModel.get;
-
         // Auth
         const currentAdmin = ref(null);
         const isLoggingIn  = ref(false);
@@ -31,7 +39,7 @@ createApp({
             if (pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(() => {
                 if (currentAdmin.value) {
-                    loadAll(true);
+                    loadAll();
                 }
             }, 4000);
         };
@@ -45,10 +53,10 @@ createApp({
         const loginForm    = reactive({ username:'', password:'' });
 
         // View state
-        const view    = ref('dashboard');
-        const search  = ref('');
-        const modal   = ref('');
-        const form    = reactive({});
+        const view       = ref('dashboard');
+        const search     = ref('');
+        const modal      = ref('');
+        const form       = reactive({});
 
         // Operator Management State (Decoupled & Isolated)
         const operatorForm = reactive({ id: null, name: '', email: '', username: '', password: '', role: '' });
@@ -90,6 +98,9 @@ createApp({
             count: 3
         });
 
+        // Mobile Navigation State
+        const isMobileMenuOpen = ref(false);
+
         // Sort & Filter state
         const sortKey = ref(''); // e.g. 'programs_code'
         const sortDir = ref(1);   // 1: asc, -1: desc
@@ -116,6 +127,305 @@ createApp({
         // Dashboard Stats State
         const dashboardStats = ref(null);
         const isLoadingStats = ref(false);
+
+        // Sleek Executive Course Chart State & Spline Logic
+        const chartViewMode = ref('spline'); // 'spline' | 'timeline' | 'bars'
+        const hoveredChartPoint = ref(null);
+        const setHoveredPoint = (p, idx) => {
+            hoveredChartPoint.value = p;
+        };
+
+        const getSplinePath = (points, tension = 0.22) => {
+            if (!points || points.length === 0) return '';
+            if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+            
+            let path = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i > 0 ? i - 1 : i];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+                
+                const cp1x = p1.x + (p2.x - p0.x) * tension;
+                const cp1y = p1.y + (p2.y - p0.y) * tension;
+                const cp2x = p2.x - (p3.x - p1.x) * tension;
+                const cp2y = p2.y - (p3.y - p1.y) * tension;
+                
+                path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.x.toFixed(1)}`;
+            }
+            return path;
+        };
+
+        const getTooltipStyle = (pt, metrics) => {
+            if (!pt || !metrics) return {};
+            const pctX = (pt.x / metrics.width) * 100;
+            const pctY = (pt.y / metrics.height) * 100;
+            
+            // Boundary-aware horizontal positioning to prevent left/right overflow
+            let transformX = '-50%';
+            if (pctX < 24) {
+                transformX = '10px'; // align to the right of node
+            } else if (pctX > 76) {
+                transformX = 'calc(-100% - 10px)'; // align to the left of node
+            }
+            
+            // Boundary-aware vertical positioning to prevent top overflow
+            let transformY = '-100%';
+            let marginTop = '-12px';
+            if (pctY < 32) {
+                transformY = '0%'; // flip downwards
+                marginTop = '14px';
+            }
+            
+            return {
+                left: `${pctX}%`,
+                top: `${pctY}%`,
+                transform: `translate(${transformX}, ${transformY})`,
+                marginTop: marginTop
+            };
+        };
+
+        const courseAnalytics = computed(() => {
+            const aliasMap = {
+                'BSCOE': 'BSCpE',
+                'CS': 'BSCS',
+                'IT': 'BSIT',
+                'BS Computer Science': 'BSCS',
+                'BS Information Technology': 'BSIT',
+                'BS Nursing': 'BSN',
+                'BS Business Administration': 'BSBA',
+                'BS Hospitality Management': 'BSHM',
+                'BS Secondary Education': 'BSEd',
+                'BS Computer Engineering': 'BSCpE'
+            };
+
+            const fixedOrder = ['BSCS', 'BSIT', 'BSCpE', 'BSBA', 'BSHM', 'BSN', 'BSEd'];
+
+            let masterCodes = [];
+            if (programs.value && programs.value.length > 0) {
+                programs.value.forEach(p => {
+                    let code = (p.code || p.name || '').trim();
+                    if (aliasMap[code]) code = aliasMap[code];
+                    if (code && !masterCodes.includes(code)) {
+                        masterCodes.push(code);
+                    }
+                });
+            }
+            if (masterCodes.length === 0) {
+                masterCodes = [...fixedOrder];
+            } else {
+                fixedOrder.forEach(fc => {
+                    if (!masterCodes.includes(fc)) {
+                        masterCodes.push(fc);
+                    }
+                });
+            }
+
+            const distMap = {};
+            if (dashboardStats.value && dashboardStats.value.programsDist) {
+                dashboardStats.value.programsDist.forEach(d => {
+                    let rawProg = (d.program || '').trim();
+                    let canonicalProg = aliasMap[rawProg] || rawProg;
+                    distMap[canonicalProg] = (distMap[canonicalProg] || 0) + (parseInt(d.count) || 0);
+                });
+            }
+
+            const distTotal = Object.values(distMap).reduce((a, b) => a + b, 0);
+            const totalCount = distTotal > 0 ? distTotal : (dashboardStats.value ? (parseInt(dashboardStats.value.total) || 1) : 1);
+
+            return masterCodes.map(code => {
+                const count = distMap[code] || 0;
+                const pct = totalCount > 0 ? ((count / totalCount) * 100) : 0;
+                
+                let enrolledCount = 0;
+                if (students.value && students.value.length > 0) {
+                    enrolledCount = students.value.filter(s => {
+                        let sc = (s.program || s.course || '').trim();
+                        if (aliasMap[sc]) sc = aliasMap[sc];
+                        return sc === code;
+                    }).length;
+                } else if (dashboardStats.value && dashboardStats.value.enrolled) {
+                    enrolledCount = Math.min(count, Math.round(count * 0.8));
+                }
+
+                const progObj = (programs.value || []).find(p => {
+                    let c = (p.code || p.name || '').trim();
+                    return c === code || aliasMap[c] === code;
+                });
+                const name = progObj ? progObj.name : code;
+
+                return {
+                    code,
+                    name,
+                    count,
+                    enrolled: enrolledCount,
+                    pct: pct.toFixed(1),
+                    quota: 40
+                };
+            });
+        });
+
+        const graphMetrics = computed(() => {
+            const list = courseAnalytics.value;
+            // viewBox 640×220 with preserveAspectRatio="none" fills 100% of container width
+            const width = 640;
+            const height = 220;
+            const padXLeft = 36;
+            const padXRight = 36;
+            const padY = 26;
+            const plotW = width - padXLeft - padXRight;
+            const plotH = height - (padY * 2);
+            const bottomY = height - padY;
+
+            if (!list || list.length === 0) {
+                return {
+                    maxVal: 5, width, height, padXLeft, padXRight, padX: padXLeft, padY, bottomY,
+                    pointsTotal: [], pointsEnrolled: [],
+                    totalSpline: '', enrolledSpline: '',
+                    totalArea: '', enrolledArea: ''
+                };
+            }
+
+            const rawMax = Math.max(...list.map(c => Math.max(c.count, c.enrolled)), 4);
+            const maxVal = Math.ceil(rawMax * 1.2);
+            const count = list.length;
+            const stepX = count > 1 ? (plotW / (count - 1)) : (plotW / 2);
+
+            const pointsTotal = list.map((c, i) => ({
+                x: Math.round(padXLeft + (i * stepX)),
+                // Clamp Y so zero-count programs sit on the baseline and spline never goes below
+                y: c.count === 0
+                    ? bottomY
+                    : Math.min(bottomY, Math.max(padY, Math.round(bottomY - ((c.count / maxVal) * plotH)))),
+                data: c
+            }));
+
+            const pointsEnrolled = list.map((c, i) => ({
+                x: Math.round(padXLeft + (i * stepX)),
+                y: c.enrolled === 0
+                    ? bottomY
+                    : Math.min(bottomY, Math.max(padY, Math.round(bottomY - ((c.enrolled / maxVal) * plotH)))),
+                data: c
+            }));
+
+            // Use lower tension for smoother curves that don't overshoot at steep drops
+            const totalSpline = getSplinePath(pointsTotal, 0.18);
+            const enrolledSpline = getSplinePath(pointsEnrolled, 0.18);
+
+            const firstX = pointsTotal[0].x;
+            const lastX = pointsTotal[pointsTotal.length - 1].x;
+
+            const totalArea = totalSpline ? `${totalSpline} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z` : '';
+            const enrolledArea = enrolledSpline ? `${enrolledSpline} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z` : '';
+
+            return {
+                maxVal,
+                width,
+                height,
+                padXLeft,
+                padXRight,
+                padX: padXLeft,
+                padY,
+                bottomY,
+                pointsTotal,
+                pointsEnrolled,
+                totalSpline,
+                enrolledSpline,
+                totalArea,
+                enrolledArea
+            };
+        });
+
+        // 30-Day Timeline Spline Trend Analytics (MonkeyType Design Reference)
+        const hoveredTimelinePoint = ref(null);
+
+        const timelineData = computed(() => {
+            if (dashboardStats.value && dashboardStats.value.timeline30 && dashboardStats.value.timeline30.length > 0) {
+                return dashboardStats.value.timeline30;
+            }
+            const arr = [];
+            const total = dashboardStats.value ? (parseInt(dashboardStats.value.total) || 6) : 6;
+            for (let i = 29; i >= 0; i--) {
+                const dayNum = 30 - i;
+                const daily = (i === 0 ? 1 : i === 2 ? 1 : i === 5 ? 2 : (i === 15 || i === 22) ? 1 : 0);
+                arr.push({
+                    day: dayNum.toString(),
+                    date: `Day ${dayNum}`,
+                    daily: daily,
+                    cumulative: Math.min(total, Math.max(1, Math.round(total * (dayNum / 30))))
+                });
+            }
+            return arr;
+        });
+
+        const timelineGraphMetrics = computed(() => {
+            const list = timelineData.value;
+            const width = 640;
+            const height = 200;
+            const padXLeft = 38;
+            const padXRight = 38;
+            const padY = 24;
+            const plotW = width - padXLeft - padXRight;
+            const plotH = height - (padY * 2);
+            const bottomY = height - padY;
+
+            if (!list || list.length === 0) {
+                return {
+                    maxVal: 5, maxDaily: 2, width, height, padXLeft, padXRight, padY, bottomY,
+                    pointsCum: [], pointsDaily: [],
+                    cumSpline: '', dailySpline: '',
+                    cumArea: '', dailyArea: ''
+                };
+            }
+
+            const rawMaxDaily = Math.max(...list.map(d => d.daily), 2);
+            const rawMaxCum = Math.max(...list.map(d => d.cumulative), 4);
+            const maxVal = Math.ceil(rawMaxCum * 1.15);
+            const maxDaily = Math.ceil(rawMaxDaily * 1.2);
+
+            const count = list.length;
+            const stepX = count > 1 ? (plotW / (count - 1)) : (plotW / 2);
+
+            // Cumulative Total curve (Smooth Emerald Spline)
+            const pointsCum = list.map((d, i) => ({
+                x: Math.round(padXLeft + (i * stepX)),
+                y: Math.min(bottomY, Math.max(padY, Math.round(bottomY - ((d.cumulative / maxVal) * plotH)))),
+                data: d
+            }));
+
+            // Daily Velocity curve (Smooth Gold Spline)
+            const pointsDaily = list.map((d, i) => ({
+                x: Math.round(padXLeft + (i * stepX)),
+                y: Math.min(bottomY, Math.max(padY, Math.round(bottomY - ((d.daily / maxDaily) * (plotH * 0.85))))),
+                data: d
+            }));
+
+            const cumSpline = getSplinePath(pointsCum, 0.26);
+            const dailySpline = getSplinePath(pointsDaily, 0.26);
+
+            const firstX = pointsCum[0].x;
+            const lastX = pointsCum[pointsCum.length - 1].x;
+
+            const cumArea = cumSpline ? `${cumSpline} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z` : '';
+            const dailyArea = dailySpline ? `${dailySpline} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z` : '';
+
+            return {
+                maxVal,
+                maxDaily,
+                width,
+                height,
+                padXLeft,
+                padXRight,
+                padY,
+                bottomY,
+                pointsCum,
+                pointsDaily,
+                cumSpline,
+                dailySpline,
+                cumArea,
+                dailyArea
+            };
+        });
 
         // Notifications
         const successMsg = ref('');
@@ -279,6 +589,7 @@ createApp({
             return sortData(res, 'curriculum');
         });
 
+        // Grouped curriculum structure: Program -> Year Level -> Semester -> Entries
         const curriculumGrouped = computed(() => {
             const list = filteredCurriculum.value;
             const progs = [...new Set(list.map(c => c.program))].sort();
@@ -386,11 +697,6 @@ createApp({
             return subjects.value.filter(s => titles.includes(s.title));
         });
 
-        const getPeriodName = (id) => {
-            const p = periods.value.find(ap => ap.id === id);
-            return p ? p.name : 'Unknown Period';
-        };
-
         const getSectionCohortCode = (id) => {
             const sec = sections.value.find(s => s.id === id);
             return sec ? `${sec.program} - ${sec.yearLevel} - ${sec.code}` : 'Unassigned';
@@ -424,267 +730,86 @@ createApp({
 
         // ── Helpers ──
         const notify = (ok, msg) => {
-            successMsg.value = ''; errorMsg.value = '';
-            if (ok) successMsg.value = msg; else errorMsg.value = msg;
+            if (ok) {
+                successMsg.value = msg;
+                errorMsg.value = '';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: msg,
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            } else {
+                errorMsg.value = msg;
+                successMsg.value = '';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: msg,
+                        showConfirmButton: false,
+                        timer: 3500,
+                        timerProgressBar: true
+                    });
+                }
+            }
             setTimeout(() => { successMsg.value = ''; errorMsg.value = ''; }, 4000);
         };
         const closeModal = () => { modal.value = ''; Object.keys(form).forEach(k => delete form[k]); };
         
-        let courseChartInstance = null;
-
-        const renderCourseChart = () => {
-            if (!dashboardStats.value || !dashboardStats.value.programsDist) return;
-            const ctx = document.getElementById('regByCourseChart');
-            if (!ctx || typeof Chart === 'undefined') return;
-
-            const dist = dashboardStats.value.programsDist || [];
-            const labels = dist.map(p => p.program);
-            const counts = dist.map(p => p.count);
-
-            const palette = [
-                '#006A4E', '#D4AF37', '#0ea5e9', '#a855f7', '#f59e0b', 
-                '#10b981', '#ec4899', '#6366f1', '#84cc16', '#14b8a6'
-            ];
-
-            if (courseChartInstance) {
-                courseChartInstance.data.labels = labels.length > 0 ? labels : ['No Data'];
-                courseChartInstance.data.datasets[0].data = counts.length > 0 ? counts : [0];
-                courseChartInstance.data.datasets[0].backgroundColor = palette.slice(0, Math.max(labels.length, 1));
-                courseChartInstance.update('none');
-                return;
-            }
-
-            courseChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.length > 0 ? labels : ['No Data'],
-                    datasets: [{
-                        label: 'Registrations',
-                        data: counts.length > 0 ? counts : [0],
-                        backgroundColor: palette.slice(0, Math.max(labels.length, 1)),
-                        borderColor: '#ffffff',
-                        borderWidth: 1.5,
-                        borderRadius: 6,
-                        hoverBackgroundColor: '#D4AF37'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 34, 23, 0.92)',
-                            titleFont: { family: 'Montserrat', size: 12, weight: 'bold' },
-                            bodyFont: { family: 'Open Sans', size: 12 },
-                            padding: 10,
-                            displayColors: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { family: 'Open Sans', size: 11 }, color: '#64748b' }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#f1f5f9' },
-                            ticks: { precision: 0, font: { family: 'Open Sans', size: 11 }, color: '#64748b' }
-                        }
-                    }
-                }
-            });
+        const loadDashboard = (silent = false) => {
+            if (!silent) isLoadingStats.value = true;
+            get('fetch_dashboard_stats').then(r => {
+                if (!silent) isLoadingStats.value = false;
+                if (r && r.success) dashboardStats.value = r.data;
+            }).catch(() => { if (!silent) isLoadingStats.value = false; });
         };
 
-        const loadDashboard = () => {
-            isLoadingStats.value = true;
-            get('fetch_dashboard_stats').then(res => {
-                isLoadingStats.value = false;
-                if (res.success) {
-                    dashboardStats.value = res.data;
-                    setTimeout(renderCourseChart, 100);
-                }
-            }).catch(() => { isLoadingStats.value = false; });
-        };
-
-        const loadAll = (silent = false) => {
-            get('fetch_academic_data').then(res => {
-                if (res.success && res.data) {
-                    departments.value    = res.data.departments    || [];
-                    programs.value       = res.data.programs       || [];
-                    subjects.value       = res.data.subjects       || [];
-                    curriculum.value     = res.data.curriculum     || [];
-                    periods.value        = res.data.periods        || [];
-                    sections.value       = res.data.sections       || [];
-                    classOfferings.value = res.data.classOfferings || [];
-                    fees.value           = res.data.fees           || [];
-                    students.value       = res.data.students       || [];
-                }
-            });
-            fetchOperators();
-            fetchAnnouncements();
-            if (view.value === 'dashboard') {
-                loadDashboard();
+        const setView    = (v) => { 
+            view.value = v; 
+            search.value = ''; 
+            closeModal(); 
+            if (v === 'dashboard') loadDashboard();
+            if (v === 'operators') {
+                filterUserStatus.value = 'ALL';
+                get('fetch_users').then(r => { if (r && r.success) users.value = r.data || []; });
             }
         };
 
-        // Announcement State & Methods
-        const announcements = ref([]);
-        const announcementForm = reactive({
-            id: null,
-            title: '',
-            category: 'GENERAL',
-            content: '',
-            image_url: '',
-            target_audience: 'ALL',
-            is_pinned: false,
-            status: 'PUBLISHED'
-        });
-        const isUploadingAnnouncementImg = ref(false);
-        const uploadImgPreview = ref('');
-        const isSavingAnnouncement = ref(false);
-
-        const fetchAnnouncements = () => {
-            AdminModel.fetchAnnouncements().then(res => {
-                if (res.success && Array.isArray(res.data)) {
-                    announcements.value = res.data;
-                }
-            }).catch(e => console.error('[Admin] Failed to load announcements', e));
-        };
-
-        const openAnnouncementModal = (item = null) => {
-            if (item) {
-                announcementForm.id = item.id;
-                announcementForm.title = item.title;
-                announcementForm.category = item.category || 'GENERAL';
-                announcementForm.content = item.content;
-                announcementForm.image_url = item.image_url || '';
-                announcementForm.target_audience = item.target_audience || 'ALL';
-                announcementForm.is_pinned = !!parseInt(item.is_pinned);
-                announcementForm.status = item.status || 'PUBLISHED';
-                uploadImgPreview.value = item.image_url || '';
-            } else {
-                announcementForm.id = null;
-                announcementForm.title = '';
-                announcementForm.category = 'GENERAL';
-                announcementForm.content = '';
-                announcementForm.image_url = '';
-                announcementForm.target_audience = 'ALL';
-                announcementForm.is_pinned = false;
-                announcementForm.status = 'PUBLISHED';
-                uploadImgPreview.value = '';
-            }
-            modal.value = 'announcement';
-        };
-
-        const handleAnnouncementImageSelect = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            isUploadingAnnouncementImg.value = true;
-            AdminModel.uploadAnnouncementImage(file).then(res => {
-                isUploadingAnnouncementImg.value = false;
-                if (res.success) {
-                    const imgPath = res.data && res.data.image_url ? res.data.image_url : res.image_url;
-                    announcementForm.image_url = imgPath;
-                    uploadImgPreview.value = imgPath;
-                    notify(true, 'Image uploaded successfully.');
-                } else {
-                    notify(false, res.message || res.error || 'Failed to upload image.');
-                }
-            }).catch(err => {
-                isUploadingAnnouncementImg.value = false;
-                notify(false, 'Image upload failed.');
-            });
-        };
-
-        const removeAnnouncementImage = () => {
-            announcementForm.image_url = '';
-            uploadImgPreview.value = '';
-        };
-
-        const saveAnnouncement = () => {
-            if (!announcementForm.title.trim() || !announcementForm.content.trim()) {
-                notify(false, 'Announcement title and content are required.');
-                return;
-            }
-            isSavingAnnouncement.value = true;
-            AdminModel.saveAnnouncement(announcementForm).then(res => {
-                isSavingAnnouncement.value = false;
-                if (res.success) {
-                    notify(true, res.message || 'Announcement saved.');
-                    closeModal();
-                    fetchAnnouncements();
-                } else {
-                    notify(false, res.message || res.error || 'Failed to save announcement.');
-                }
-            }).catch(() => {
-                isSavingAnnouncement.value = false;
-                notify(false, 'Save request failed.');
-            });
-        };
-
-        const deleteAnnouncement = (id) => {
-            Swal.fire({
-                title: 'Delete Announcement?',
-                text: 'This post will be permanently removed and students will no longer see it.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, Delete It'
-            }).then(result => {
-                if (!result.isConfirmed) return;
-                AdminModel.deleteAnnouncement(id).then(res => {
-                    if (res.success) {
-                        notify(true, 'Announcement deleted.');
-                        fetchAnnouncements();
-                    } else {
-                        notify(false, res.message || 'Failed to delete announcement.');
-                    }
-                });
-            });
-        };
-
-        const togglePinAnnouncement = (item) => {
-            const payload = {
-                ...item,
-                is_pinned: !item.is_pinned
-            };
-            AdminModel.saveAnnouncement(payload).then(res => {
-                if (res.success) {
-                    notify(true, item.is_pinned ? 'Post unpinned.' : 'Post pinned to top.');
-                    fetchAnnouncements();
-                }
-            });
-        };
-
-        const fetchOperators = () => {
-            get('fetch_users').then(r => {
-                if (r.success) users.value = r.data || [];
-            });
-        };
-
-        const getProfile = () => {
+        // ── Auth ──
+        const fetchCurrentProfile = () => {
             fetch('../api/index.php?action=auth/profile')
                 .then(res => res.json())
                 .then(res => {
-                    if (res.success && res.data) {
-                        currentAdmin.value = { ...currentAdmin.value, ...res.data };
-                        const key = (currentAdmin.value.role === 'SUPER_ADMIN' || currentAdmin.value.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
-                        sessionStorage.setItem(key, JSON.stringify(currentAdmin.value));
+                    if (res && res.success && res.data) {
+                        const prof = res.data;
+                        const avatarUrl = prof.avatar || prof.photo || prof.image || null;
+                        if (currentAdmin.value) {
+                            if (avatarUrl) currentAdmin.value.avatar = avatarUrl;
+                            if (prof.name) currentAdmin.value.name = prof.name;
+                            if (prof.email) currentAdmin.value.email = prof.email;
+                            const key = (currentAdmin.value.role === 'SUPER_ADMIN' || currentAdmin.value.role === 'ADMIN') ? 'gncp_admin_user' : 'gncp_station_user';
+                            sessionStorage.setItem(key, JSON.stringify(currentAdmin.value));
+                            localStorage.setItem(key, JSON.stringify(currentAdmin.value));
+                        }
                     }
                 }).catch(() => {});
         };
 
         onMounted(() => {
-            const s = sessionStorage.getItem('gncp_admin_user') || sessionStorage.getItem('gncp_station_user');
+            const s = sessionStorage.getItem('gncp_admin_user') || sessionStorage.getItem('gncp_station_user') || localStorage.getItem('gncp_admin_user') || localStorage.getItem('gncp_station_user');
             if (s) {
                 try {
                     const u = JSON.parse(s);
                     if (u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN')) {
                         currentAdmin.value = u;
-                        getProfile();
+                        fetchCurrentProfile();
                         if (u.must_change_password && typeof window.PasswordChangeGuard !== 'undefined') {
                             window.PasswordChangeGuard.checkAndPrompt(u, function() {
                                 loadAll();
@@ -700,6 +825,8 @@ createApp({
             }
             sessionStorage.removeItem('gncp_admin_user');
             sessionStorage.removeItem('gncp_station_user');
+            localStorage.removeItem('gncp_admin_user');
+            localStorage.removeItem('gncp_station_user');
             window.location.href = '../index.html?clear=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         });
 
@@ -707,26 +834,418 @@ createApp({
             stopLiveSync();
         });
 
-        const logout = () => {
-            fetch('../api/index.php?action=auth/logout', { method: 'POST' }).finally(() => {
-                sessionStorage.removeItem('gncp_admin_user');
-                sessionStorage.removeItem('gncp_station_user');
-                window.location.href = '../index.html?logout=true';
+        const showLogoutConfirm = ref(false);
+
+        const handleLogout = () => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Confirm Logout',
+                    text: 'Are you sure you want to log out of the Super Admin Portal?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: '<i class="fa-solid fa-right-from-bracket me-1"></i> Log Out',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'gncp-swal-card',
+                        title: 'gncp-swal-title',
+                        confirmButton: 'gncp-swal-confirm-btn',
+                        cancelButton: 'gncp-swal-cancel-btn'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        confirmLogout();
+                    }
+                });
+            } else {
+                showLogoutConfirm.value = true;
+            }
+        };
+
+        const confirmLogout = () => {
+            showLogoutConfirm.value = false;
+            stopLiveSync();
+            currentAdmin.value = null;
+            sessionStorage.removeItem('gncp_admin_user');
+            sessionStorage.removeItem('gncp_station_user');
+            localStorage.removeItem('gncp_admin_user');
+            localStorage.removeItem('gncp_station_user');
+
+            fetch('../api/index.php?action=auth/logout', { method: 'POST' })
+                .catch(() => {})
+                .finally(() => {
+                    window.location.replace('../index.html?clear=true&logout=true');
+                });
+        };
+
+        // ── Announcements (Bulletin Board & Google Docs Editor) ──
+        const announcements        = ref([]);
+        const isSavingAnnouncement = ref(false);
+        const uploadImgPreview     = ref('');
+        const announcementForm     = reactive({
+            id: null,
+            title: '',
+            category: 'GENERAL',
+            target_audience: 'ALL',
+            content: '',
+            image_url: '',
+            image_height: 320,
+            image_width: 100,
+            image_fit: 'cover',
+            is_pinned: false
+        });
+
+        // ── Academic Milestones Management ──
+        const milestones         = ref([]);
+        const isSavingMilestone  = ref(false);
+        const milestoneForm      = reactive({
+            id: null,
+            academic_period_id: null,
+            title: '',
+            date_start: '',
+            date_end: '',
+            date_display: '',
+            status: 'SCHEDULED',
+            display_order: 1
+        });
+
+        const editorWordCount = computed(() => {
+            const canvas = typeof document !== 'undefined' ? document.getElementById('announcement-content-canvas') : null;
+            const text = canvas ? canvas.innerText : (announcementForm.content || '').replace(/<[^>]*>/g, ' ');
+            const words = text.trim().split(/\s+/).filter(Boolean);
+            return words.length;
+        });
+
+        const editorCharCount = computed(() => {
+            const canvas = typeof document !== 'undefined' ? document.getElementById('announcement-content-canvas') : null;
+            const text = canvas ? canvas.innerText : (announcementForm.content || '').replace(/<[^>]*>/g, '');
+            return text.trim().length;
+        });
+
+        const fetchAdminAnnouncements = () => {
+            get('fetch_announcements').then(r => {
+                if (r.success) announcements.value = r.data || [];
+            }).catch(() => {});
+        };
+
+        const formatDoc = (cmd, val = null) => {
+            const canvas = document.getElementById('announcement-content-canvas');
+            if (canvas) canvas.focus();
+            document.execCommand(cmd, false, val);
+            syncEditorContent();
+        };
+
+        const applyFormatBlock = (e) => {
+            const val = e.target.value;
+            formatDoc('formatBlock', val === 'p' ? '<p>' : `<${val}>`);
+        };
+
+        const applyTextColor = (e) => {
+            formatDoc('foreColor', e.target.value);
+        };
+
+        const applyHiliteColor = (e) => {
+            formatDoc('hiliteColor', e.target.value);
+        };
+
+        const insertLink = async () => {
+            const { value: url } = await Swal.fire({
+                title: 'Insert Link',
+                input: 'url',
+                inputLabel: 'Web Address (URL)',
+                inputPlaceholder: 'https://gncp.edu.ph/memo.pdf',
+                showCancelButton: true,
+                confirmButtonColor: '#006A4E'
+            });
+            if (url) {
+                formatDoc('createLink', url);
+            }
+        };
+
+        const syncEditorContent = () => {
+            const canvas = document.getElementById('announcement-content-canvas');
+            if (canvas) {
+                announcementForm.content = canvas.innerHTML;
+            }
+        };
+
+        const setImagePreset = (height, width = 100, fit = 'contain') => {
+            announcementForm.image_height = height;
+            announcementForm.image_width = width;
+            announcementForm.image_fit = fit;
+        };
+
+        // ── Load all data ──
+        const loadAll = () => {
+            loadDashboard(true);
+            get('fetch_academic_data').then(r => {
+                if (r.success && r.data) {
+                    departments.value = window.GNCP_DEPARTMENTS;
+                    programs.value   = r.data.programs  || [];
+                    subjects.value   = r.data.subjects  || [];
+                    curriculum.value = r.data.curriculum|| [];
+                    periods.value    = r.data.periods   || [];
+                    milestones.value = r.data.milestones|| [];
+                    sections.value   = r.data.sections  || [];
+                    classOfferings.value = r.data.classOfferings || [];
+                    fees.value       = r.data.fees      || [];
+                    students.value   = r.data.students  || [];
+                }
+            });
+            get('fetch_users').then(r => { if (r.success) users.value = r.data || []; });
+            fetchAdminAnnouncements();
+            fetchAdminMilestones();
+        };
+
+        const openAnnouncementModal = (item = null) => {
+            uploadImgPreview.value = '';
+            if (item) {
+                Object.assign(announcementForm, {
+                    id: item.id,
+                    title: item.title || '',
+                    author_name: item.author_name || 'Dr. Eleanor Vance (VP for Academic Affairs)',
+                    category: item.category || 'GENERAL',
+                    target_audience: item.target_audience || 'ALL',
+                    content: item.content || '',
+                    image_url: item.image_url || '',
+                    image_height: item.image_height || 'auto',
+                    image_width: item.image_width || 100,
+                    image_fit: item.image_fit || 'contain',
+                    is_pinned: parseInt(item.is_pinned) === 1
+                });
+            } else {
+                const stored = sessionStorage.getItem('gncp_admin_user') || localStorage.getItem('gncp_admin_user');
+                const admin = stored ? JSON.parse(stored) : {};
+                Object.assign(announcementForm, {
+                    id: null,
+                    title: '',
+                    author_name: admin.name || 'Dr. Eleanor Vance (VP for Academic Affairs)',
+                    category: 'GENERAL',
+                    target_audience: 'ALL',
+                    content: '',
+                    image_url: '',
+                    image_height: 'auto',
+                    image_width: 100,
+                    image_fit: 'contain',
+                    is_pinned: false
+                });
+            }
+            modal.value = 'announcement';
+            Vue.nextTick(() => {
+                const canvas = document.getElementById('announcement-content-canvas');
+                if (canvas) {
+                    canvas.innerHTML = announcementForm.content || '';
+                }
             });
         };
 
-        const setView = v => {
-            view.value = v; search.value = ''; modal.value = '';
-            if (v === 'dashboard') loadDashboard();
-            if (v === 'announcements') fetchAnnouncements();
-            if (v === 'operators') fetchOperators();
+        const handleAnnouncementImageSelect = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => { uploadImgPreview.value = ev.target.result; };
+            reader.readAsDataURL(file);
+        };
+
+        const removeAnnouncementImage = () => {
+            uploadImgPreview.value = '';
+            announcementForm.image_url = '';
+        };
+
+        const saveAnnouncement = async () => {
+            syncEditorContent();
+            const title = (announcementForm.title || '').trim();
+            const rawContent = (announcementForm.content || '').trim();
+            const textOnly = rawContent.replace(/<[^>]*>/g, '').trim();
+
+            if (!title) {
+                notify(false, 'Please enter an announcement title / headline.');
+                return;
+            }
+            if (!textOnly && !uploadImgPreview.value && !announcementForm.image_url) {
+                notify(false, 'Please write the announcement circular body content.');
+                return;
+            }
+
+            isSavingAnnouncement.value = true;
+            try {
+                let imageUrl = announcementForm.image_url || '';
+                if (uploadImgPreview.value && uploadImgPreview.value.startsWith('data:')) {
+                    const formData = new FormData();
+                    const blob = await (await fetch(uploadImgPreview.value)).blob();
+                    formData.append('image', blob, 'banner.jpg');
+                    const upRes = await fetch('backend/api.php?action=upload_announcement_image', { method: 'POST', body: formData });
+                    const upJson = await upRes.json();
+                    if (upJson.success) imageUrl = upJson.url;
+                }
+                const stored = sessionStorage.getItem('gncp_admin_user') || localStorage.getItem('gncp_admin_user');
+                const admin = stored ? JSON.parse(stored) : {};
+                const payload = {
+                    id: announcementForm.id,
+                    title: announcementForm.title,
+                    author_name: (announcementForm.author_name || '').trim() || (admin.name || 'GNCP Administration'),
+                    category: announcementForm.category,
+                    target_audience: announcementForm.target_audience,
+                    content: announcementForm.content,
+                    image_url: imageUrl,
+                    image_height: (announcementForm.image_height === 'auto' || !announcementForm.image_height) ? 'auto' : announcementForm.image_height,
+                    image_width: announcementForm.image_width || 100,
+                    image_fit: announcementForm.image_fit || 'contain',
+                    is_pinned: announcementForm.is_pinned ? 1 : 0,
+                    author_id: admin.id || 1
+                };
+                const r = await post('save_announcement', { announcement: payload });
+                if (r.success) {
+                    notify(true, announcementForm.id ? 'Announcement updated successfully.' : 'Official announcement published to campus feed.');
+                    closeModal();
+                    fetchAdminAnnouncements();
+                } else {
+                    notify(false, r.message || r.error || 'Failed to save announcement.');
+                }
+            } catch (e) {
+                console.error('[Admin::Announcements] Save error:', e);
+                notify(false, 'Unexpected error saving announcement.');
+            }
+            isSavingAnnouncement.value = false;
+        };
+
+        const deleteAnnouncement = async (id) => {
+            const result = await Swal.fire({
+                title: 'Delete Announcement?',
+                text: 'This notice will be permanently removed from the student feed.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#006A4E',
+                confirmButtonText: 'Yes, delete it!'
+            });
+            if (!result.isConfirmed) return;
+            post('delete_announcement', { id }).then(r => {
+                if (r.success) {
+                    notify(true, 'Announcement deleted successfully.');
+                    fetchAdminAnnouncements();
+                } else {
+                    notify(false, r.message || r.error || 'Failed to delete.');
+                }
+            });
+        };
+
+        const togglePinAnnouncement = (item) => {
+            post('save_announcement', { announcement: { ...item, is_pinned: parseInt(item.is_pinned) === 1 ? 0 : 1 } })
+                .then(r => { if (r.success) fetchAdminAnnouncements(); });
+        };
+
+        // ── Academic Milestones Methods ──
+        const fetchAdminMilestones = () => {
+            get('fetch_milestones').then(r => {
+                if (r && r.success && Array.isArray(r.data)) {
+                    milestones.value = r.data;
+                }
+            }).catch(e => console.error('Failed to fetch milestones:', e));
+        };
+
+        const openMilestoneModal = (m = null) => {
+            if (m) {
+                milestoneForm.id                 = m.id;
+                milestoneForm.academic_period_id = m.academic_period_id;
+                milestoneForm.title              = m.title;
+                milestoneForm.date_start         = m.date_start || '';
+                milestoneForm.date_end           = m.date_end || '';
+                milestoneForm.date_display       = m.date_display || '';
+                milestoneForm.status             = m.status || 'SCHEDULED';
+                milestoneForm.display_order      = m.display_order || 1;
+            } else {
+                milestoneForm.id                 = null;
+                const activeP = periods.value.find(p => p.status === 'Active');
+                milestoneForm.academic_period_id = activeP ? activeP.id : (periods.value.length > 0 ? periods.value[0].id : null);
+                milestoneForm.title              = '';
+                milestoneForm.date_start         = '';
+                milestoneForm.date_end           = '';
+                milestoneForm.date_display       = '';
+                milestoneForm.status             = 'SCHEDULED';
+                milestoneForm.display_order      = milestones.value.length + 1;
+            }
+            modal.value = 'milestone';
+        };
+
+        const updateMilestoneDisplayDate = () => {
+            if (milestoneForm.date_start && milestoneForm.date_end) {
+                try {
+                    const s = new Date(milestoneForm.date_start + 'T00:00:00');
+                    const e = new Date(milestoneForm.date_end + 'T00:00:00');
+                    if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+                        milestoneForm.date_display = s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' + e.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' });
+                    } else {
+                        milestoneForm.date_display = s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' + e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                } catch (err) {}
+            } else if (milestoneForm.date_start) {
+                try {
+                    milestoneForm.date_display = new Date(milestoneForm.date_start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                } catch (err) {}
+            }
+        };
+
+        const saveMilestone = async () => {
+            if (!milestoneForm.title.trim()) {
+                Swal.fire('Validation Error', 'Milestone title is required.', 'warning');
+                return;
+            }
+            isSavingMilestone.value = true;
+            try {
+                const res = await post('save_milestone', { milestone: { ...milestoneForm } });
+                if (res && res.success) {
+                    notify(true, milestoneForm.id ? 'Academic milestone updated.' : 'Academic milestone created.');
+                    closeModal();
+                    fetchAdminMilestones();
+                } else {
+                    Swal.fire('Save Failed', res.message || res.error || 'Failed to save milestone.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'An unexpected error occurred.', 'error');
+            } finally {
+                isSavingMilestone.value = false;
+            }
+        };
+
+        const deleteMilestone = async (id) => {
+            const result = await Swal.fire({
+                title: 'Delete Milestone?',
+                text: 'Are you sure you want to remove this academic deadline?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete'
+            });
+            if (!result.isConfirmed) return;
+
+            try {
+                const res = await post('delete_milestone', { id });
+                if (res && res.success) {
+                    notify(true, 'Milestone deleted.');
+                    fetchAdminMilestones();
+                } else {
+                    Swal.fire('Delete Failed', res.message || res.error || 'Failed to delete milestone.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Failed to delete milestone.', 'error');
+            }
+        };
+
+        const getPeriodName = (periodId) => {
+            if (!periodId) return 'All Semesters / General';
+            const found = periods.value.find(p => parseInt(p.id) === parseInt(periodId));
+            return found ? (found.name + (found.academic_year ? ' (A.Y. ' + found.academic_year + ')' : '')) : ('Term #' + periodId);
         };
 
         // ── Open modals ──
         const openAddModal = () => {
             search.value = '';
-            if (view.value === 'announcements') { openAnnouncementModal(); return; }
-            if (view.value === 'operators')     { openCreateOperatorModal(); return; }
             if (view.value === 'departments_programs') { Object.assign(form, {id:null,code:'',name:'',department:selectedDeptName.value || '',status:'Active'}); modal.value='program'; }
             if (view.value === 'subjects')   { Object.assign(form, {id:null,code:'',title:'',description:'',lectureUnits:3,labUnits:0,labFee:0,department:'',prerequisites:'None'}); modal.value='subject'; }
             if (view.value === 'curriculum') { Object.assign(form, {id:null,program:'',curriculumVersion:'2022 Curriculum',subject:'',yearLevel:'1st Year',semester:'1st Semester',elective:false}); modal.value='curriculum'; }
@@ -734,6 +1253,7 @@ createApp({
             if (view.value === 'sections')   { Object.assign(form, {id:null,code:'',program:'',yearLevel:'1st Year',academicPeriodId:'',curriculumVersion:'2022 Curriculum',capacity:40,adviser:''}); modal.value='section'; }
             if (view.value === 'classOfferings') { Object.assign(form, {id:null,sectionId:'',program:'',yearLevel:'1st Year',semester:'1st Semester',subject:'',code:'',instructor:'TBD',days:'MWF',time:'09:00 AM - 10:30 AM',room:'Room 101',capacity:40}); modal.value='classOffering'; }
             if (view.value === 'fees')       { Object.assign(form, {id:null,type:'Tuition',label:'',amount:0,perUnit:false}); modal.value='fee'; }
+            if (view.value === 'operators')  { Object.assign(form, {name:'',username:'',password:'',role:''}); modal.value='operator'; }
         };
         const editDepartment = d => { Object.assign(form, {...d}); modal.value='department'; };
         const editProgram    = p => { Object.assign(form, {...p}); modal.value='program'; };
@@ -780,164 +1300,224 @@ createApp({
                 notify(false, 'Please fill in all required fields.');
                 return;
             }
-            post('clone_term', cloneForm).then(r => {
-                if (r.success) {
-                    notify(true, 'Term cloned successfully with options.');
+            post('clone_term', { clone: cloneForm }).then(r => {
+                if (r.success && r.data) {
+                    periods.value = r.data.periods || [];
+                    sections.value = r.data.sections || [];
+                    classOfferings.value = r.data.classOfferings || [];
                     closeModal();
-                    loadAll();
-                } else notify(false, r.error || 'Cloning failed.');
+                    notify(true, r.message || 'Term cloned successfully!');
+                } else {
+                    notify(false, r.error || 'Failed to clone term.');
+                }
             });
-        };
-
-        const onBulkProgramSelect = () => {
-            const versions = uniqueCurriculumVersionsForBulk.value;
-            if (versions.length > 0) {
-                bulkForm.curriculumVersion = versions[0];
-            }
         };
 
         const submitBulkSections = () => {
-            if (!bulkForm.program || !bulkForm.academicPeriodId || !bulkForm.count) {
-                notify(false, 'Program, Academic Period, and Count are required.');
+            if (!bulkForm.program || !bulkForm.yearLevel || !bulkForm.academicPeriodId || bulkForm.count <= 0) {
+                notify(false, 'Please fill in all required fields.');
                 return;
             }
-            post('bulk_sections', bulkForm).then(r => {
-                if (r.success) {
-                    notify(true, `${r.createdCount || bulkForm.count} Sections created successfully.`);
+            post('bulk_generate_sections', { bulk: bulkForm }).then(r => {
+                if (r.success && r.data) {
+                    sections.value = r.data.sections || r.data || [];
                     closeModal();
-                    loadAll();
-                } else notify(false, r.error || 'Bulk creation failed.');
+                    notify(true, r.message || 'Sections generated successfully!');
+                } else {
+                    notify(false, r.error || 'Failed to generate sections.');
+                }
             });
         };
+        const onBulkProgramSelect = () => {
+            const matching = curriculum.value.filter(c => c.program === bulkForm.program);
+            if (matching.length > 0) {
+                bulkForm.curriculumVersion = matching[0].curriculumVersion;
+            } else {
+                bulkForm.curriculumVersion = '2022 Curriculum';
+            }
+        };
 
-        // ── Save handlers ──
-        const saveDepartment = () => {
-            post('save_department', { department: form }).then(r => {
-                if (r.success) { notify(true, 'Department saved.'); closeModal(); loadAll(); }
+        // ── CRUD helpers ──
+        const crudSave = (action, bodyKey, dataList, payload) =>
+            post(action, {[bodyKey]: {...form, ...payload}}).then(r => {
+                if (r.success) { dataList.value = r.data; closeModal(); notify(true, 'Saved successfully.'); }
                 else notify(false, r.error || 'Save failed.');
             });
-        };
-        const deleteDepartment = id => {
-            if (!confirm('Delete this department? Associated programs may be orphaned.')) return;
-            post('delete_department', { id }).then(r => {
-                if (r.success) { notify(true, 'Department deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
+        const crudDel = async (action, id, dataList, label) => {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `Delete this ${label}? This cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#006A4E',
+                confirmButtonText: 'Yes, delete it!'
+            });
+            if (!result.isConfirmed) return;
+            post(action, {id}).then(r => {
+                if (r.success) { dataList.value = r.data; notify(true, `${label} deleted.`); }
+                else Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
             });
         };
 
-        const saveProgram = () => {
-            post('save_program', { program: form }).then(r => {
-                if (r.success) { notify(true, 'Program saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
+        const saveDepartment = () => crudSave('save_department', 'department', departments, {});
+        const deleteDepartment = id => crudDel('delete_department', id, departments, 'department');
+        const saveProgram    = () => crudSave('save_program',   'program',    programs,   {});
+        const deleteProgram = async (id) => {
+            const prog = programs.value.find(p => p.id === id);
+            if (!prog) return;
+            const currCount = curriculum.value.filter(c => c.program === prog.name).length;
+            const secCount = sections.value.filter(s => s.program === prog.name).length;
+            const offCount = classOfferings.value.filter(o => o.program === prog.name).length;
+            let warningHtml = `<p style="margin-bottom:8px">You are about to delete <strong>${prog.name}</strong> (${prog.code}).</p>`;
+            if (currCount > 0 || secCount > 0 || offCount > 0) {
+                warningHtml += `<div style="text-align:left;background:#fff3cd;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
+                warningHtml += `<strong style="color:#856404"><i class="fa-solid fa-triangle-exclamation"></i> The following will also be deleted:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
+                if (currCount > 0) warningHtml += `<li>${currCount} curriculum mapping(s)</li>`;
+                if (offCount > 0) warningHtml += `<li>${offCount} class offering(s)</li>`;
+                if (secCount > 0) warningHtml += `<li>${secCount} section cohort(s)</li>`;
+                warningHtml += `</ul></div>`;
+            }
+            const result = await Swal.fire({
+                title: 'Delete Program?',
+                html: warningHtml,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#006A4E',
+                confirmButtonText: 'Yes, delete everything'
+            });
+            if (!result.isConfirmed) return;
+            post('delete_program', {id}).then(r => {
+                if (r.success) {
+                    programs.value = r.data;
+                    // Refresh dependent lists since cascading deletions occurred
+                    get('fetch_academic_data').then(rd => {
+                        if (rd.success && rd.data) {
+                            curriculum.value = rd.data.curriculum || [];
+                            sections.value = rd.data.sections || [];
+                            classOfferings.value = rd.data.classOfferings || [];
+                        }
+                    });
+                    notify(true, `Program "${prog.name}" and all dependent data deleted.`);
+                } else {
+                    Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
+                }
             });
         };
-        const deleteProgram = id => {
-            if (!confirm('Delete this program?')) return;
-            post('delete_program', { id }).then(r => {
-                if (r.success) { notify(true, 'Program deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
+        const saveSubject    = () => crudSave('save_subject',   'subject',    subjects,   {});
+        const deleteSubject  = id => crudDel('delete_subject',  id,           subjects,   'subject');
+        const saveCurriculum = () => crudSave('save_curriculum','curriculum', curriculum, {});
+        const deleteCurriculum=id => crudDel('delete_curriculum',id,          curriculum, 'entry');
+        const savePeriod     = () => crudSave('save_academic_period','period',periods,    {});
+        const deletePeriod = async (id) => {
+            const period = periods.value.find(p => p.id === id);
+            if (!period) return;
+            const linkedSections = sections.value.filter(s => s.academicPeriodId === id);
+            const linkedOfferings = classOfferings.value.filter(o => linkedSections.some(s => s.id === o.sectionId));
+            let warningHtml = `<p style="margin-bottom:8px">Delete academic period <strong>${period.name}</strong>?</p>`;
+            if (linkedSections.length > 0 || linkedOfferings.length > 0) {
+                warningHtml += `<div style="text-align:left;background:#f8d7da;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
+                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This period has active linked records:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
+                if (linkedSections.length > 0) warningHtml += `<li>${linkedSections.length} section cohort(s)</li>`;
+                if (linkedOfferings.length > 0) warningHtml += `<li>${linkedOfferings.length} class offering(s)</li>`;
+                warningHtml += `</ul><p style="margin-top:6px;color:#721c24;font-weight:600">You must remove these first before deleting the period.</p></div>`;
+            }
+            const result = await Swal.fire({
+                title: 'Delete Period?',
+                html: warningHtml,
+                icon: linkedSections.length > 0 ? 'error' : 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#006A4E',
+                confirmButtonText: linkedSections.length > 0 ? 'Try Anyway' : 'Yes, delete it'
+            });
+            if (!result.isConfirmed) return;
+            post('delete_academic_period', {id}).then(r => {
+                if (r.success) { periods.value = r.data; notify(true, 'Period deleted.'); }
+                else Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
             });
         };
-
-        const saveSubject = () => {
-            post('save_subject', { subject: form }).then(r => {
-                if (r.success) { notify(true, 'Subject saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
+        const saveSection    = () => crudSave('save_section',   'section',    sections,   {});
+        const deleteSection = async (id) => {
+            const sec = sections.value.find(s => s.id === id);
+            if (!sec) return;
+            const linkedOfferings = classOfferings.value.filter(o => o.sectionId === id);
+            let warningHtml = `<p style="margin-bottom:8px">Delete section <strong>${sec.code}</strong> (${sec.program} — ${sec.yearLevel})?</p>`;
+            if (linkedOfferings.length > 0) {
+                warningHtml += `<div style="text-align:left;background:#f8d7da;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:.85rem">`;
+                warningHtml += `<strong style="color:#721c24"><i class="fa-solid fa-shield-halved"></i> This section has active linked records:</strong><ul style="margin:6px 0 0 16px;padding:0">`;
+                if (linkedOfferings.length > 0) warningHtml += `<li>${linkedOfferings.length} class offering(s) scheduled</li>`;
+                warningHtml += `</ul><p style="margin-top:6px;color:#721c24;font-weight:600">You must remove these first before deleting the section.</p></div>`;
+            }
+            const result = await Swal.fire({
+                title: 'Delete Section?',
+                html: warningHtml,
+                icon: linkedOfferings.length > 0 ? 'error' : 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#006A4E',
+                confirmButtonText: linkedOfferings.length > 0 ? 'Try Anyway' : 'Yes, delete it'
+            });
+            if (!result.isConfirmed) return;
+            post('delete_section', {id}).then(r => {
+                if (r.success) { sections.value = r.data; notify(true, 'Section deleted.'); }
+                else Swal.fire({ title: 'Cannot Delete', html: r.error || 'Delete failed.', icon: 'error', confirmButtonColor: '#006A4E' });
             });
         };
-        const deleteSubject = id => {
-            if (!confirm('Delete this subject?')) return;
-            post('delete_subject', { id }).then(r => {
-                if (r.success) { notify(true, 'Subject deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
+        const saveClassOffering = () => crudSave('save_subject_section', 'section', classOfferings, {});
+        const deleteClassOffering = id => crudDel('delete_subject_section', id, classOfferings, 'class offering');
+        const openBlockSectionModal = () => {
+            Object.assign(form, {
+                program: '',
+                yearLevel: '1st Year',
+                semester: '1st Semester',
+                sectionSuffix: '',
+                capacity: 40,
+                instructor: 'TBD',
+                days: 'MWF',
+                time: '09:00 AM - 10:30 AM',
+                room: 'Room 101'
             });
+            modal.value = 'block-section';
         };
-
-        const saveCurriculum = () => {
-            post('save_curriculum', { curriculum: form }).then(r => {
-                if (r.success) { notify(true, 'Curriculum entry saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
-            });
-        };
-        const deleteCurriculum = id => {
-            if (!confirm('Delete this curriculum entry?')) return;
-            post('delete_curriculum', { id }).then(r => {
-                if (r.success) { notify(true, 'Curriculum entry deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
-            });
-        };
-
-        const savePeriod = () => {
-            post('save_period', { period: form }).then(r => {
-                if (r.success) { notify(true, 'Academic period saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
-            });
-        };
-        const deletePeriod = id => {
-            if (!confirm('Delete this period?')) return;
-            post('delete_period', { id }).then(r => {
-                if (r.success) { notify(true, 'Period deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
-            });
-        };
-
-        const saveSection = () => {
-            post('save_section', { section: form }).then(r => {
-                if (r.success) { notify(true, 'Cohort Section saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
-            });
-        };
-
-        const openBlockSectionModal = (s) => {
-            Object.assign(form, { ...s });
-            modal.value = 'section';
-        };
-
         const saveBlockSection = () => {
-            saveSection();
+            if (!form.program || !form.yearLevel || !form.semester || !form.sectionSuffix) {
+                notify(false, 'Please fill in all required fields.');
+                return;
+            }
+            post('save_block_section', { block: form }).then(r => {
+                if (r.success) {
+                    classOfferings.value = r.data;
+                    closeModal();
+                    notify(true, r.message || 'Block section generated successfully.');
+                } else {
+                    notify(false, r.error || 'Failed to generate block section.');
+                }
+            });
         };
+        const saveFee        = () => crudSave('save_fee',       'fee',        fees,       {});
+        const deleteFee      = id => crudDel('delete_fee',      id,           fees,       'fee');
 
-        const deleteSection = id => {
-            if (!confirm('Delete this section? Offerings assigned to this section will be deleted.')) return;
-            post('delete_section', { id }).then(r => {
-                if (r.success) { notify(true, 'Section deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
-            });
-        };
-
-        const saveClassOffering = () => {
-            post('save_class_offering', { offering: form }).then(r => {
-                if (r.success) { notify(true, 'Class offering schedule saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
-            });
-        };
-        const deleteClassOffering = id => {
-            if (!confirm('Delete this class offering schedule?')) return;
-            post('delete_class_offering', { id }).then(r => {
-                if (r.success) { notify(true, 'Class offering schedule deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
-            });
-        };
-
-        const saveFee = () => {
-            post('save_fee', { fee: form }).then(r => {
-                if (r.success) { notify(true, 'Fee saved.'); closeModal(); loadAll(); }
-                else notify(false, r.error || 'Save failed.');
-            });
-        };
-        const deleteFee = id => {
-            if (!confirm('Delete this fee entry?')) return;
-            post('delete_fee', { id }).then(r => {
-                if (r.success) { notify(true, 'Fee deleted.'); loadAll(); }
-                else notify(false, r.error || 'Delete failed.');
+        // ── Operator Management (Isolated Methods & Tracing) ──
+        const fetchOperators = () => {
+            console.log('[Trace: Operators] Fetching operators list...');
+            return get('fetch_users').then(r => {
+                if (r && r.success) {
+                    users.value = r.data || [];
+                    console.log(`[Trace: Operators] Loaded ${users.value.length} operators:`, users.value);
+                } else {
+                    console.error('[Trace: Operators] Failed to fetch operators:', r);
+                }
             });
         };
 
-        // Operator account creation and management (Decoupled & Isolated)
         const openCreateOperatorModal = () => {
-            console.log('[Trace: Operators] Triggered Open Create Operator Modal');
-            Object.assign(operatorForm, { id: null, name: '', email: '', username: '', password: '', role: 'REGISTRAR' });
+            console.log('[Trace: Operators] Triggered Create Operator Modal');
+            search.value = '';
+            Object.assign(operatorForm, { id: null, name: '', email: '', username: '', password: '', role: '' });
             isOperatorModalOpen.value = true;
+            console.log('[Trace: Operators] isOperatorModalOpen set to true');
         };
 
         const closeCreateOperatorModal = () => {
@@ -1069,7 +1649,6 @@ createApp({
                 }
             }).catch(err => {
                 isSubmittingOperator.value = false;
-                console.error('[Trace: Operators] Network error updating operator:', err);
                 Swal.fire({
                     title: 'Server Error',
                     text: 'An error occurred while connecting to the server.',
@@ -1079,49 +1658,32 @@ createApp({
             });
         };
 
-        const resetOperatorPassword = (u) => {
-            console.log('[Trace: Operators] Triggered Password Reset for user ID:', u.id);
-            Swal.fire({
-                title: 'Reset Operator Password?',
-                text: `Generates a new temporary password for ${u.name} (${u.username}).`,
-                icon: 'question',
+        const resetOperatorPassword = async (u) => {
+            console.log('[Trace: Operators] Initiating password reset for user:', u);
+            const { value: newPass } = await Swal.fire({
+                title: 'Reset Operator Password',
+                text: `Set a new temporary password for ${u.name} (${u.username}):`,
+                input: 'text',
+                inputPlaceholder: 'Leave blank to auto-generate',
                 showCancelButton: true,
                 confirmButtonColor: '#006A4E',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Reset Password'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    post('reset_operator_password', { userId: u.id }).then(r => {
-                        if (r.success) {
-                            console.log('[Trace: Operators] Password reset successful:', r);
-                            fetchOperators();
-                            const pass = r.data && r.data.tempPassword ? r.data.tempPassword : '(Password Updated)';
-                            const emailSent = r.data && r.data.emailSent;
-
-                            Swal.fire({
-                                title: 'Password Reset Successful!',
-                                html: `
-                                    <div style="text-align: left; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px;">
-                                        <div><strong>Operator:</strong> ${u.name}</div>
-                                        <div style="margin-top: 6px;"><strong>New Temporary Password:</strong><br><code style="font-size: 1.15rem; color: #006A4E; background: #e6f4ed; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-top: 4px;">${pass}</code></div>
-                                        <div style="margin-top: 10px; font-size: 0.85rem; color: ${emailSent ? '#059669' : '#d97706'};">
-                                            <i class="fa-solid ${emailSent ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${emailSent ? 'New password sent via email.' : 'Local environment — please issue password manually.'}
-                                        </div>
-                                    </div>
-                                `,
-                                icon: 'success',
-                                confirmButtonColor: '#006A4E'
-                            });
-                        } else {
-                            console.error('[Trace: Operators] Password reset failed:', r);
-                            Swal.fire({
-                                title: 'Reset Failed',
-                                text: r.message || r.error || 'Failed to reset operator password.',
-                                icon: 'error',
-                                confirmButtonColor: '#006A4E'
-                            });
-                        }
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Reset Password'
+            });
+            if (newPass === undefined) return;
+            post('reset_operator_password', { userId: u.id, newPassword: newPass }).then(r => {
+                if (r.success) {
+                    console.log('[Trace: Operators] Password reset successful:', r);
+                    fetchOperators();
+                    Swal.fire({
+                        title: 'Password Reset Successful!',
+                        html: `Temporary password for <strong>${u.username}</strong>:<br><br><code style="font-size:1.25rem;color:#006A4E;background:#e6f4ed;padding:6px 14px;border-radius:6px;display:inline-block">${r.data.tempPassword}</code><br><br>${r.data.emailSent ? 'Credentials have been emailed to the operator.' : (r.data.emailMessage || 'No email sent.')}`,
+                        icon: 'success',
+                        confirmButtonColor: '#006A4E'
                     });
+                } else {
+                    console.error('[Trace: Operators] Password reset failed:', r);
+                    notify(false, r.message || r.error || 'Failed to reset password.');
                 }
             });
         };
@@ -1157,26 +1719,227 @@ createApp({
             });
         };
 
-        const handleLogout = () => {
-            Swal.fire({
-                title: 'Sign Out?',
-                text: 'Are you sure you want to log out of the Admin Workstation?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#006A4E',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, Sign Out'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch('../api/index.php?action=auth/logout', { method: 'POST' }).finally(() => {
-                        sessionStorage.clear();
-                        localStorage.removeItem('gncp_admin_user');
-                        localStorage.removeItem('gncp_station_user');
-                        window.location.href = '../index.html';
-                    });
+        // ── IN-APP ACCOUNT PROFILE & SECURITY MANAGEMENT ──────────────────────
+        const user = ref({ name: '', email: '', username: '', role: '', avatar: null });
+        const pass = ref({ current: '', newPass: '', confirm: '' });
+        const saving = ref(false);
+        const updatingPass = ref(false);
+        const showCurrentPass = ref(false);
+        const showNewPass = ref(false);
+        const fileInput = ref(null);
+        const passStrengthLevel = ref(0);
+        const avatarFailed = ref(false);
+        const onAvatarError = () => { avatarFailed.value = true; };
+
+        const initials = computed(() => {
+            const name = user.value.name || (currentAdmin.value ? currentAdmin.value.name : 'Super Admin');
+            const parts = name.trim().split(' ').filter(Boolean);
+            if (parts.length > 1) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return (parts[0] ? parts[0][0] : 'SA').toUpperCase();
+        });
+
+        const formattedAvatar = computed(() => {
+            if (avatarFailed.value) return null;
+            const avatar = user.value.avatar || (currentAdmin.value ? currentAdmin.value.avatar : null);
+            if (!avatar) return null;
+            if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:')) return avatar;
+            if (avatar.startsWith('../')) return avatar;
+            if (avatar.startsWith('uploads/')) return '../' + avatar;
+            const filename = avatar.split('/').pop();
+            return '../uploads/avatars/' + filename;
+        });
+
+        const passStrengthLabel = computed(() => {
+            const l = passStrengthLevel.value;
+            if (l <= 1) return 'Weak'; if (l === 2) return 'Fair'; if (l === 3) return 'Good'; return 'Strong';
+        });
+        const passStrengthColor = computed(() => {
+            const l = passStrengthLevel.value;
+            if (l <= 1) return '#ef4444'; if (l === 2) return '#f59e0b'; if (l === 3) return '#10b981'; return '#059669';
+        });
+        const passStrengthWidth = computed(() => (passStrengthLevel.value / 4 * 100) + '%');
+
+        function checkPassStrength() {
+            const p = pass.value.newPass;
+            let score = 0;
+            if (p.length >= 8) score++; if (/[A-Z]/.test(p)) score++; if (/[0-9]/.test(p)) score++; if (/[^A-Za-z0-9]/.test(p)) score++;
+            passStrengthLevel.value = Math.max(p.length >= 6 ? 1 : 0, score);
+        }
+
+        function triggerFileInput() { if (fileInput.value) fileInput.value.click(); }
+
+        const loadProfile = async () => {
+            avatarFailed.value = false;
+            if (currentAdmin.value) {
+                user.value.name = currentAdmin.value.name || '';
+                user.value.email = currentAdmin.value.email || '';
+                user.value.username = currentAdmin.value.username || 'admin';
+                user.value.role = currentAdmin.value.role || 'SUPER_ADMIN';
+                user.value.avatar = currentAdmin.value.avatar || null;
+            }
+            try {
+                const username = user.value.username || (currentAdmin.value ? currentAdmin.value.username : 'admin');
+                const res = await fetch('../api/index.php?action=auth/profile&username=' + encodeURIComponent(username));
+                const data = await res.json();
+                if (data.success && data.data) {
+                    user.value = { ...user.value, ...data.data };
+                    if (data.data.avatar) {
+                        user.value.avatar = data.data.avatar;
+                        if (currentAdmin.value) currentAdmin.value.avatar = data.data.avatar;
+                    }
+                    if (data.data.name && currentAdmin.value) currentAdmin.value.name = data.data.name;
+                    if (data.data.email && currentAdmin.value) currentAdmin.value.email = data.data.email;
                 }
-            });
+            } catch (e) { console.error('[Profile] Staff fetch failed:', e); }
         };
+
+        const onFileSelected = async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Swal.fire('Invalid File', 'Please select a valid image file (JPG, PNG, WebP).', 'warning');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                Swal.fire('File Too Large', 'Please select an image smaller than 5MB.', 'warning');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const b64 = ev.target.result;
+                try {
+                    const res = await fetch('../api/index.php?action=auth/upload_avatar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: user.value.username || 'admin', photoData: b64 })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.data) {
+                        const newFilename = data.data.avatar || data.data.photo;
+                        user.value.avatar = newFilename;
+                        avatarFailed.value = false;
+                        if (currentAdmin.value) currentAdmin.value.avatar = newFilename;
+                        const raw = sessionStorage.getItem('gncp_admin_user');
+                        if (raw) {
+                            const p = JSON.parse(raw);
+                            p.avatar = newFilename;
+                            sessionStorage.setItem('gncp_admin_user', JSON.stringify(p));
+                        }
+                        const rawLoc = localStorage.getItem('gncp_admin_user');
+                        if (rawLoc) {
+                            const p = JSON.parse(rawLoc);
+                            p.avatar = newFilename;
+                            localStorage.setItem('gncp_admin_user', JSON.stringify(p));
+                        }
+                        notify(true, 'Profile picture updated successfully.');
+                    } else {
+                        Swal.fire('Upload Failed', data.message || 'Unable to update profile picture.', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Unable to process image upload.', 'error');
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const saveStaffProfile = async () => {
+            if (!user.value.name || !user.value.email) {
+                Swal.fire('Validation Error', 'Full Name and Email Address are required.', 'warning');
+                return;
+            }
+            saving.value = true;
+            try {
+                const avatarFilename = user.value.avatar ? user.value.avatar.split('/').pop() : null;
+                const res = await fetch('../api/index.php?action=auth/update_profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: user.value.username || 'admin',
+                        name: user.value.name,
+                        email: user.value.email,
+                        avatar: avatarFilename
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (currentAdmin.value) {
+                        currentAdmin.value.name = user.value.name;
+                        currentAdmin.value.email = user.value.email;
+                        currentAdmin.value.avatar = avatarFilename;
+                    }
+                    const raw = sessionStorage.getItem('gncp_admin_user');
+                    if (raw) {
+                        const p = JSON.parse(raw);
+                        p.name = user.value.name;
+                        p.email = user.value.email;
+                        p.avatar = avatarFilename;
+                        sessionStorage.setItem('gncp_admin_user', JSON.stringify(p));
+                    }
+                    const rawLoc = localStorage.getItem('gncp_admin_user');
+                    if (rawLoc) {
+                        const p = JSON.parse(rawLoc);
+                        p.name = user.value.name;
+                        p.email = user.value.email;
+                        p.avatar = avatarFilename;
+                        localStorage.setItem('gncp_admin_user', JSON.stringify(p));
+                    }
+                    notify(true, 'Personal details updated successfully.');
+                } else {
+                    Swal.fire('Update Failed', data.message || 'Unable to update profile.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'Server error while saving profile.', 'error');
+            } finally {
+                saving.value = false;
+            }
+        };
+
+        const updatePassword = async () => {
+            if (!pass.value.current) {
+                Swal.fire('Current Password Required', 'Please enter your current password.', 'warning');
+                return;
+            }
+            if (pass.value.newPass !== pass.value.confirm) {
+                Swal.fire('Password Mismatch', 'New password and confirm password do not match.', 'warning');
+                return;
+            }
+            if (pass.value.newPass.length < 6) {
+                Swal.fire('Weak Password', 'New password must be at least 6 characters.', 'warning');
+                return;
+            }
+            updatingPass.value = true;
+            try {
+                const res = await fetch('../api/index.php?action=auth/change_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: user.value.username || 'admin',
+                        current_password: pass.value.current,
+                        new_password: pass.value.newPass
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    pass.value = { current: '', newPass: '', confirm: '' };
+                    passStrengthLevel.value = 0;
+                    notify(true, 'Password changed successfully.');
+                } else {
+                    Swal.fire('Password Error', data.message || 'Unable to update password.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'Server connection error while changing password.', 'error');
+            } finally {
+                updatingPass.value = false;
+            }
+        };
+
+        watch(view, (newV) => {
+            if (newV === 'profile') {
+                loadProfile();
+            }
+        });
 
         return {
             currentAdmin, isLoggingIn, loginError, loginForm, showOperatorPassword,
@@ -1187,7 +1950,7 @@ createApp({
             filteredDepartments, filteredPrograms, filteredSubjects, filteredCurriculum,
             filteredPeriods, filteredSections, filteredClassOfferings, filteredFees, filteredUsers, filteredSubjectsForSection,
             filteredProgramsList, filteredStudents, filteredAccounts, uniqueCurriculumVersionsForBulk,
-            handleLogout, setView, openAddModal, closeModal,
+            showLogoutConfirm, handleLogout, confirmLogout, setView, openAddModal, closeModal,
             editDepartment, editProgram, editSubject, editCurriculum, editPeriod, editSection, editClassOffering, editFee,
             saveDepartment, deleteDepartment, saveProgram, deleteProgram, saveSubject, deleteSubject,
             saveCurriculum, deleteCurriculum, savePeriod, deletePeriod,
@@ -1219,10 +1982,25 @@ createApp({
             openAddDepartmentModal, openAddProgramModal, openCloneTermModal, openBulkSectionsModal,
             submitCloneTerm, submitBulkSections, onBulkProgramSelect,
             timeGreeting,
-            // Announcements
-            announcements, announcementForm, isUploadingAnnouncementImg, uploadImgPreview, isSavingAnnouncement,
-            fetchAnnouncements, openAnnouncementModal, handleAnnouncementImageSelect, removeAnnouncementImage,
-            saveAnnouncement, deleteAnnouncement, togglePinAnnouncement
+            // Announcements (Bulletin Board & Google Docs Editor)
+            announcements, announcementForm, isSavingAnnouncement, uploadImgPreview,
+            openAnnouncementModal, handleAnnouncementImageSelect, removeAnnouncementImage,
+            saveAnnouncement, deleteAnnouncement, togglePinAnnouncement, fetchAdminAnnouncements,
+            editorWordCount, editorCharCount, formatDoc, applyFormatBlock, applyTextColor,
+            applyHiliteColor, insertLink, syncEditorContent, setImagePreset,
+            // Academic Milestones Management
+            milestones, milestoneForm, isSavingMilestone, openMilestoneModal, updateMilestoneDisplayDate,
+            saveMilestone, deleteMilestone, fetchAdminMilestones,
+            isMobileMenuOpen,
+            // Sleek Course & Timeline Spline Chart
+            chartViewMode, hoveredChartPoint, hoveredTimelinePoint, setHoveredPoint,
+            getTooltipStyle, courseAnalytics, graphMetrics, timelineData, timelineGraphMetrics,
+            // Profile & Security
+            user, pass, saving, updatingPass, showCurrentPass, showNewPass, fileInput,
+            initials, formattedAvatar, avatarFailed, onAvatarError,
+            passStrengthLevel, passStrengthLabel, passStrengthColor, passStrengthWidth,
+            checkPassStrength, triggerFileInput, onFileSelected, saveStaffProfile, updatePassword, loadProfile
         };
     }
-}).mount('#admin-app');
+});
+window.app = app.mount('#admin-app');
