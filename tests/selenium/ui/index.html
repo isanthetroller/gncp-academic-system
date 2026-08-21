@@ -241,10 +241,10 @@
 
         <div class="topbar-controls">
             <div class="mode-pills">
-                <button :class="{ active: mode === 'all' }" @click="mode = 'all'">Full Pipeline Suite</button>
-                <button :class="{ active: mode === 'pipeline' }" @click="mode = 'pipeline'">Enrollment Flow Only</button>
-                <button :class="{ active: mode === 'admin' }" @click="mode = 'admin'">Admin Features Suite</button>
-                <button :class="{ active: mode === 'paymongo' }" @click="mode = 'paymongo'">PayMongo Gateway Suite</button>
+                <button :class="{ active: mode === 'all' }" @click="mode = 'all'"><i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i> Full System Test</button>
+                <button :class="{ active: mode === 'pipeline' }" @click="mode = 'pipeline'"><i class="fa-solid fa-diagram-project" style="margin-right:4px"></i> Enrollment Flow Only</button>
+                <button :class="{ active: mode === 'admin' }" @click="mode = 'admin'"><i class="fa-solid fa-sliders" style="margin-right:4px"></i> Admin Portal Suite</button>
+                <button :class="{ active: mode === 'paymongo' }" @click="mode = 'paymongo'"><i class="fa-solid fa-qrcode" style="margin-right:4px"></i> PayMongo Gateway</button>
             </div>
 
             <label class="toggle-wrap" title="Toggle between background headless execution and visible Chrome browser">
@@ -474,19 +474,37 @@ createApp({
                     { num: '4', key: 'Feature 4: Interactive Super Admin Logout', label: '4. Interactive Modal Logout', sub: 'Session Invalidation & Redirect', icon: 'fa-right-from-bracket' }
                 ];
             }
+            if (this.mode === 'pipeline') {
+                return [
+                    { num: '0',  key: '0. Cleanup',                           label: '0. Purge Stale Test Records',      sub: 'Database Purge & Reset',          icon: 'fa-database' },
+                    { num: '1',  key: '1. Admin Section Creation',            label: '1. Admin Section Creation',       sub: 'Course & Section Allocation',     icon: 'fa-layer-group' },
+                    { num: '2',  key: '4. Student Pre-Registration',          label: '2. Online Application Form',      sub: 'Applicant Pre-Registration',      icon: 'fa-user-pen' },
+                    { num: '3',  key: '3. Registrar Verification',            label: '3. Registrar Document Check',     sub: 'Document Approval State',         icon: 'fa-clipboard-check' },
+                    { num: '4',  key: '4. Academic Advising',                 label: '4. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',     icon: 'fa-graduation-cap' },
+                    { num: '5',  key: '5. Medical Clearance',                 label: '5. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',      icon: 'fa-stethoscope' },
+                    { num: '6',  key: '6. Cashier Payment',                   label: '6. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',       icon: 'fa-wallet' },
+                    { num: '7',  key: '7. IT Center Promotion',               label: '7. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',        icon: 'fa-id-card' },
+                    { num: '8',  key: '8. Student Portal Verification',       label: '8. Student Portal Live Login',    sub: 'Portal Credential Verification',  icon: 'fa-desktop' }
+                ];
+            }
             return [
-                { num: '0',  key: '0. Cleanup',                           label: '0. Purge Stale Test Data',        sub: 'Database Purge & Reset',       icon: 'fa-database' },
-                { num: '1',  key: '1. Admin Section Creation',            label: '1. Admin Section Creation',       sub: 'Course & Section Allocation',  icon: 'fa-layer-group' },
-                { num: '2',  key: '2. Student Pre-Registration',          label: '2. Online Application Form',      sub: 'Applicant Pre-Registration',   icon: 'fa-user-pen' },
-                { num: '3',  key: '3. Registrar Verification',            label: '3. Registrar Document Check',     sub: 'Document Approval State',      icon: 'fa-clipboard-check' },
-                { num: '4',  key: '4. Academic Advising',                 label: '4. Helpdesk Unit Sectioning',     sub: 'Course & Section Allocation',  icon: 'fa-graduation-cap' },
-                { num: '5',  key: '5. Medical Clearance',                 label: '5. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',   icon: 'fa-stethoscope' },
-                { num: '6',  key: '6. Cashier Payment',                   label: '6. Cashier Fee Payment & OR',     sub: 'Downpayment & OR Issuance',    icon: 'fa-wallet' },
-                { num: '7',  key: '7. IT Center Promotion',               label: '7. IT Center Account Promotion',  sub: 'Permanent Student ID Gen',     icon: 'fa-id-card' },
-                { num: '8',  key: '8. Student Portal Login',              label: '8. Student Portal Live Login',    sub: 'Portal Credential Verification', icon: 'fa-desktop' },
-                { num: '9',  key: '9. Admin Student Accounts Check',      label: '9. Admin Directory Audit',        sub: 'Admin Directory Verification', icon: 'fa-shield-halved' },
-                { num: '10', key: '10. Profile UI & Audit Logs',          label: '10. Staff Profile & Log Audit',   sub: 'Profile UI Audit Verification', icon: 'fa-user-gear' },
-                { num: '11', key: '11. Super Admin Sign Out',             label: '11. Interactive Logout Audit',    sub: 'Session Destruction & Redirect', icon: 'fa-right-from-bracket' }
+                { num: '0',  key: '0. Cleanup',                           label: '0. Purge Stale Test Records',      sub: 'Database Purge & Reset',          icon: 'fa-database' },
+                { num: '1',  key: '1. Admin Section Creation',            label: '1. Admin Section Creation',       sub: 'Class Offering Timetable',        icon: 'fa-layer-group' },
+                { num: '2',  key: '2. Master Catalog & Department Lockdown', label: '2. Master Catalog Lockdown',   sub: 'Department & Program Lock',       icon: 'fa-shield-halved' },
+                { num: '3',  key: '3. Staff Operator Provisioning',       label: '3. Staff Operator Provisioning',  sub: '5 Workstation Operator Accounts', icon: 'fa-users-gear' },
+                { num: '4',  key: '4. Student Pre-Registration',          label: '4. Online Pre-Registration',      sub: 'Multi-Step Student Application',  icon: 'fa-user-pen' },
+                { num: '5',  key: '5. Self-Service Tracker Verification', label: '5. Public Self-Service Tracker',   sub: 'PIN Lookup & Status Roadmap',     icon: 'fa-magnifying-glass' },
+                { num: '6',  key: '3. Registrar Verification',            label: '6. Registrar Document Check',     sub: 'Document Approval State',         icon: 'fa-clipboard-check' },
+                { num: '7',  key: '4. Academic Advising',                 label: '7. Helpdesk Unit Sectioning',     sub: 'NSTP & Block Allocation',         icon: 'fa-graduation-cap' },
+                { num: '8',  key: '5. Medical Clearance',                 label: '8. Medical Clinic Clearance',     sub: 'Doctor Fitness Certificate',      icon: 'fa-stethoscope' },
+                { num: '9',  key: '6. Cashier Payment',                   label: '9. Cashier Fee Payment & OR',     sub: 'GCash / Cash & OR Issuance',      icon: 'fa-wallet' },
+                { num: '10', key: '7. IT Center Promotion',               label: '10. IT Center Account Promotion', sub: 'Permanent Student ID Gen',        icon: 'fa-id-card' },
+                { num: '11', key: '8. Student Portal Verification',       label: '11. Student Portal Live Login',   sub: 'COR & Schedule Verification',     icon: 'fa-desktop' },
+                { num: '12', key: '12. Academic Milestones & Campus Feed', label: '12. Milestones & Feed Live Sync', sub: 'Campus Bulletin & Announcements', icon: 'fa-bullhorn' },
+                { num: '13', key: '13. Tuition Fee Matrix & Assessment Audit', label: '13. Tuition Fee Matrix Audit', sub: 'Per-Unit & Lab Fee Calculations', icon: 'fa-calculator' },
+                { num: '14', key: '9. Admin Student Accounts Check',      label: '14. Admin Directory Audit',       sub: 'Permanent Student Directory',     icon: 'fa-address-book' },
+                { num: '15', key: '10. Profile UI & Audit Logs Verification', label: '15. Staff Profile & Audit Logs', sub: 'Audit Trail Verification',     icon: 'fa-user-gear' },
+                { num: '16', key: '11. Super Admin Sign Out / Logout',    label: '16. Interactive Logout Audit',   sub: 'Session Destruction & Redirect',    icon: 'fa-right-from-bracket' }
             ];
         },
         passedCount() { return this.results.filter(r => r.status === 'PASSED').length; },
