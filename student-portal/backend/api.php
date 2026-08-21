@@ -77,6 +77,7 @@ if ($action === 'login' || $action === 'login_student') {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    $_SESSION = [];
     $_SESSION['gncp_student'] = [
         'id'                   => $student['id'],
         'name'                 => $student['name'],

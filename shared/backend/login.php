@@ -99,6 +99,7 @@ try {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    $_SESSION = [];
     $mustChangePassword = (bool)($user['must_change_password'] ?? false);
     $userAvatar = $user['avatar'] ?? $user['photo'] ?? null;
     $sessionUser = [
@@ -112,10 +113,8 @@ try {
 
     if ($role === 'SUPER_ADMIN' || $role === 'ADMIN') {
         $_SESSION['gncp_admin_user'] = $sessionUser;
-        unset($_SESSION['gncp_station_user']);
     } else {
         $_SESSION['gncp_station_user'] = $sessionUser;
-        unset($_SESSION['gncp_admin_user']);
     }
     session_write_close();
 

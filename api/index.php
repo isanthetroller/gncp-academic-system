@@ -63,15 +63,29 @@ try {
         'student/cleanup_test_records'=> fn($p) => (new StudentController($pdo))->cleanupTestRecords($p),
 
         'stations/update'         => fn($p) => (new StationController($pdo))->updateStudent($p),
+        'update_student'          => fn($p) => (new StationController($pdo))->updateStudent($p),
         'stations/next_student_id'=> function() use ($pdo) {
             require_once __DIR__ . '/../shared/backend/utils/student.php';
             return ['success' => true, 'data' => ['nextStudentId' => generateUniqueStudentId($pdo, '2026')]];
         },
+        'get_next_student_id'     => function() use ($pdo) {
+            require_once __DIR__ . '/../shared/backend/utils/student.php';
+            return ['success' => true, 'data' => ['nextStudentId' => generateUniqueStudentId($pdo, '2026')]];
+        },
+        'upload_photo'            => fn($p) => (new AuthController($pdo))->uploadAvatar($p),
         'stations/stats'          => function() use ($pdo) {
             require_once __DIR__ . '/../stations/backend/services/QueueService.php';
             return ['success' => true, 'data' => QueueService::getEnrollmentStats($pdo)];
         },
+        'get_enrollment_stats'    => function() use ($pdo) {
+            require_once __DIR__ . '/../stations/backend/services/QueueService.php';
+            return ['success' => true, 'data' => QueueService::getEnrollmentStats($pdo)];
+        },
         'stations/student_accounts'=> function() use ($pdo) {
+            require_once __DIR__ . '/../stations/backend/services/QueueService.php';
+            return ['success' => true, 'data' => QueueService::fetchStudentAccounts($pdo)];
+        },
+        'fetch_student_accounts'  => function() use ($pdo) {
             require_once __DIR__ . '/../stations/backend/services/QueueService.php';
             return ['success' => true, 'data' => QueueService::fetchStudentAccounts($pdo)];
         },

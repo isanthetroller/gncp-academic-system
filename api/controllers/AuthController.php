@@ -37,6 +37,7 @@ class AuthController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+        $_SESSION = [];
 
         $mustChangePassword = (bool)($user['must_change_password'] ?? false);
         $role = $user['role'];
