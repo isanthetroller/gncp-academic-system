@@ -112,7 +112,65 @@ try {
 
         'milestones/list'                 => fn($p) => (new AdminController($pdo))->getMilestones($_GET),
         'admin/save_milestone'            => fn($p) => (new AdminController($pdo))->saveMilestone($p),
-        'admin/delete_milestone'          => fn($p) => (new AdminController($pdo))->deleteMilestone($p)
+        'admin/delete_milestone'          => fn($p) => (new AdminController($pdo))->deleteMilestone($p),
+
+        // PayMongo Payment Gateway Integration Endpoints
+        'payments/paymongo_create_checkout' => function($p) {
+            require_once __DIR__ . '/../shared/backend/services/PayMongoService.php';
+            $refNo  = trim($p['referenceNumber'] ?? ($p['ref'] ?? ''));
+            $amount = (float)($p['amount'] ?? 0);
+            $desc   = trim($p['description'] ?? 'GNCP Academic Tuition Assessment');
+            if (empty($refNo) || $amount <= 0) {
+                return ['success' => false, 'message' => 'Valid student reference number and payment amount are required.', 'code' => 400];
+            }
+            try {
+                $session = PayMongoService::createCheckoutSession($refNo, $amount, $desc, $p['studentData'] ?? []);
+                return ['success' => true, 'data' => $session];
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => $e->getMessage(), 'code' => 400];
+            }
+        },
+        'payments/paymongo_simulate_paid' => function($p) {
+            require_once __DIR__ . '/../shared/backend/services/PayMongoService.php';
+            $refNo   = trim($p['referenceNumber'] ?? '');
+            $amount  = (float)($p['amount'] ?? 0);
+            $channel = trim($p['channel'] ?? 'GCash');
+            $txnRef  = trim($p['transactionRef'] ?? '');
+            $cashier = trim($p['cashier'] ?? 'PayMongo Gateway');
+            $notes   = trim($p['notes'] ?? 'Online payment via PayMongo simulation');
+
+            if (empty($refNo) || $amount <= 0) {
+                return ['success' => false, 'message' => 'Valid reference number and amount are required to simulate payment.', 'code' => 400];
+            }
+            try {
+                $result = PayMongoService::processPaymentSuccess($refNo, $amount, $channel, $txnRef, $cashier, $notes);
+                return ['success' => true, 'data' => $result];
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => $e->getMessage(), 'code' => 400];
+            }
+        },
+        'payments/paymongo_webhook' => function($p) {
+            require_once __DIR__ . '/../shared/backend/services/PayMongoService.php';
+            // Live webhook signature handler
+            $rawPayload = file_get_contents('php://input');
+            $event = json_decode($rawPayload, true);
+            $eventType = $event['data']['attributes']['type'] ?? '';
+
+            if ($eventType === 'checkout_session.payment.paid') {
+                $sessionData = $event['data']['attributes']['data']['attributes'] ?? [];
+                $refNo = $sessionData['line_items'][0]['description'] ?? '';
+                $amountInCentavos = (int)($sessionData['payments'][0]['attributes']['amount'] ?? 0);
+                $amount = $amountInCentavos / 100.0;
+                $channel = $sessionData['payments'][0]['attributes']['source']['type'] ?? 'GCash';
+                $txnRef = $sessionData['payments'][0]['id'] ?? ('PM-' . time());
+
+                if (!empty($refNo) && $amount > 0) {
+                    PayMongoService::processPaymentSuccess($refNo, $amount, $channel, $txnRef, 'PayMongo Webhook');
+                }
+            }
+
+            return ['success' => true, 'message' => 'Webhook received'];
+        }
     ];
 
     if ($action === 'stations/queue' || $action === 'fetch_queue') {

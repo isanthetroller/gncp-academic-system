@@ -319,6 +319,51 @@ window.app = createApp({
         const payAmountInput = ref(0);
         const cashTendered = ref(0);
         const paymentScheme = ref('FULL');
+        const paymongoSession = ref(null);
+        const isProcessingPayMongo = ref(false);
+
+        const fetchPayMongoSession = async () => {
+            if (!selectedStudent.value) return;
+            const student = selectedStudent.value;
+            const payAmt = parseFloat(payAmountInput.value) || 0;
+            if (payAmt <= 0) return;
+
+            try {
+                const res = await fetch('../../api/index.php?action=payments/paymongo_create_checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        referenceNumber: student.referenceNumber,
+                        amount: payAmt,
+                        description: `Tuition Assessment - ${student.studentName} (${student.program})`,
+                        studentData: {
+                            name: student.studentName,
+                            program: student.program
+                        }
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.data) {
+                    paymongoSession.value = data.data;
+                }
+            } catch (e) {
+                console.error('[PayMongo] Failed to generate checkout session:', e);
+            }
+        };
+
+        const onPaymentTypeChange = () => {
+            if (selectedStudent.value?.payment?.paymentType === 'PayMongo') {
+                fetchPayMongoSession();
+            } else {
+                paymongoSession.value = null;
+            }
+        };
+
+        const onAmountChanged = () => {
+            if (selectedStudent.value?.payment?.paymentType === 'PayMongo') {
+                fetchPayMongoSession();
+            }
+        };
 
         const handleSchemeChange = () => {
             if (!selectedStudent.value || !selectedStudent.value.payment) return;
@@ -327,6 +372,9 @@ window.app = createApp({
                 payAmountInput.value = balance;
             } else if (paymentScheme.value === 'DOWNPAYMENT') {
                 payAmountInput.value = balance >= 3000 ? 3000 : balance;
+            }
+            if (selectedStudent.value?.payment?.paymentType === 'PayMongo') {
+                fetchPayMongoSession();
             }
         };
 
@@ -341,12 +389,145 @@ window.app = createApp({
             return Math.max(0, currentBal - (payAmountInput.value || 0));
         });
 
+        const simulatePayMongoPayment = async (channel = 'GCash') => {
+            if (!selectedStudent.value) return;
+            const student = selectedStudent.value;
+            const payAmt = parseFloat(payAmountInput.value) || 0;
+            const currentBal = parseFloat(student.payment.balance) || 0;
+
+            const minAllowed = currentBal < 3000 ? currentBal : 3000;
+            if (payAmt < minAllowed) {
+                await Swal.fire({
+                    title: 'Minimum Payment Limit',
+                    text: `Minimum allowed payment is ₱${minAllowed.toLocaleString()}.`,
+                    icon: 'warning',
+                    confirmButtonColor: '#006A4E'
+                });
+                return;
+            }
+
+            isProcessingPayMongo.value = true;
+            try {
+                const cashierName = currentUser.value ? currentUser.value.name : 'Cashier Officer';
+                const res = await fetch('../../api/index.php?action=payments/paymongo_simulate_paid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        referenceNumber: student.referenceNumber,
+                        amount: payAmt,
+                        channel: channel,
+                        transactionRef: paymongoSession.value?.transactionRef || '',
+                        cashier: `${cashierName} (PayMongo)`,
+                        notes: `Instant ${channel} online settlement via PayMongo Gateway`
+                    })
+                });
+                const json = await res.json();
+
+                if (!json.success) {
+                    throw new Error(json.message || 'Payment simulation failed.');
+                }
+
+                const data = json.data;
+                const newStatus = data.status;
+                const txnRef = data.transactionRef;
+
+                // Update local reactive student
+                student.payment.amountPaid = data.totalPaid;
+                student.payment.balance = data.balance;
+                student.payment.status = newStatus;
+                student.status = newStatus;
+                student.payment.paymentType = `PayMongo (${channel})`;
+                student.payment.transactionRef = txnRef;
+
+                if (!student.payment.history || !Array.isArray(student.payment.history)) {
+                    student.payment.history = [];
+                }
+                student.payment.history.push({
+                    date: new Date().toISOString(),
+                    amount: payAmt,
+                    reference: txnRef,
+                    paymentType: `PayMongo (${channel})`,
+                    cashier: `${cashierName} (PayMongo)`,
+                    notes: `Instant ${channel} online settlement via PayMongo Gateway`
+                });
+
+                // Broadcast to StationDataBus
+                StationDataBus.updateStudent(student.referenceNumber, (s) => {
+                    s.status = newStatus;
+                    s.payment.status = newStatus;
+                    s.payment.amountPaid = data.totalPaid;
+                    s.payment.balance = data.balance;
+                    s.payment.paymentType = `PayMongo (${channel})`;
+                    s.payment.transactionRef = txnRef;
+                    s.payment.notes = `Instant ${channel} online settlement via PayMongo Gateway`;
+                    s.payment.verifiedBy = `${cashierName} (PayMongo)`;
+                    s.payment.dateVerified = new Date().toLocaleDateString();
+                    s.payment.history = student.payment.history;
+
+                    const currentStepIdx = (s.roadmap && Array.isArray(s.roadmap)) ? s.roadmap.findIndex(r => r.stepId === 'cashier_payment') : -1;
+                    if (currentStepIdx !== -1) {
+                        s.roadmap[currentStepIdx].status = 'COMPLETED';
+                        s.roadmap[currentStepIdx].updatedAt = new Date().toISOString();
+
+                        const nextStep = s.roadmap.slice(currentStepIdx + 1).find(r => r.status === 'PENDING');
+                        if (nextStep) {
+                            nextStep.status = 'IN_PROGRESS';
+                        }
+                    }
+                }, ['status', 'payment', 'roadmap']);
+
+                loadQueue();
+
+                receiptData.value = {
+                    refNo: student.referenceNumber,
+                    name: student.studentName,
+                    program: student.program,
+                    paymentMode: `PayMongo (${channel})`,
+                    transactionRef: txnRef,
+                    totalFee: student.payment.totalFee,
+                    amountPaid: payAmt,
+                    balance: data.balance,
+                    date: new Date().toLocaleString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }),
+                    cashier: `${cashierName} (PayMongo)`
+                };
+
+                closeModal();
+
+                await Swal.fire({
+                    title: 'PayMongo Settlement Received!',
+                    html: `<div class="text-start">
+                            <p class="mb-1"><strong>Payment Channel:</strong> ${channel}</p>
+                            <p class="mb-1"><strong>Amount Paid:</strong> <span class="text-success fw-bold">₱${payAmt.toLocaleString()}</span></p>
+                            <p class="mb-1"><strong>Transaction Ref:</strong> <code class="font-monospace">${txnRef}</code></p>
+                            <p class="mb-0"><strong>New Balance:</strong> ₱${data.balance.toLocaleString()}</p>
+                           </div>`,
+                    icon: 'success',
+                    confirmButtonColor: '#006A4E'
+                });
+            } catch (err) {
+                await Swal.fire({
+                    title: 'Payment Error',
+                    text: err.message || 'Failed to process PayMongo payment.',
+                    icon: 'error',
+                    confirmButtonColor: '#006A4E'
+                });
+            } finally {
+                isProcessingPayMongo.value = false;
+            }
+        };
+
         const openProcess = (student) => {
             selectedStudent.value = student;
             const currentBal = student.payment.balance || 0;
             paymentScheme.value = 'FULL';
             payAmountInput.value = currentBal; // Default to full outstanding balance
             cashTendered.value = 0;
+            paymongoSession.value = null;
+            if (student.payment.paymentType === 'PayMongo') {
+                fetchPayMongoSession();
+            }
             setTimeout(() => {
                 const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal'));
                 modal.show();
@@ -916,6 +1097,13 @@ window.app = createApp({
             printCOR,
             markEnrolledAndPrint,
             timeGreeting,
+            // PayMongo Gateway Integration
+            paymongoSession,
+            isProcessingPayMongo,
+            fetchPayMongoSession,
+            onPaymentTypeChange,
+            onAmountChanged,
+            simulatePayMongoPayment,
             // Profile & Security
             user, pass, saving, updatingPass, showCurrentPass, showNewPass, fileInput,
             passStrengthLevel, passStrengthLabel, passStrengthColor, passStrengthWidth,

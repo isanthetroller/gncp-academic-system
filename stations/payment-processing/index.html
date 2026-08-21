@@ -477,16 +477,17 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small uppercase fw-bold">Payment Mode</label>
-                                        <select class="form-select" v-model="selectedStudent.payment.paymentType">
+                                        <select class="form-select" v-model="selectedStudent.payment.paymentType" @change="onPaymentTypeChange">
                                             <option value="Cash">Cash</option>
-                                            <option value="GCash">GCash</option>
+                                            <option value="GCash">Manual GCash / Bank Ref</option>
+                                            <option value="PayMongo">PayMongo (GCash / Maya / QR Ph / Card)</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small uppercase fw-bold">Amount to Pay</label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0" style="font-size: 0.88rem;">₱</span>
-                                            <input class="form-control border-start-0" type="number" :min="selectedStudent.payment.balance < 3000 ? selectedStudent.payment.balance : 3000" :max="selectedStudent.payment.balance" v-model.number="payAmountInput" :readonly="paymentScheme !== 'CUSTOM'" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
+                                            <input class="form-control border-start-0" type="number" :min="selectedStudent.payment.balance < 3000 ? selectedStudent.payment.balance : 3000" :max="selectedStudent.payment.balance" v-model.number="payAmountInput" :readonly="paymentScheme !== 'CUSTOM'" @input="onAmountChanged" style="border-top-right-radius: 9px; border-bottom-right-radius: 9px;">
                                         </div>
                                         <div class="form-text text-muted" style="font-size: 0.7rem;">Minimum allowed: ₱{{ formatCurrency(selectedStudent.payment.balance < 3000 ? selectedStudent.payment.balance : 3000) }}</div>
                                     </div>
@@ -503,6 +504,110 @@
                                             ₱{{ formatCurrency(changeDue) }}
                                         </div>
                                     </div>
+
+                                    <!-- PayMongo Gateway Dynamic QR & Simulation Panel -->
+                                    <div class="col-12" v-if="selectedStudent.payment.paymentType === 'PayMongo'">
+                                        <div class="card border border-success-subtle shadow-sm rounded-3 p-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);">
+                                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-success-subtle">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge rounded-pill text-white fw-bold px-2.5 py-1" style="background: #006A4E; font-size: 0.75rem;">
+                                                        <i class="fa-solid fa-bolt me-1"></i>PayMongo Gateway
+                                                    </span>
+                                                    <span class="text-muted small fw-semibold">Philippine QR Ph &amp; E-Wallets</span>
+                                                </div>
+                                                <div class="d-flex gap-1.5 align-items-center">
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem;">GCash</span>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">Maya</span>
+                                                    <span class="badge bg-dark-subtle text-dark border border-dark-subtle" style="font-size: 0.65rem;">QR Ph</span>
+                                                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 0.65rem;">Cards</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="row align-items-center g-3">
+                                                <!-- Dynamic QR Code Column -->
+                                                <div class="col-sm-5 text-center">
+                                                    <div class="bg-white p-2.5 rounded-3 border border-light-subtle shadow-sm d-inline-block position-relative">
+                                                        <svg v-if="paymongoSession" width="130" height="130" viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <rect width="130" height="130" fill="#ffffff" rx="6"/>
+                                                            <!-- QR Corners Pattern -->
+                                                            <rect x="10" y="10" width="30" height="30" fill="#000000" rx="3"/>
+                                                            <rect x="15" y="15" width="20" height="20" fill="#ffffff" rx="2"/>
+                                                            <rect x="20" y="20" width="10" height="10" fill="#006A4E"/>
+                                                            
+                                                            <rect x="90" y="10" width="30" height="30" fill="#000000" rx="3"/>
+                                                            <rect x="95" y="15" width="20" height="20" fill="#ffffff" rx="2"/>
+                                                            <rect x="100" y="20" width="10" height="10" fill="#006A4E"/>
+
+                                                            <rect x="10" y="90" width="30" height="30" fill="#000000" rx="3"/>
+                                                            <rect x="15" y="95" width="20" height="20" fill="#ffffff" rx="2"/>
+                                                            <rect x="20" y="100" width="10" height="10" fill="#006A4E"/>
+
+                                                            <!-- Data Pattern Simulation -->
+                                                            <rect x="48" y="12" width="6" height="6" fill="#000000"/>
+                                                            <rect x="62" y="18" width="6" height="6" fill="#000000"/>
+                                                            <rect x="76" y="12" width="6" height="6" fill="#000000"/>
+                                                            <rect x="48" y="28" width="6" height="6" fill="#006A4E"/>
+                                                            <rect x="68" y="32" width="6" height="6" fill="#000000"/>
+                                                            
+                                                            <rect x="12" y="52" width="6" height="6" fill="#000000"/>
+                                                            <rect x="26" y="58" width="6" height="6" fill="#006A4E"/>
+                                                            <rect x="40" y="52" width="6" height="6" fill="#000000"/>
+                                                            <rect x="54" y="48" width="8" height="8" fill="#d4af37"/>
+                                                            <rect x="70" y="52" width="6" height="6" fill="#000000"/>
+                                                            <rect x="84" y="58" width="6" height="6" fill="#006A4E"/>
+                                                            <rect x="100" y="52" width="6" height="6" fill="#000000"/>
+                                                            <rect x="114" y="58" width="6" height="6" fill="#000000"/>
+
+                                                            <rect x="48" y="90" width="6" height="6" fill="#000000"/>
+                                                            <rect x="62" y="96" width="6" height="6" fill="#006A4E"/>
+                                                            <rect x="76" y="90" width="6" height="6" fill="#000000"/>
+                                                            <rect x="90" y="80" width="6" height="6" fill="#000000"/>
+                                                            <rect x="104" y="94" width="6" height="6" fill="#006A4E"/>
+                                                            <rect x="116" y="82" width="6" height="6" fill="#000000"/>
+                                                        </svg>
+                                                        <div v-else class="d-flex align-items-center justify-content-center" style="width:130px;height:130px;background:#f3f4f6;border-radius:6px;">
+                                                            <i class="fa-solid fa-qrcode fa-3x text-muted opacity-50"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-1" style="font-size: 0.65rem; color: #4b5563;">
+                                                        <i class="fa-solid fa-camera me-1 text-success"></i>Scan via GCash / Maya
+                                                    </div>
+                                                </div>
+
+                                                <!-- Session Info & Simulator Controls -->
+                                                <div class="col-sm-7">
+                                                    <div class="mb-2">
+                                                        <div class="text-muted" style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase;">Checkout Session ID</div>
+                                                        <code class="font-monospace text-dark fw-bold" style="font-size: 0.72rem; word-break: break-all;">
+                                                            {{ paymongoSession ? paymongoSession.sessionId : 'Generating session...' }}
+                                                        </code>
+                                                    </div>
+                                                    <div class="mb-2.5">
+                                                        <div class="text-muted" style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase;">Charge Amount (Centavos)</div>
+                                                        <span class="fw-bold text-success" style="font-size: 0.92rem;">₱{{ formatCurrency(payAmountInput) }}</span>
+                                                        <span class="text-muted small ms-1">({{ (payAmountInput * 100).toLocaleString() }} centavos)</span>
+                                                    </div>
+
+                                                    <!-- Simulation Action Bar -->
+                                                    <div class="d-flex flex-column gap-1.5">
+                                                        <button type="button" class="btn btn-sm btn-success fw-bold d-flex align-items-center justify-content-center gap-1.5 py-1.5 shadow-sm" :disabled="isProcessingPayMongo" @click="simulatePayMongoPayment('GCash')">
+                                                            <i class="fa-solid fa-mobile-screen-button"></i>
+                                                            {{ isProcessingPayMongo ? 'Settling Payment...' : '⚡ Simulate GCash Settlement' }}
+                                                        </button>
+                                                        <div class="d-flex gap-1.5">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold flex-fill py-1" style="font-size: 0.75rem;" :disabled="isProcessingPayMongo" @click="simulatePayMongoPayment('Maya')">
+                                                                <i class="fa-solid fa-wallet me-1"></i>Simulate Maya
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-dark fw-semibold flex-fill py-1" style="font-size: 0.75rem;" :disabled="isProcessingPayMongo" @click="simulatePayMongoPayment('Card')">
+                                                                <i class="fa-solid fa-credit-card me-1"></i>Simulate Card
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="col-12 border-top pt-2 mt-2">
                                         <div class="d-flex justify-content-between text-muted small">
                                             <span>Current Balance:</span>
