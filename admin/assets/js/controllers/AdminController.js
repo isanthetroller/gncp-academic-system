@@ -1360,8 +1360,12 @@ const app = createApp({
             });
         };
 
-        const saveDepartment = () => crudSave('save_department', 'department', departments, {});
-        const deleteDepartment = id => crudDel('delete_department', id, departments, 'department');
+        const saveDepartment = () => {
+            Swal.fire({ icon: 'warning', title: 'Action Locked', text: 'Collegiate departments are fixed and cannot be modified.' });
+        };
+        const deleteDepartment = () => {
+            Swal.fire({ icon: 'warning', title: 'Action Locked', text: 'Collegiate departments are fixed and cannot be deleted.' });
+        };
         const saveProgram    = () => crudSave('save_program',   'program',    programs,   {});
         const deleteProgram = async (id) => {
             const prog = programs.value.find(p => p.id === id);

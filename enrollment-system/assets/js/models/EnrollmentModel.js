@@ -14,7 +14,7 @@
     let courses = [
         { code: 'BSIT', college: 'COIT', name: 'BS in Information Technology', duration: '4 Years' },
         { code: 'BSCS', college: 'COIT', name: 'BS in Computer Science', duration: '4 Years' },
-        { code: 'BSCOE', college: 'COIT', name: 'BS in Computer Engineering', duration: '4 Years' },
+        { code: 'BSCpE', college: 'COIT', name: 'BS in Computer Engineering', duration: '4 Years' },
         { code: 'BSBA', college: 'COBA', name: 'BS in Business Administration', duration: '4 Years' },
         { code: 'BSN', college: 'COHS', name: 'BS in Nursing', duration: '4 Years' }
     ];

@@ -175,7 +175,6 @@ INSERT INTO `programs` (`code`, `name`, `department`, `status`) VALUES
 ('BSIT', 'BS Information Technology', 'Information Technology', 'Active'),
 ('BSN', 'BS Nursing', 'College of Nursing', 'Active'),
 ('BSBA', 'BS Business Administration', 'Business Administration', 'Active'),
-('BSCOE', 'BS Computer Engineering', 'Information Technology', 'Active'),
 ('BSCpE', 'BS Computer Engineering', 'Information Technology', 'Active')
 ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `department`=VALUES(`department`);
 

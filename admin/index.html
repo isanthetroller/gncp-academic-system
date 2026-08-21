@@ -2284,20 +2284,6 @@
 
     <!-- ══ MODALS ════════════════════════════════════════════════════════ -->
 
-    <!-- Department Modal -->
-    <div v-if="modal==='department'" class="overlay" @click.self="closeModal">
-        <div class="modal-card">
-            <div class="modal-title"><i class="fa-solid fa-school" style="color:var(--gold)"></i>{{ form.id?'Edit':'Add' }} Department</div>
-            <div class="form-row col2">
-                <div class="form-group"><label class="form-label">Code</label><input class="form-input" v-model="form.code" placeholder="e.g. COIT"></div>
-                <div class="form-group"><label class="form-label">Status</label>
-                    <select class="form-select" v-model="form.status"><option>Active</option><option>Inactive</option></select></div>
-            </div>
-            <div class="form-row"><div class="form-group"><label class="form-label">Department/College Name</label><input class="form-input" v-model="form.name" placeholder="e.g. College of Computer Studies"></div></div>
-            <div class="modal-actions"><button class="btn-modal-cancel" @click="closeModal">Cancel</button><button class="btn-modal-save" @click="saveDepartment">Save Department</button></div>
-        </div>
-    </div>
-
     <!-- Program Modal -->
     <div v-if="modal==='program'" class="overlay" @click.self="closeModal">
         <div class="modal-card">
