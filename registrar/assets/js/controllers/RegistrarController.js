@@ -1101,6 +1101,12 @@
                                 p.avatar = newFilename;
                                 sessionStorage.setItem('gncp_station_user', JSON.stringify(p));
                             }
+                            const rawLoc = localStorage.getItem('gncp_station_user');
+                            if (rawLoc) {
+                                const p = JSON.parse(rawLoc);
+                                p.avatar = newFilename;
+                                localStorage.setItem('gncp_station_user', JSON.stringify(p));
+                            }
                             Swal.fire('Success', 'Profile picture updated successfully.', 'success');
                         } else { Swal.fire('Upload Failed', data.message || 'Unable to update profile picture.', 'error'); }
                     } catch (err) { Swal.fire('Error', 'Unable to process image upload.', 'error'); }
@@ -1136,6 +1142,14 @@
                             p.email = user.value.email;
                             p.avatar = avatarFilename;
                             sessionStorage.setItem('gncp_station_user', JSON.stringify(p));
+                        }
+                        const rawLoc = localStorage.getItem('gncp_station_user');
+                        if (rawLoc) {
+                            const p = JSON.parse(rawLoc);
+                            p.name = user.value.name;
+                            p.email = user.value.email;
+                            p.avatar = avatarFilename;
+                            localStorage.setItem('gncp_station_user', JSON.stringify(p));
                         }
                         Swal.fire('Success', 'Personal details updated successfully.', 'success');
                     } else { Swal.fire('Update Failed', data.message || 'Unable to update profile.', 'error'); }

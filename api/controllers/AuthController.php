@@ -221,12 +221,12 @@ class AuthController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $stationUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
+        $stationUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? $_SESSION['gncp_student'] ?? null;
         if (is_string($stationUser)) {
             $stationUser = json_decode($stationUser, true);
         }
 
-        $username = $payload['username'] ?? ($stationUser['username'] ?? '');
+        $username = $payload['username'] ?? ($stationUser['username'] ?? ($stationUser['id'] ?? ''));
         if (!$username) {
             return ['success' => false, 'message' => 'Unauthorized or missing username.', 'code' => 401];
         }
@@ -241,11 +241,11 @@ class AuthController {
 
         $success = $this->userModel->updateProfile($username, $name, $email, $avatar);
         if ($success) {
-            $sessionKeys = ['gncp_admin_user', 'gncp_station_user'];
+            $sessionKeys = ['gncp_admin_user', 'gncp_station_user', 'gncp_student'];
             foreach ($sessionKeys as $key) {
                 if (isset($_SESSION[$key])) {
                     $sessionUser = is_string($_SESSION[$key]) ? json_decode($_SESSION[$key], true) : $_SESSION[$key];
-                    if (is_array($sessionUser) && ($sessionUser['username'] ?? '') === $username) {
+                    if (is_array($sessionUser) && (($sessionUser['username'] ?? '') === $username || ($sessionUser['id'] ?? '') === $username)) {
                         $sessionUser['name'] = $name;
                         $sessionUser['email'] = $email;
                         if ($avatar !== null) {

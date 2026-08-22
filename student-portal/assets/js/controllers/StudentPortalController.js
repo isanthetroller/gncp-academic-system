@@ -235,6 +235,11 @@ window.StudentPortalController = {
                 const res = await StudentApiService.uploadPhoto(currentStudent.value.id, base64Data);
                 if (res.success && res.data) {
                     state.profile.photo = res.data.photo;
+                    if (currentStudent.value) {
+                        currentStudent.value.photo = res.data.photo;
+                        sessionStorage.setItem('gncp_portal_student', JSON.stringify(currentStudent.value));
+                        localStorage.setItem('gncp_portal_student', JSON.stringify(currentStudent.value));
+                    }
                     updateSuccessMsg.value = 'Profile portrait updated successfully!';
                     setTimeout(() => { updateSuccessMsg.value = ''; }, 3500);
                 } else {
@@ -253,6 +258,7 @@ window.StudentPortalController = {
 
             const payload = {
                 phone: studentForm.phone,
+                personalEmail: studentForm.personalEmail,
                 email: studentForm.personalEmail,
                 address: studentForm.address,
                 emergencyContactName: studentForm.emergencyContactName,
@@ -264,6 +270,11 @@ window.StudentPortalController = {
 
             if (res.success && res.data) {
                 StudentModel.hydrateProfileFromSession(state.profile, res.data);
+                if (currentStudent.value) {
+                    Object.assign(currentStudent.value, res.data);
+                    sessionStorage.setItem('gncp_portal_student', JSON.stringify(currentStudent.value));
+                    localStorage.setItem('gncp_portal_student', JSON.stringify(currentStudent.value));
+                }
                 updateSuccessMsg.value = 'Personal information updated successfully!';
                 setTimeout(() => { updateSuccessMsg.value = ''; }, 3500);
             } else {

@@ -426,8 +426,10 @@ if ($action === 'login' || $action === 'login_student') {
     if (isset($payload['phone'])) {
         $personalInfo['phone'] = trim($payload['phone']);
     }
-    if (isset($payload['personalEmail'])) {
+    if (isset($payload['personalEmail']) && !empty($payload['personalEmail'])) {
         $personalInfo['email'] = trim($payload['personalEmail']);
+    } elseif (isset($payload['email']) && !empty($payload['email'])) {
+        $personalInfo['email'] = trim($payload['email']);
     }
     if (isset($payload['address'])) {
         $personalInfo['address'] = trim($payload['address']);
@@ -454,12 +456,15 @@ if ($action === 'login' || $action === 'login_student') {
         if ($imageData !== false) {
             $uploadDir1 = __DIR__ . '/../../stations/it-center/assets/uploads/';
             $uploadDir2 = __DIR__ . '/../../shared/assets/uploads/';
+            $uploadDir3 = __DIR__ . '/../../uploads/avatars/';
             if (!is_dir($uploadDir1)) @mkdir($uploadDir1, 0777, true);
             if (!is_dir($uploadDir2)) @mkdir($uploadDir2, 0777, true);
+            if (!is_dir($uploadDir3)) @mkdir($uploadDir3, 0777, true);
             $safeId = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $studentId);
             $filename = 'portrait_' . $safeId . '_' . time() . '.' . $ext;
             @file_put_contents($uploadDir1 . $filename, $imageData);
             @file_put_contents($uploadDir2 . $filename, $imageData);
+            @file_put_contents($uploadDir3 . $filename, $imageData);
             $photoFile = $filename;
         }
     }
@@ -471,6 +476,12 @@ if ($action === 'login' || $action === 'login_student') {
         'photo' => $photoFile,
         'id'    => $studentId
     ]);
+
+    // Update active student session if present
+    if (isset($_SESSION['gncp_student']) && is_array($_SESSION['gncp_student'])) {
+        $_SESSION['gncp_student']['photo'] = $photoFile;
+        $_SESSION['gncp_student']['personal_info'] = json_encode($personalInfo);
+    }
 
     // Also update pre_enrollments staging queue record if reference exists or matching student ID
     $ref = $student['temp_reference_no'] ?? $studentId;

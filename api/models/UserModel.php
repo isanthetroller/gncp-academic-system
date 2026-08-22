@@ -75,7 +75,7 @@ class UserModel {
         }
 
         // 3. Try pre_enrollments table (for pending applicants)
-        $stmt = $this->pdo->prepare("SELECT id, temp_student_id AS username, CONCAT(first_name, ' ', last_name) AS name, email, 'STUDENT' AS role, status, photo AS avatar, photo, created_at FROM `pre_enrollments` WHERE `temp_student_id` = :uname_where OR `email` = :email_where");
+        $stmt = $this->pdo->prepare("SELECT id, temp_student_id AS username, CONCAT(first_name, ' ', last_name) AS name, email, 'STUDENT' AS role, status, NULL AS avatar, NULL AS photo, created_at FROM `pre_enrollments` WHERE `temp_student_id` = :uname_where OR `email` = :email_where");
         $stmt->execute(['uname_where' => $identity, 'email_where' => $identity]);
         $pre = $stmt->fetch();
         if ($pre) {
@@ -123,10 +123,6 @@ class UserModel {
             $ln = count($parts) > 1 ? end($parts) : '';
             $sql = "UPDATE `pre_enrollments` SET `first_name` = :set_fn, `last_name` = :set_ln, `email` = :set_email";
             $params = ['set_fn' => $fn, 'set_ln' => $ln, 'set_email' => $email, 'where_id' => $identity, 'where_email' => $identity];
-            if ($avatar !== null) {
-                $sql .= ", `photo` = :set_avatar";
-                $params['set_avatar'] = $avatar;
-            }
             $sql .= " WHERE `temp_student_id` = :where_id OR `email` = :where_email";
             return $this->pdo->prepare($sql)->execute($params);
         }
