@@ -134,7 +134,8 @@ const AdminSidebar = {
                     </div>
                 </div>
 
-                <!-- Category 3: Fee Schedule & Tuition Matrix -->
+                <!-- Category 3: Fee Schedule & Tuition Matrix (Temporarily Hidden) -->
+                <!--
                 <div class="nav-category-wrapper" :class="{ expanded: expandedCats.fees, 'has-active-child': ['fees'].includes(view) }">
                     <button class="nav-cat-header" :class="{ expanded: expandedCats.fees, 'has-active-child': ['fees'].includes(view) }" @click="expandedCats.fees = !expandedCats.fees">
                         <span><i class="fa-solid fa-money-check-dollar"></i>Fee Schedule</span>
@@ -148,6 +149,7 @@ const AdminSidebar = {
                         </div>
                     </div>
                 </div>
+                -->
 
                 <!-- Section 3: Administration & System -->
                 <div class="nav-cat" style="margin-top: 8px;">Administration &amp; Users</div>
