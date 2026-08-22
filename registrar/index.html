@@ -429,17 +429,26 @@
 
                             <!-- Admission Requirements List & Document Management -->
                             <div class="col-md-6">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0 d-flex align-items-center fw-bold text-dark" style="font-size: 0.95rem;">
-                                        <i class="fas fa-file-shield text-success me-2 fs-6"></i>
-                                        Admission Requirements Checklist
-                                    </h6>
-                                    <span class="badge py-1 px-2.5 rounded-pill fw-bold"
-                                          :class="selectedApplication.requirements && selectedApplication.requirements.every(r => isDocVerified(r)) ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'"
-                                          style="font-size: 0.72rem;">
-                                        <i class="fas" :class="selectedApplication.requirements && selectedApplication.requirements.every(r => isDocVerified(r)) ? 'fa-check-circle me-1' : 'fa-clock me-1'"></i>
-                                        {{ selectedApplication.requirements ? selectedApplication.requirements.filter(r => isDocVerified(r)).length : 0 }} / {{ selectedApplication.requirements ? selectedApplication.requirements.length : 0 }} Satisfied
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <h6 class="mb-0 d-flex align-items-center fw-bold text-dark" style="font-size: 0.95rem;">
+                                            <i class="fas fa-file-shield text-success me-2 fs-6"></i>
+                                            Admission Requirements
+                                        </h6>
+                                        <span class="text-muted" style="font-size: 0.72rem;">Verify physical credentials &amp; digital soft copies</span>
+                                    </div>
+                                    <span class="badge req-header-pill"
+                                          :class="selectedApplication.requirements && selectedApplication.requirements.every(r => isDocVerified(r)) ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'">
+                                        <i class="fas" :class="selectedApplication.requirements && selectedApplication.requirements.every(r => isDocVerified(r)) ? 'fa-check-circle' : 'fa-clock'"></i>
+                                        {{ selectedApplication.requirements ? selectedApplication.requirements.filter(r => isDocVerified(r)).length : 0 }} of {{ selectedApplication.requirements ? selectedApplication.requirements.length : 0 }} Verified
                                     </span>
+                                </div>
+
+                                <!-- Dynamic Micro Progress Bar -->
+                                <div class="req-progress-bar">
+                                    <div class="req-progress-fill" 
+                                         :style="{ width: ((selectedApplication.requirements && selectedApplication.requirements.length > 0) ? ((selectedApplication.requirements.filter(r => isDocVerified(r)).length / selectedApplication.requirements.length) * 100) : 0) + '%' }">
+                                    </div>
                                 </div>
 
                                 <div v-if="requirementsError"
@@ -449,17 +458,14 @@
                                     <span>{{ requirementsError }}</span>
                                 </div>
 
-                                <div class="p-2.5 border border-light-subtle rounded-3 bg-light bg-opacity-50 mb-3 custom-scrollbar"
-                                    style="max-height: 410px; overflow-y: auto; overflow-x: hidden !important;">
-                                    <div class="mb-2 px-1 text-muted small d-flex align-items-center justify-content-between" style="font-size: 0.73rem;">
-                                        <span><i class="fas fa-circle-info me-1 text-success"></i> Verify submitted documents or set promissory undertaking:</span>
-                                    </div>
+                                <!-- Requirements Card List -->
+                                <div class="req-container custom-scrollbar" style="max-height: 410px; overflow-y: auto; overflow-x: hidden !important;">
                                     <div v-for="(item, idx) in selectedApplication.requirements" :key="idx"
                                         class="req-checklist-card"
                                         :class="{'is-invalid': !isDocVerified(item) && showRequirementsValidation}">
                                         
-                                        <!-- Top: Icon, Document Title, and Type/File Badges -->
-                                        <div class="d-flex align-items-start gap-2.5 mb-2.5">
+                                        <!-- Top Row: Icon, Title, and Submission Mode Badge -->
+                                        <div class="d-flex align-items-start gap-2.5">
                                             <div class="req-icon-box" :class="{
                                                 'status-original': getDocStatus(item) === 'ORIGINAL',
                                                 'status-photocopy': getDocStatus(item) === 'PHOTOCOPY',
@@ -475,33 +481,33 @@
                                             </div>
 
                                             <div class="min-w-0 flex-grow-1">
-                                                <div class="fw-bold text-dark mb-1" style="font-size: 0.84rem; line-height: 1.35; word-break: break-word;">
+                                                <div class="req-doc-title">
                                                     {{ item }}
                                                 </div>
-                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                                    <div class="d-flex align-items-center gap-1.5">
-                                                        <span v-if="getDocFile(item)" class="badge bg-success bg-opacity-10 text-success fw-semibold py-1 px-2 rounded-pill" style="font-size: 0.68rem;">
-                                                            <i class="fas fa-file-arrow-up me-1"></i>Soft Copy Attached
+                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1.5">
+                                                    <div>
+                                                        <span v-if="getDocFile(item)" class="badge bg-success-subtle text-success border border-success-subtle req-badge-tag">
+                                                            <i class="fas fa-file-arrow-up"></i> Soft Copy Attached
                                                         </span>
-                                                        <span v-else class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold py-1 px-2 rounded-pill" style="font-size: 0.68rem;">
-                                                            <i class="fas fa-file-invoice me-1"></i>Physical Hardcopy
+                                                        <span v-else class="badge bg-light text-muted border req-badge-tag">
+                                                            <i class="fas fa-file-lines"></i> Physical Hardcopy
                                                         </span>
                                                     </div>
 
-                                                    <!-- View File Action Button if Uploaded -->
+                                                    <!-- View Soft Copy Trigger Button -->
                                                     <button v-if="getDocFile(item)" type="button" 
-                                                            class="btn btn-xs btn-outline-success py-0.5 px-2.5 rounded-pill fw-bold d-flex align-items-center gap-1" 
+                                                            class="btn btn-xs btn-outline-success py-0.5 px-2 rounded-pill fw-bold d-flex align-items-center gap-1" 
                                                             @click.stop="openDocumentModal(getDocFile(item))" 
                                                             title="View uploaded document" 
-                                                            style="font-size: 0.72rem;">
+                                                            style="font-size: 0.70rem;">
                                                         <i class="fas fa-eye"></i>
-                                                        <span>View File</span>
+                                                        <span>Preview</span>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Unified Segmented Controls for Status -->
+                                        <!-- Unified Segmented Controls -->
                                         <div class="doc-segmented-control">
                                             <button type="button" class="doc-segment-btn"
                                                     :class="{'active-original': getDocStatus(item) === 'ORIGINAL'}"
@@ -533,7 +539,7 @@
                                             </button>
                                         </div>
 
-                                        <!-- Promissory Note Sub-drawer (Shown when UNDERTAKING) -->
+                                        <!-- Promissory Note Sub-drawer -->
                                         <div v-if="getDocStatus(item) === 'UNDERTAKING'" class="undertaking-drawer">
                                             <div class="row g-2">
                                                 <div class="col-6">
@@ -549,9 +555,9 @@
                                                 <div class="col-6">
                                                     <label>
                                                         <i class="fas fa-comment-dots text-warning-emphasis"></i>
-                                                        Undertaking Remarks
+                                                        Undertaking Note
                                                     </label>
-                                                    <input type="text" class="form-control form-control-sm" placeholder="e.g. Before prelim exams"
+                                                    <input type="text" class="form-control form-control-sm" placeholder="e.g. Due before prelims"
                                                            :value="getDocRemarks(item)"
                                                            :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
                                                            @input="setDocRemarks(item, $event.target.value)">
@@ -590,7 +596,7 @@
                                             </select>
                                         </div>
                                         <div class="col-5">
-                                            <label class="form-label-subtle">Date Dispatched / Archived</label>
+                                            <label class="form-label-subtle">Date Dispatched / Logged</label>
                                             <input type="date" class="form-control form-control-sm py-1.5" style="font-size: 0.78rem;"
                                                    :value="getTransmittalData().dateDispatched"
                                                    @change="setTransmittalDate($event.target.value)"

@@ -612,18 +612,55 @@ a { text-decoration: none; }
 }
 
 /* ── Modern Requirements Checklist Component ── */
-.req-checklist-card {
-    background: var(--white);
+.req-container {
+    background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 13px 14px;
-    margin-bottom: 11px;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.req-header-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.req-progress-bar {
+    height: 4px;
+    border-radius: 99px;
+    background: #e2e8f0;
+    overflow: hidden;
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+.req-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #006A4E 0%, #10b981 100%);
+    border-radius: 99px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.req-checklist-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 .req-checklist-card:hover {
     border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+.req-checklist-card:last-child {
+    margin-bottom: 0;
 }
 .req-checklist-card.is-invalid {
     border-color: #f87171 !important;
@@ -631,38 +668,57 @@ a { text-decoration: none; }
 }
 
 .req-icon-box {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     flex-shrink: 0;
     transition: all 0.2s ease;
 }
 .req-icon-box.status-original {
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #a7f3d0;
+    background: #e6f4ea;
+    color: #006A4E;
+    border: 1px solid rgba(0, 106, 78, 0.2);
 }
 .req-icon-box.status-photocopy {
     background: #f0f9ff;
     color: #0284c7;
-    border: 1px solid #bae6fd;
+    border: 1px solid rgba(2, 132, 199, 0.2);
 }
 .req-icon-box.status-undertaking {
     background: #fffbeb;
     color: #d97706;
-    border: 1px solid #fde68a;
+    border: 1px solid rgba(217, 119, 6, 0.25);
 }
 .req-icon-box.status-missing {
-    background: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
+    background: #f8fafc;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
 }
 
-/* Unified Segmented Control for Document Verification */
+.req-doc-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    word-break: break-word;
+    margin-bottom: 4px;
+}
+
+.req-badge-tag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Unified Modern Segmented Control */
 .doc-segmented-control {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -671,11 +727,12 @@ a { text-decoration: none; }
     border-radius: 8px;
     gap: 3px;
     width: 100%;
+    margin-top: 10px;
 }
 .doc-segment-btn {
     border: none;
     background: transparent;
-    padding: 6px 4px;
+    padding: 6px 3px;
     border-radius: 6px;
     font-size: 0.72rem;
     font-weight: 700;
@@ -685,51 +742,51 @@ a { text-decoration: none; }
     align-items: center;
     justify-content: center;
     gap: 4px;
-    transition: all 0.15s ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     text-align: center;
 }
 .doc-segment-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.7);
-    color: #1e293b;
+    background: rgba(255, 255, 255, 0.8);
+    color: #0f172a;
 }
 .doc-segment-btn:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.55;
 }
 
 .doc-segment-btn.active-original {
-    background: #006A4E !important;
+    background: linear-gradient(135deg, #006A4E 0%, #004D38 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0, 106, 78, 0.25) !important;
+    box-shadow: 0 2px 4px rgba(0, 106, 78, 0.25) !important;
 }
 .doc-segment-btn.active-photocopy {
-    background: #0284c7 !important;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25) !important;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25) !important;
 }
 .doc-segment-btn.active-undertaking {
-    background: #d97706 !important;
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(217, 119, 6, 0.25) !important;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25) !important;
 }
 .doc-segment-btn.active-missing {
-    background: #ef4444 !important;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.25) !important;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.25) !important;
 }
 
 /* Promissory Undertaking Sub-drawer */
 .undertaking-drawer {
     margin-top: 10px;
-    padding: 10px 12px;
-    background: #fffbeb;
+    padding: 11px 13px;
+    background: #fffdf5;
     border: 1px solid #fef3c7;
-    border-left: 3px solid #f59e0b;
+    border-left: 3.5px solid #f59e0b;
     border-radius: 8px;
 }
 .undertaking-drawer label {
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     font-weight: 700;
     color: #92400e;
     text-transform: uppercase;
@@ -741,10 +798,10 @@ a { text-decoration: none; }
 }
 .undertaking-drawer input {
     background: #ffffff;
-    border: 1px solid #fde68a;
+    border: 1.5px solid #fde68a;
     font-size: 0.78rem;
     border-radius: 6px;
-    padding: 4px 8px;
+    padding: 5px 8px;
 }
 .undertaking-drawer input:focus {
     border-color: #d97706;
@@ -757,19 +814,19 @@ a { text-decoration: none; }
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    padding: 13px 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 .transmittal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 .transmittal-title {
     font-size: 0.8rem;
     font-weight: 800;
-    color: #1e293b;
+    color: #0f172a;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -782,7 +839,7 @@ a { text-decoration: none; }
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     display: block;
 }
 
