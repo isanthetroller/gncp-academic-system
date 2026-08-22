@@ -6,9 +6,22 @@ window.AdminModel = (function () {
     const API = 'backend/api.php';
 
     const handleFetchResponse = async (res) => {
+        if (res.status === 401) {
+            if (typeof window.handle401SessionExpired === 'function') {
+                window.handle401SessionExpired();
+            }
+            return { success: false, error: 'Session expired. Please log in.' };
+        }
         const text = await res.text();
         try {
-            return JSON.parse(text);
+            const json = JSON.parse(text);
+            if (json && (json.code === 401 || (json.error && typeof json.error === 'string' && json.error.includes('Authentication required')))) {
+                if (typeof window.handle401SessionExpired === 'function') {
+                    window.handle401SessionExpired();
+                }
+                return { success: false, error: 'Session expired. Please log in.' };
+            }
+            return json;
         } catch (e) {
             console.error('[AdminModel] Invalid JSON response from server:', text);
             return { success: false, error: 'Server returned an invalid format. Check console logs for details.' };

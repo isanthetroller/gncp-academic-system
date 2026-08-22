@@ -2,10 +2,48 @@ const { createApp, ref, reactive, computed, watch, onMounted, onUnmounted } = Vu
 
 const API = 'backend/api.php';
 
+let isHandling401 = false;
+window.handle401SessionExpired = () => {
+    if (isHandling401) return;
+    isHandling401 = true;
+    if (typeof window.__stopAdminLiveSync === 'function') {
+        window.__stopAdminLiveSync();
+    }
+    sessionStorage.removeItem('gncp_admin_user');
+    sessionStorage.removeItem('gncp_station_user');
+    localStorage.removeItem('gncp_admin_user');
+    localStorage.removeItem('gncp_station_user');
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session Expired',
+            text: 'Your session has expired. Please sign in to continue.',
+            confirmButtonColor: '#006A4E',
+            confirmButtonText: 'Sign In',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then(() => {
+            window.location.href = '../index.html?clear=true&session_expired=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+        });
+    } else {
+        window.location.href = '../index.html?clear=true&session_expired=true&redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+    }
+};
+
 const handleFetchResponse = async (res) => {
+    if (res.status === 401) {
+        window.handle401SessionExpired();
+        return { success: false, error: 'Session expired. Please log in.' };
+    }
     const text = await res.text();
     try {
-        return JSON.parse(text);
+        const json = JSON.parse(text);
+        if (json && (json.code === 401 || (json.error && typeof json.error === 'string' && json.error.includes('Authentication required')))) {
+            window.handle401SessionExpired();
+            return { success: false, error: 'Session expired. Please log in.' };
+        }
+        return json;
     } catch (e) {
         console.error('Invalid JSON response from server:', text);
         return { success: false, error: 'Server returned an invalid format. Check console logs for details.' };
@@ -50,6 +88,7 @@ const app = createApp({
                 pollTimer = null;
             }
         };
+        window.__stopAdminLiveSync = stopLiveSync;
         const loginForm    = reactive({ username:'', password:'' });
 
         // View state
@@ -1055,8 +1094,16 @@ const app = createApp({
 
         // ── Auth ──
         const fetchCurrentProfile = () => {
-            fetch('../api/index.php?action=auth/profile')
-                .then(res => res.json())
+            const u = currentAdmin.value?.username || '';
+            const url = u ? `../api/index.php?action=auth/profile&username=${encodeURIComponent(u)}` : '../api/index.php?action=auth/profile';
+            fetch(url)
+                .then(res => {
+                    if (res.status === 401) {
+                        window.handle401SessionExpired();
+                        return null;
+                    }
+                    return res.json();
+                })
                 .then(res => {
                     if (res && res.success && res.data) {
                         const prof = res.data;
