@@ -159,10 +159,10 @@ window.StudentPortalController = {
         const syncStudentFormFromProfile = () => {
             if (state.profile) {
                 studentForm.phone = state.profile.phone || '';
-                studentForm.personalEmail = state.profile.email || '';
+                studentForm.personalEmail = state.profile.personalEmail || (state.profile.personalInfo && (state.profile.personalInfo.personalEmail || state.profile.personalInfo.email)) || '';
                 studentForm.address = state.profile.address || '';
-                studentForm.emergencyContactName = state.profile.emergencyContactName || '';
-                studentForm.emergencyContactPhone = state.profile.emergencyContactPhone || '';
+                studentForm.emergencyContactName = state.profile.emergencyContactName || (state.profile.personalInfo && state.profile.personalInfo.emergencyContactName) || '';
+                studentForm.emergencyContactPhone = state.profile.emergencyContactPhone || (state.profile.personalInfo && state.profile.personalInfo.emergencyContactPhone) || '';
             }
         };
 

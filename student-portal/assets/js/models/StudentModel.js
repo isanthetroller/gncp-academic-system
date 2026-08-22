@@ -49,6 +49,9 @@ window.StudentModel = {
             : !!targetProfile.must_change_password;
         targetProfile.address = sessionStudent.address || (sessionStudent.personalInfo && sessionStudent.personalInfo.address) || targetProfile.address || '';
         targetProfile.phone = sessionStudent.phone || (sessionStudent.personalInfo && sessionStudent.personalInfo.phone) || targetProfile.phone || '';
+        targetProfile.personalEmail = sessionStudent.personalEmail || (sessionStudent.personalInfo && (sessionStudent.personalInfo.personalEmail || sessionStudent.personalInfo.email)) || targetProfile.personalEmail || '';
+        targetProfile.emergencyContactName = sessionStudent.emergencyContactName || (sessionStudent.personalInfo && sessionStudent.personalInfo.emergencyContactName) || targetProfile.emergencyContactName || '';
+        targetProfile.emergencyContactPhone = sessionStudent.emergencyContactPhone || (sessionStudent.personalInfo && sessionStudent.personalInfo.emergencyContactPhone) || targetProfile.emergencyContactPhone || '';
         if (sessionStudent.personalInfo) {
             targetProfile.personalInfo = sessionStudent.personalInfo;
         }
