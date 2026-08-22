@@ -1361,14 +1361,15 @@
         .profile-hero {
             background: linear-gradient(135deg, #003D2B 0%, #006A4E 100%);
             border-radius: var(--radius);
-            padding: 28px 32px;
+            padding: 30px 34px;
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 26px;
+            min-height: 144px;
             box-shadow: 0 10px 30px rgba(0, 106, 78, 0.2);
             position: relative;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .profile-hero::after {
@@ -2675,7 +2676,7 @@
                         <div class="profile-hero">
                             <div class="avatar-wrap" @click="triggerPhotoUpload"
                                 title="Click to change profile picture">
-                                <img v-if="profile.photo" :src="'../stations/it-center/assets/uploads/' + profile.photo"
+                                <img v-if="profile.photo" :src="formattedProfilePhoto(profile.photo)"
                                     @error="profile.photo = null" alt="Profile Picture">
                                 <div v-else class="avatar-initials">{{ (profile.name || 'S').substring(0,2).toUpperCase() }}</div>
                                 <div class="avatar-overlay">

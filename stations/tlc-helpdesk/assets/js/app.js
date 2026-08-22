@@ -69,18 +69,20 @@ window.app = createApp({
                     continue;
                 }
                 const help = s.helpdesk || {};
+                const studentName = s.name || s.fullName || (s.firstName ? [s.firstName, s.middleName, s.lastName].filter(Boolean).join(' ') : '') || (s.form ? [s.form.firstName, s.form.middleName, s.form.lastName].filter(Boolean).join(' ') : '') || 'Applicant';
+                const studentProg = s.program || s.courseCode || (s.form ? s.form.courseCode : '') || '---';
                 const flatStudent = {
-                    id: s.referenceNumber,
-                    referenceNumber: s.referenceNumber,
-                    name: s.name,
-                    program: s.program,
-                    studentType: s.studentType,
+                    id: s.referenceNumber || s.id,
+                    referenceNumber: s.referenceNumber || s.id,
+                    name: studentName,
+                    program: studentProg,
+                    studentType: s.studentType || (s.form ? s.form.studentType : 'REGULAR'),
                     roadmap: s.roadmap,
                     medical: s.medical,
                     payment: s.payment,
                     form: s.form,
                     // Flatten helpdesk specific properties safely
-                    nstp: help.nstp || s.nstp || 'ROTC',
+                    nstp: help.nstp || s.nstp || (s.form ? s.form.nstp : 'ROTC') || 'ROTC',
                     tlcNotes: help.tlcNotes || '',
                     status: getHelpdeskStepStatus(s),
                     prospectusSubjects: s.prospectusSubjects || [],

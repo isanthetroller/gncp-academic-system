@@ -12,12 +12,15 @@ try {
     $pdo = Database::getInstance();
 
     // Check staff session for security
-    session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $isLoggedInStaff = false;
-    $storedUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? '';
+    $storedUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
     if ($storedUser) {
-        $user = json_decode($storedUser, true);
-        if (in_array($user['role'] ?? '', ['CASHIER', 'REGISTRAR', 'ADMIN', 'SUPER_ADMIN'])) {
+        $user = is_array($storedUser) ? $storedUser : (is_string($storedUser) ? json_decode($storedUser, true) : []);
+        $role = strtoupper($user['role'] ?? '');
+        if (in_array($role, ['CASHIER', 'REGISTRAR', 'ADMIN', 'SUPER_ADMIN', 'HELPDESK', 'MEDICAL', 'IT_CENTER'])) {
             $isLoggedInStaff = true;
         }
     }

@@ -249,6 +249,14 @@ window.StudentPortalController = {
             reader.readAsDataURL(file);
         };
 
+        const formattedProfilePhoto = (photo) => {
+            if (!photo) return null;
+            if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) return photo;
+            if (photo.startsWith('../') || photo.startsWith('../../')) return photo;
+            if (photo.startsWith('uploads/')) return '../' + photo;
+            return '../uploads/avatars/' + photo.replace(/^\/+/, '');
+        };
+
         const saving = ref(false);
 
         const saveStudentPersonalInfo = async () => {
@@ -722,7 +730,8 @@ window.StudentPortalController = {
             fetchAnnouncements,
             fetchMilestones,
             formatTimeAgo,
-            formatDateRange
+            formatDateRange,
+            formattedProfilePhoto
         };
     }
 };

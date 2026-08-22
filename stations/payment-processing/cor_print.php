@@ -3,11 +3,11 @@ require_once __DIR__ . '/../../shared/backend/config/database.php';
 require_once __DIR__ . '/../../shared/backend/utils/student.php';
 require_once __DIR__ . '/../../shared/backend/services/AssessmentService.php';
 
-$ref = $_GET['ref'] ?? '';
+$ref = $_GET['ref'] ?? $_GET['id'] ?? $_GET['student_id'] ?? '';
 $pin = $_GET['pin'] ?? '';
 
 if (empty($ref)) {
-    die("<h1 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Error: Student reference number is required.</h1>");
+    die("<h1 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Error: Student reference number or Student ID is required.</h1>");
 }
 
 try {
@@ -40,11 +40,16 @@ try {
             $enrollment = json_decode($permStudent['enrollment_data'] ?? '{}', true);
             $payment = json_decode($permStudent['payment_data'] ?? '{}', true);
             
+            $nameParts = explode(' ', trim($permStudent['name'] ?? ''));
+            $lastName = !empty($personal['lastName']) ? $personal['lastName'] : (count($nameParts) > 1 ? end($nameParts) : ($permStudent['name'] ?? ''));
+            $firstName = !empty($personal['firstName']) ? $personal['firstName'] : (count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 0, -1)) : ($permStudent['name'] ?? ''));
+            $middleName = !empty($personal['middleName']) ? $personal['middleName'] : '';
+
             $student = [
                 'temp_student_id' => $permStudent['temp_reference_no'] ?: $permStudent['id'],
-                'first_name' => $personal['firstName'] ?? '',
-                'middle_name' => $personal['middleName'] ?? '',
-                'last_name' => $personal['lastName'] ?? '',
+                'first_name' => $firstName,
+                'middle_name' => $middleName,
+                'last_name' => $lastName,
                 'course_code' => $permStudent['program'],
                 'program_name' => $permStudent['program_name'],
                 'academic_period_name' => $permStudent['academic_period_name'],
@@ -67,13 +72,16 @@ try {
         die("<h1 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Error: Student record not found.</h1>");
     }
 
-    // Access control check: allow logged in cashier/admin to bypass PIN check
-    session_start();
+    // Access control check: allow logged in cashier/admin/staff to bypass PIN check
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $isLoggedInStaff = false;
-    $storedUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? '';
+    $storedUser = $_SESSION['gncp_station_user'] ?? $_SESSION['gncp_admin_user'] ?? null;
     if ($storedUser) {
-        $user = json_decode($storedUser, true);
-        if (in_array($user['role'] ?? '', ['CASHIER', 'REGISTRAR', 'ADMIN', 'SUPER_ADMIN'])) {
+        $user = is_array($storedUser) ? $storedUser : (is_string($storedUser) ? json_decode($storedUser, true) : []);
+        $role = strtoupper($user['role'] ?? '');
+        if (in_array($role, ['CASHIER', 'REGISTRAR', 'ADMIN', 'SUPER_ADMIN', 'HELPDESK', 'MEDICAL', 'IT_CENTER'])) {
             $isLoggedInStaff = true;
         }
     }
