@@ -838,6 +838,7 @@ body {
     flex-shrink: 0;
     overflow: hidden;
     cursor: pointer;
+    transition: border-color 0.25s ease;
 }
 
 .avatar-wrap img {
