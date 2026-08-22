@@ -430,11 +430,14 @@
                             <!-- Admission Requirements List & Document Management -->
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0 d-flex align-items-center">
-                                        <i class="fas fa-file-shield text-success me-2"></i>
+                                    <h6 class="mb-0 d-flex align-items-center fw-bold text-dark" style="font-size: 0.95rem;">
+                                        <i class="fas fa-file-shield text-success me-2 fs-6"></i>
                                         Admission Requirements Checklist
                                     </h6>
-                                    <span class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.68rem;">
+                                    <span class="badge py-1 px-2.5 rounded-pill fw-bold"
+                                          :class="selectedApplication.requirements && selectedApplication.requirements.every(r => isDocVerified(r)) ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'"
+                                          style="font-size: 0.72rem;">
+                                        <i class="fas" :class="selectedApplication.requirements && selectedApplication.requirements.every(r => isDocVerified(r)) ? 'fa-check-circle me-1' : 'fa-clock me-1'"></i>
                                         {{ selectedApplication.requirements ? selectedApplication.requirements.filter(r => isDocVerified(r)).length : 0 }} / {{ selectedApplication.requirements ? selectedApplication.requirements.length : 0 }} Satisfied
                                     </span>
                                 </div>
@@ -446,86 +449,109 @@
                                     <span>{{ requirementsError }}</span>
                                 </div>
 
-                                <div class="card p-3 border border-light-subtle rounded-3 bg-light bg-opacity-50 mb-3 custom-scrollbar"
-                                    style="max-height: 400px; overflow-y: auto; overflow-x: hidden !important;">
-                                    <div class="mb-2 text-muted small d-flex align-items-center justify-content-between" style="font-size:0.75rem;">
-                                        <span><i class="fas fa-info-circle me-1 text-success"></i> Verify physical hard copies or assign promissory undertaking:</span>
+                                <div class="p-2.5 border border-light-subtle rounded-3 bg-light bg-opacity-50 mb-3 custom-scrollbar"
+                                    style="max-height: 410px; overflow-y: auto; overflow-x: hidden !important;">
+                                    <div class="mb-2 px-1 text-muted small d-flex align-items-center justify-content-between" style="font-size: 0.73rem;">
+                                        <span><i class="fas fa-circle-info me-1 text-success"></i> Verify submitted documents or set promissory undertaking:</span>
                                     </div>
                                     <div v-for="(item, idx) in selectedApplication.requirements" :key="idx"
-                                        class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm"
-                                        :class="{'border-danger': !isDocVerified(item) && showRequirementsValidation, 'border-light-subtle': isDocVerified(item) || !showRequirementsValidation}">
-                                        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                                            <div class="d-flex align-items-start gap-2 min-w-0 flex-grow-1">
-                                                <i class="fa-solid mt-1 flex-shrink-0" :class="{
-                                                    'fa-circle-check text-success': getDocStatus(item) === 'ORIGINAL',
-                                                    'fa-file-lines text-info': getDocStatus(item) === 'PHOTOCOPY',
-                                                    'fa-clock-rotate-left text-warning': getDocStatus(item) === 'UNDERTAKING',
-                                                    'fa-circle-xmark text-danger': getDocStatus(item) === 'NOT_SUBMITTED'
-                                                }" style="font-size:0.95rem;"></i>
-                                                <div class="min-w-0 flex-grow-1">
-                                                    <div class="fw-semibold text-dark" style="font-size:0.83rem; line-height:1.35; word-break:break-word;">
-                                                        {{ item }}
-                                                    </div>
-                                                    <div class="text-muted small mt-1 d-flex align-items-center gap-1.5" style="font-size:0.72rem;">
-                                                        <span v-if="getDocFile(item)" class="badge bg-success bg-opacity-10 text-success fw-semibold py-0.5 px-2 rounded-pill font-monospace" style="font-size:0.68rem;">
-                                                            <i class="fas fa-file-arrow-up me-1"></i>Soft Copy Uploaded
+                                        class="req-checklist-card"
+                                        :class="{'is-invalid': !isDocVerified(item) && showRequirementsValidation}">
+                                        
+                                        <!-- Top: Icon, Document Title, and Type/File Badges -->
+                                        <div class="d-flex align-items-start gap-2.5 mb-2.5">
+                                            <div class="req-icon-box" :class="{
+                                                'status-original': getDocStatus(item) === 'ORIGINAL',
+                                                'status-photocopy': getDocStatus(item) === 'PHOTOCOPY',
+                                                'status-undertaking': getDocStatus(item) === 'UNDERTAKING',
+                                                'status-missing': getDocStatus(item) === 'NOT_SUBMITTED'
+                                            }">
+                                                <i class="fa-solid" :class="{
+                                                    'fa-check': getDocStatus(item) === 'ORIGINAL',
+                                                    'fa-copy': getDocStatus(item) === 'PHOTOCOPY',
+                                                    'fa-clock-rotate-left': getDocStatus(item) === 'UNDERTAKING',
+                                                    'fa-xmark': getDocStatus(item) === 'NOT_SUBMITTED'
+                                                }"></i>
+                                            </div>
+
+                                            <div class="min-w-0 flex-grow-1">
+                                                <div class="fw-bold text-dark mb-1" style="font-size: 0.84rem; line-height: 1.35; word-break: break-word;">
+                                                    {{ item }}
+                                                </div>
+                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                                    <div class="d-flex align-items-center gap-1.5">
+                                                        <span v-if="getDocFile(item)" class="badge bg-success bg-opacity-10 text-success fw-semibold py-1 px-2 rounded-pill" style="font-size: 0.68rem;">
+                                                            <i class="fas fa-file-arrow-up me-1"></i>Soft Copy Attached
                                                         </span>
-                                                        <span v-else class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold py-0.5 px-2 rounded-pill font-monospace" style="font-size:0.68rem;">
-                                                            <i class="fas fa-hand-holding-hand me-1"></i>Face-to-Face Hardcopy
+                                                        <span v-else class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold py-1 px-2 rounded-pill" style="font-size: 0.68rem;">
+                                                            <i class="fas fa-file-invoice me-1"></i>Physical Hardcopy
                                                         </span>
                                                     </div>
+
+                                                    <!-- View File Action Button if Uploaded -->
+                                                    <button v-if="getDocFile(item)" type="button" 
+                                                            class="btn btn-xs btn-outline-success py-0.5 px-2.5 rounded-pill fw-bold d-flex align-items-center gap-1" 
+                                                            @click.stop="openDocumentModal(getDocFile(item))" 
+                                                            title="View uploaded document" 
+                                                            style="font-size: 0.72rem;">
+                                                        <i class="fas fa-eye"></i>
+                                                        <span>View File</span>
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <button v-if="getDocFile(item)" type="button" class="btn btn-xs btn-outline-success py-1 px-2.5 rounded-pill flex-shrink-0 fw-bold" @click.stop="openDocumentModal(getDocFile(item))" title="View uploaded soft copy" style="font-size:0.72rem;">
-                                                <i class="fas fa-eye me-1"></i>View File
+                                        </div>
+
+                                        <!-- Unified Segmented Controls for Status -->
+                                        <div class="doc-segmented-control">
+                                            <button type="button" class="doc-segment-btn"
+                                                    :class="{'active-original': getDocStatus(item) === 'ORIGINAL'}"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'ORIGINAL')">
+                                                <i class="fa-solid fa-check"></i>
+                                                <span>Original</span>
+                                            </button>
+                                            <button type="button" class="doc-segment-btn"
+                                                    :class="{'active-photocopy': getDocStatus(item) === 'PHOTOCOPY'}"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'PHOTOCOPY')">
+                                                <i class="fa-solid fa-copy"></i>
+                                                <span>Photocopy</span>
+                                            </button>
+                                            <button type="button" class="doc-segment-btn"
+                                                    :class="{'active-undertaking': getDocStatus(item) === 'UNDERTAKING'}"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'UNDERTAKING')">
+                                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                                <span>Undertaking</span>
+                                            </button>
+                                            <button type="button" class="doc-segment-btn"
+                                                    :class="{'active-missing': getDocStatus(item) === 'NOT_SUBMITTED'}"
+                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
+                                                    @click="setDocStatus(item, 'NOT_SUBMITTED')">
+                                                <i class="fa-solid fa-xmark"></i>
+                                                <span>Missing</span>
                                             </button>
                                         </div>
 
-                                        <!-- Document Status Segment Controls -->
-                                        <div class="d-flex flex-wrap gap-1.5 align-items-center pt-2 border-top border-light-subtle">
-                                            <button type="button" class="btn btn-xs py-1 px-2.5 rounded-pill font-monospace fw-semibold"
-                                                    :class="getDocStatus(item) === 'ORIGINAL' ? 'btn-success text-white shadow-sm' : 'btn-outline-secondary bg-white'"
-                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
-                                                    @click="setDocStatus(item, 'ORIGINAL')"
-                                                    style="font-size:0.7rem;">
-                                                <i class="fa-solid fa-check me-1"></i>Original
-                                            </button>
-                                            <button type="button" class="btn btn-xs py-1 px-2.5 rounded-pill font-monospace fw-semibold"
-                                                    :class="getDocStatus(item) === 'PHOTOCOPY' ? 'btn-info text-white shadow-sm' : 'btn-outline-secondary bg-white'"
-                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
-                                                    @click="setDocStatus(item, 'PHOTOCOPY')"
-                                                    style="font-size:0.7rem;">
-                                                <i class="fa-solid fa-copy me-1"></i>Photocopy
-                                            </button>
-                                            <button type="button" class="btn btn-xs py-1 px-2.5 rounded-pill font-monospace fw-bold"
-                                                    :class="getDocStatus(item) === 'UNDERTAKING' ? 'btn-warning text-dark shadow-sm' : 'btn-outline-secondary bg-white'"
-                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
-                                                    @click="setDocStatus(item, 'UNDERTAKING')"
-                                                    style="font-size:0.7rem;">
-                                                <i class="fa-solid fa-file-contract me-1"></i>Undertaking
-                                            </button>
-                                            <button type="button" class="btn btn-xs py-1 px-2.5 rounded-pill font-monospace ms-auto fw-semibold"
-                                                    :class="getDocStatus(item) === 'NOT_SUBMITTED' ? 'btn-outline-danger bg-danger bg-opacity-10 text-danger border-danger-subtle' : 'btn-light text-muted border-0'"
-                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
-                                                    @click="setDocStatus(item, 'NOT_SUBMITTED')"
-                                                    style="font-size:0.7rem;">
-                                                <i class="fa-solid fa-xmark me-1" v-if="getDocStatus(item) === 'NOT_SUBMITTED'"></i>Missing
-                                            </button>
-                                        </div>
-
-                                        <!-- Promissory Note Sub-drawer -->
-                                        <div v-if="getDocStatus(item) === 'UNDERTAKING'" class="mt-2 pt-2 border-top border-warning-subtle" style="background: rgba(245,158,11,0.05); padding: 8px; border-radius: 6px;">
+                                        <!-- Promissory Note Sub-drawer (Shown when UNDERTAKING) -->
+                                        <div v-if="getDocStatus(item) === 'UNDERTAKING'" class="undertaking-drawer">
                                             <div class="row g-2">
                                                 <div class="col-6">
-                                                    <label class="d-block text-uppercase text-muted" style="font-size:0.65rem; font-weight:700;">Promissory Deadline</label>
-                                                    <input type="date" class="form-control form-control-sm py-0 px-2" style="font-size:0.75rem;"
+                                                    <label>
+                                                        <i class="fas fa-calendar-days text-warning-emphasis"></i>
+                                                        Promissory Deadline
+                                                    </label>
+                                                    <input type="date" class="form-control form-control-sm"
                                                            :value="getDocUndertakingDeadline(item)"
                                                            :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
                                                            @change="setDocUndertakingDeadline(item, $event.target.value)">
                                                 </div>
                                                 <div class="col-6">
-                                                    <label class="d-block text-uppercase text-muted" style="font-size:0.65rem; font-weight:700;">Undertaking Note</label>
-                                                    <input type="text" class="form-control form-control-sm py-0 px-2" placeholder="e.g. Due before midterms" style="font-size:0.75rem;"
+                                                    <label>
+                                                        <i class="fas fa-comment-dots text-warning-emphasis"></i>
+                                                        Undertaking Remarks
+                                                    </label>
+                                                    <input type="text" class="form-control form-control-sm" placeholder="e.g. Before prelim exams"
                                                            :value="getDocRemarks(item)"
                                                            :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
                                                            @input="setDocRemarks(item, $event.target.value)">
@@ -536,23 +562,24 @@
                                 </div>
 
                                 <!-- Form 137 / SF10 High School Transmittal Tracking Box -->
-                                <div class="p-3 rounded-3 border border-light-subtle bg-white shadow-sm">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <span class="fw-bold text-dark small text-uppercase font-monospace d-flex align-items-center" style="font-size:0.75rem;">
-                                            <i class="fa-solid fa-paper-plane text-success me-1.5"></i>
-                                            Form 137 / SF10 Transmittal
-                                        </span>
-                                        <span class="badge font-monospace" style="font-size:0.65rem;" :class="{
-                                            'bg-secondary-subtle text-secondary': getTransmittalData().form137Status === 'NOT_SENT',
-                                            'bg-warning-subtle text-dark border border-warning-subtle': ['1ST_REQUEST_SENT', '2ND_REQUEST_SENT'].includes(getTransmittalData().form137Status),
+                                <div class="transmittal-card">
+                                    <div class="transmittal-header">
+                                        <div class="transmittal-title">
+                                            <i class="fa-solid fa-paper-plane text-success"></i>
+                                            <span>Form 137 / SF10 Transmittal</span>
+                                        </div>
+                                        <span class="badge py-1 px-2.5 rounded-pill fw-bold" style="font-size: 0.68rem;" :class="{
+                                            'bg-secondary-subtle text-secondary border border-secondary-subtle': getTransmittalData().form137Status === 'NOT_SENT',
+                                            'bg-warning-subtle text-warning-emphasis border border-warning-subtle': ['1ST_REQUEST_SENT', '2ND_REQUEST_SENT'].includes(getTransmittalData().form137Status),
                                             'bg-success-subtle text-success border border-success-subtle': getTransmittalData().form137Status === 'RECEIVED_ARCHIVED'
                                         }">
                                             {{ (getTransmittalData().form137Status || 'NOT_SENT').replace(/_/g, ' ') }}
                                         </span>
                                     </div>
-                                    <div class="row g-2 align-items-center">
+                                    <div class="row g-2">
                                         <div class="col-7">
-                                            <select class="form-select form-select-sm py-1" style="font-size:0.75rem;"
+                                            <label class="form-label-subtle">Transmittal Status</label>
+                                            <select class="form-select form-select-sm py-1.5" style="font-size: 0.78rem;"
                                                     :value="getTransmittalData().form137Status || 'NOT_SENT'"
                                                     @change="setTransmittalStatus($event.target.value)"
                                                     :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)">
@@ -563,7 +590,8 @@
                                             </select>
                                         </div>
                                         <div class="col-5">
-                                            <input type="date" class="form-control form-control-sm py-1" style="font-size:0.75rem;"
+                                            <label class="form-label-subtle">Date Dispatched / Archived</label>
+                                            <input type="date" class="form-control form-control-sm py-1.5" style="font-size: 0.78rem;"
                                                    :value="getTransmittalData().dateDispatched"
                                                    @change="setTransmittalDate($event.target.value)"
                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
