@@ -1612,8 +1612,8 @@ const app = createApp({
         const openAddModal = () => {
             search.value = '';
             if (view.value === 'departments_programs') { Object.assign(form, {id:null,code:'',name:'',department:selectedDeptName.value || '',status:'Active'}); modal.value='program'; }
-            if (view.value === 'subjects')   { Object.assign(form, {id:null,code:'',title:'',description:'',lectureUnits:3,labUnits:0,labFee:0,department:'',prerequisites:'None'}); modal.value='subject'; }
-            if (view.value === 'curriculum') { Object.assign(form, {id:null,program:'',curriculumVersion:'2022 Curriculum',subject:'',yearLevel:'1st Year',semester:'1st Semester',elective:false}); modal.value='curriculum'; }
+            if (view.value === 'subjects')   { Object.assign(form, {id:null,code:'',title:'',description:'',lectureUnits:3,labUnits:0,labFee:0,department:selectedDeptName.value || '',prerequisites:'None'}); modal.value='subject'; }
+            if (view.value === 'curriculum') { Object.assign(form, {id:null,program:selectedCurrProgram.value || (programs.value.length > 0 ? programs.value[0].name : ''),curriculumVersion:selectedCurrVersion.value || '2022 Curriculum',subject:subjects.value.length > 0 ? subjects.value[0].title : '',yearLevel:'1st Year',semester:'1st Semester',elective:false}); modal.value='curriculum'; }
             if (view.value === 'periods')    { Object.assign(form, {id:null,name:'',academicYear:'',semester:'1st Semester',enrollmentStart:'',enrollmentEnd:'',status:'Active'}); modal.value='period'; }
             if (view.value === 'sections')   { Object.assign(form, {id:null,code:'',program:'',yearLevel:'1st Year',academicPeriodId:'',curriculumVersion:'2022 Curriculum',capacity:40,adviser:''}); modal.value='section'; }
             if (view.value === 'classOfferings') { Object.assign(form, {id:null,sectionId:'',program:'',yearLevel:'1st Year',semester:'1st Semester',subject:'',code:'',instructor:'TBD',days:'MWF',time:'09:00 AM - 10:30 AM',room:'Room 101',capacity:40}); modal.value='classOffering'; }
@@ -1784,7 +1784,7 @@ const app = createApp({
                 id: null,
                 program: selectedCurrProgram.value,
                 curriculumVersion: selectedCurrVersion.value || '2022 Curriculum',
-                subject: '',
+                subject: subjects.value.length > 0 ? subjects.value[0].title : '',
                 yearLevel: yearLevel || '1st Year',
                 semester: semester || '1st Semester',
                 elective: false
