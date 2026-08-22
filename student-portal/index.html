@@ -2600,33 +2600,42 @@
                                                 <th>Amount Due</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody v-if="corData && corData.paymentSchedule && corData.paymentSchedule.items">
+                                            <tr v-for="item in corData.paymentSchedule.items" :key="item.milestone">
+                                                <td :style="item.milestone === 'Upon Registration' ? 'font-weight: bold;' : ''">{{ item.milestone }}</td>
+                                                <td :style="item.status === 'CLEARED' ? 'color: #059669; font-style: italic;' : ''">{{ item.dueDate }}</td>
+                                                <td class="font-monospace" :class="item.status === 'PAID' || item.status === 'CLEARED' ? 'text-success fw-bold' : 'fw-bold'">
+                                                    {{ item.formattedAmount }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tbody v-else>
                                             <tr>
                                                 <td style="font-weight: bold;">Upon Registration</td>
-                                                <td>---</td>
+                                                <td>Upon Enrollment</td>
                                                 <td class="font-monospace fw-bold" style="font-style: italic;">
                                                     {{ corData ? corData.paymentMode.toUpperCase() : 'FULL' }}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td>PRELIM</td>
-                                                <td>---</td>
-                                                <td>---</td>
+                                                <td>Term Week 5</td>
+                                                <td>{{ corData && corData.paymentMode === 'Installment' ? ('₱ ' + formatCurrency(corData.installmentTotal * 0.2)) : '₱ 0.00' }}</td>
                                             </tr>
                                             <tr>
                                                 <td>MIDTERM</td>
-                                                <td>---</td>
-                                                <td>---</td>
+                                                <td>Term Week 9</td>
+                                                <td>{{ corData && corData.paymentMode === 'Installment' ? ('₱ ' + formatCurrency(corData.installmentTotal * 0.2)) : '₱ 0.00' }}</td>
                                             </tr>
                                             <tr>
                                                 <td>PREFINALS</td>
-                                                <td>---</td>
-                                                <td>---</td>
+                                                <td>Term Week 14</td>
+                                                <td>{{ corData && corData.paymentMode === 'Installment' ? ('₱ ' + formatCurrency(corData.installmentTotal * 0.2)) : '₱ 0.00' }}</td>
                                             </tr>
                                             <tr>
                                                 <td>FINALS</td>
-                                                <td>---</td>
-                                                <td>---</td>
+                                                <td>Term Week 18</td>
+                                                <td>{{ corData && corData.paymentMode === 'Installment' ? ('₱ ' + formatCurrency(corData.installmentTotal * 0.2)) : '₱ 0.00' }}</td>
                                             </tr>
                                         </tbody>
                                     </table>

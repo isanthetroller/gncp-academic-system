@@ -293,6 +293,8 @@ try {
     $cashTotal         = $assessment['cashTotal'];
     $installmentCharge = $assessment['installmentCharge'];
     $installmentTotal  = $assessment['installmentTotal'];
+    $paymentMode       = $student['payment_mode'] ?? 'Full';
+    $paymentSchedule   = AssessmentService::calculatePaymentSchedule($cashTotal, $installmentTotal, $paymentMode, $paymentData);
 
 } catch (Exception $e) {
     die("<h1 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Database error: " . $e->getMessage() . "</h1>");
@@ -665,33 +667,25 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td style="font-weight: bold;">Upon Registration</td>
-                        <td>---</td>
-                        <td class="font-mono" style="font-style: italic; font-weight: bold;">
-                            <?php echo $student['payment_mode'] === 'Installment' ? 'INSTALLMENT' : 'FULL'; ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>PRELIM</td>
-                        <td>---</td>
-                        <td>---</td>
-                    </tr>
-                    <tr>
-                        <td>MIDTERM</td>
-                        <td>---</td>
-                        <td>---</td>
-                    </tr>
-                    <tr>
-                        <td>PREFINALS</td>
-                        <td>---</td>
-                        <td>---</td>
-                    </tr>
-                    <tr>
-                        <td>FINALS</td>
-                        <td>---</td>
-                        <td>---</td>
-                    </tr>
+                    <?php if (!empty($paymentSchedule['items'])): ?>
+                        <?php foreach ($paymentSchedule['items'] as $item): ?>
+                            <tr>
+                                <td style="<?php echo $item['milestone'] === 'Upon Registration' ? 'font-weight: bold;' : ''; ?>"><?php echo htmlspecialchars($item['milestone']); ?></td>
+                                <td style="<?php echo $item['status'] === 'CLEARED' ? 'color: #059669; font-style: italic;' : ''; ?>"><?php echo htmlspecialchars($item['dueDate']); ?></td>
+                                <td class="font-mono" style="font-weight: bold; <?php echo ($item['status'] === 'PAID' || $item['status'] === 'CLEARED') ? 'color: #059669;' : ''; ?>">
+                                    <?php echo htmlspecialchars($item['formattedAmount']); ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td style="font-weight: bold;">Upon Registration</td>
+                            <td>Upon Enrollment</td>
+                            <td class="font-mono" style="font-style: italic; font-weight: bold;">
+                                <?php echo $student['payment_mode'] === 'Installment' ? '₱ ' . number_format($installmentTotal, 2) : '₱ ' . number_format($cashTotal, 2); ?>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
             <div style="font-size: 8.5px; margin-top: 8px; font-style: italic; text-align: justify;">

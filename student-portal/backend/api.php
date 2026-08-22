@@ -318,6 +318,8 @@ if ($action === 'login' || $action === 'login_student') {
     $encoder  = $payment['processedBy'] ?? $student['cashier_name'] ?? 'sbaltazar3';
     $paymentMode = $payment['paymentMode'] ?? $student['payment_mode'] ?? 'Full';
 
+    $paymentSchedule = AssessmentService::calculatePaymentSchedule($cashTotal, $installmentTotal, $paymentMode, $payment);
+
     $corData = [
         'studentNo'        => $student['id'],
         'tempReferenceNo'  => $student['temp_reference_no'] ?? $student['id'],
@@ -346,6 +348,7 @@ if ($action === 'login' || $action === 'login_student') {
         'installmentCharge'=> $installmentCharge,
         'installmentTotal' => $installmentTotal,
         'paymentMode'      => $paymentMode,
+        'paymentSchedule'  => $paymentSchedule,
         'orNumber'         => $orNumber,
         'encoder'          => $encoder,
         'createdAt'        => $student['created_at'] ?? date('Y-m-d H:i:s')

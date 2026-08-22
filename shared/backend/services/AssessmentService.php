@@ -175,4 +175,137 @@ class AssessmentService {
             'validPayments' => $validPayments
         ];
     }
+
+    /**
+     * Generates the dynamic Milestone Schedule of Payments (Upon Registration, Prelim, Midterm, Prefinals, Finals)
+     * 
+     * @param float $cashTotal Full cash assessment total
+     * @param float $installmentTotal 8% installment surcharge assessment total
+     * @param string $paymentMode 'Full' or 'Installment'
+     * @param array|float $paymentData Payment snapshot or amount paid
+     * @return array Itemized milestone payment schedule with formatted amounts, due dates, and payment statuses
+     */
+    public static function calculatePaymentSchedule(float $cashTotal, float $installmentTotal, string $paymentMode = 'Full', $paymentData = []): array {
+        $mode = ucfirst(strtolower(trim($paymentMode)));
+        $isInstallment = ($mode === 'Installment');
+        
+        $totalAssessment = $isInstallment ? $installmentTotal : $cashTotal;
+        $amountPaid = 0.00;
+        if (is_numeric($paymentData)) {
+            $amountPaid = (float)$paymentData;
+        } elseif (is_array($paymentData)) {
+            $amountPaid = (float)($paymentData['amountPaid'] ?? $paymentData['amount_paid'] ?? $paymentData['amount'] ?? 0.00);
+            if ($amountPaid <= 0 && !empty($paymentData['payments']) && is_array($paymentData['payments'])) {
+                foreach ($paymentData['payments'] as $p) {
+                    $pStatus = strtoupper(trim($p['status'] ?? 'PAID'));
+                    if ($pStatus !== 'VOIDED' && $pStatus !== 'CANCELLED') {
+                        $amountPaid += (float)($p['amountPaid'] ?? $p['amount'] ?? 0.00);
+                    }
+                }
+            }
+        }
+
+        if (!$isInstallment) {
+            $isPaid = ($amountPaid >= $cashTotal && $cashTotal > 0);
+            return [
+                'mode'             => 'FULL',
+                'totalAssessment'  => $cashTotal,
+                'amountPaid'       => $amountPaid,
+                'remainingBalance' => max(0.00, round($cashTotal - $amountPaid, 2)),
+                'items' => [
+                    [
+                        'milestone'       => 'Upon Registration',
+                        'dueDate'         => 'Upon Enrollment',
+                        'amountDue'       => $cashTotal,
+                        'formattedAmount' => '₱ ' . number_format($cashTotal, 2),
+                        'status'          => $isPaid ? 'PAID' : 'DUE'
+                    ],
+                    [
+                        'milestone'       => 'PRELIM',
+                        'dueDate'         => 'Cleared (Full Paid)',
+                        'amountDue'       => 0.00,
+                        'formattedAmount' => '₱ 0.00',
+                        'status'          => 'CLEARED'
+                    ],
+                    [
+                        'milestone'       => 'MIDTERM',
+                        'dueDate'         => 'Cleared (Full Paid)',
+                        'amountDue'       => 0.00,
+                        'formattedAmount' => '₱ 0.00',
+                        'status'          => 'CLEARED'
+                    ],
+                    [
+                        'milestone'       => 'PREFINALS',
+                        'dueDate'         => 'Cleared (Full Paid)',
+                        'amountDue'       => 0.00,
+                        'formattedAmount' => '₱ 0.00',
+                        'status'          => 'CLEARED'
+                    ],
+                    [
+                        'milestone'       => 'FINALS',
+                        'dueDate'         => 'Cleared (Full Paid)',
+                        'amountDue'       => 0.00,
+                        'formattedAmount' => '₱ 0.00',
+                        'status'          => 'CLEARED'
+                    ]
+                ]
+            ];
+        }
+
+        // Installment Breakdown
+        $downpayment = $amountPaid > 0 ? min($amountPaid, round($totalAssessment * 0.35, 2)) : max(3500.00, round($totalAssessment * 0.20, 2));
+        $remaining = max(0.00, round($totalAssessment - $downpayment, 2));
+        $chunk = round($remaining / 4, 2);
+        $finalChunk = round($remaining - (3 * $chunk), 2);
+
+        $cum1 = $downpayment;
+        $cum2 = $downpayment + $chunk;
+        $cum3 = $downpayment + (2 * $chunk);
+        $cum4 = $downpayment + (3 * $chunk);
+        $cum5 = $totalAssessment;
+
+        return [
+            'mode'             => 'INSTALLMENT',
+            'totalAssessment'  => $totalAssessment,
+            'downpayment'      => $downpayment,
+            'remainingBalance' => max(0.00, round($totalAssessment - $amountPaid, 2)),
+            'items' => [
+                [
+                    'milestone'       => 'Upon Registration',
+                    'dueDate'         => 'Upon Enrollment',
+                    'amountDue'       => $downpayment,
+                    'formattedAmount' => '₱ ' . number_format($downpayment, 2),
+                    'status'          => ($amountPaid >= $cum1) ? 'PAID' : 'DUE'
+                ],
+                [
+                    'milestone'       => 'PRELIM',
+                    'dueDate'         => 'Term Week 5',
+                    'amountDue'       => $chunk,
+                    'formattedAmount' => '₱ ' . number_format($chunk, 2),
+                    'status'          => ($amountPaid >= $cum2) ? 'PAID' : 'DUE'
+                ],
+                [
+                    'milestone'       => 'MIDTERM',
+                    'dueDate'         => 'Term Week 9',
+                    'amountDue'       => $chunk,
+                    'formattedAmount' => '₱ ' . number_format($chunk, 2),
+                    'status'          => ($amountPaid >= $cum3) ? 'PAID' : 'DUE'
+                ],
+                [
+                    'milestone'       => 'PREFINALS',
+                    'dueDate'         => 'Term Week 14',
+                    'amountDue'       => $chunk,
+                    'formattedAmount' => '₱ ' . number_format($chunk, 2),
+                    'status'          => ($amountPaid >= $cum4) ? 'PAID' : 'DUE'
+                ],
+                [
+                    'milestone'       => 'FINALS',
+                    'dueDate'         => 'Term Week 18',
+                    'amountDue'       => $finalChunk,
+                    'formattedAmount' => '₱ ' . number_format($finalChunk, 2),
+                    'status'          => ($amountPaid >= $cum5) ? 'PAID' : 'DUE'
+                ]
+            ]
+        ];
+    }
 }
