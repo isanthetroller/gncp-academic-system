@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../shared/libs/fonts/fonts.css">
     <link href="../shared/libs/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../shared/libs/font-awesome/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=20260822_v5">
     <link rel="stylesheet" href="../shared/css/admin_workstation_theme.css?v=20260822_swal">
     <link rel="stylesheet" href="../shared/css/sidebar.css?v=10">
     <link rel="stylesheet" href="../shared/libs/login.css">
@@ -28,6 +28,193 @@
     <style>
         [v-cloak] {
             display: none !important;
+        }
+
+        /* ── Requirements Checklist Core Component ─────────── */
+        .req-container {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+        .req-header-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 99px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .req-progress-bar {
+            height: 4px;
+            border-radius: 99px;
+            background: #e2e8f0;
+            overflow: hidden;
+            margin-top: 6px;
+            margin-bottom: 10px;
+        }
+        .req-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #006A4E 0%, #10b981 100%);
+            border-radius: 99px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .req-checklist-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+        .req-checklist-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+        }
+        .req-checklist-card:last-child {
+            margin-bottom: 0;
+        }
+        .req-checklist-card.is-invalid {
+            border-color: #f87171 !important;
+            background-color: #fffafb;
+        }
+        .req-icon-box {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.92rem;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .req-icon-box.status-original {
+            background: #e6f4ea;
+            color: #006A4E;
+            border: 1px solid rgba(0, 106, 78, 0.2);
+        }
+        .req-icon-box.status-photocopy {
+            background: #f0f9ff;
+            color: #0284c7;
+            border: 1px solid rgba(2, 132, 199, 0.2);
+        }
+        .req-icon-box.status-undertaking {
+            background: #fffbeb;
+            color: #d97706;
+            border: 1px solid rgba(217, 119, 6, 0.25);
+        }
+        .req-icon-box.status-missing {
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+        }
+        .req-doc-title {
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.35;
+            word-break: break-word;
+            margin-bottom: 4px;
+        }
+        .req-badge-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 99px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .doc-segmented-control {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background: #f1f5f9;
+            padding: 3px;
+            border-radius: 8px;
+            gap: 3px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .doc-segment-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 3px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            text-align: center;
+        }
+        .doc-segment-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.8);
+            color: #0f172a;
+        }
+        .doc-segment-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+        .doc-segment-btn.active-original {
+            background: linear-gradient(135deg, #006A4E 0%, #004D38 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0, 106, 78, 0.25) !important;
+        }
+        .doc-segment-btn.active-photocopy {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25) !important;
+        }
+        .doc-segment-btn.active-undertaking {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25) !important;
+        }
+        .doc-segment-btn.active-missing {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.25) !important;
+        }
+        .undertaking-drawer {
+            margin-top: 10px;
+            padding: 11px 13px;
+            background: #fffdf5;
+            border: 1px solid #fef3c7;
+            border-left: 3.5px solid #f59e0b;
+            border-radius: 8px;
+        }
+        .undertaking-drawer label {
+            font-size: 0.67rem;
+            font-weight: 700;
+            color: #92400e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .undertaking-drawer input {
+            background: #ffffff;
+            border: 1.5px solid #fde68a;
+            font-size: 0.78rem;
+            border-radius: 6px;
+            padding: 5px 8px;
+        }
+        .undertaking-drawer input:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+            outline: none;
         }
 
         /* ── Confirmation Dialog ───────────────────────────── */
@@ -459,7 +646,7 @@
                                 </div>
 
                                 <!-- Requirements Card List -->
-                                <div class="req-container custom-scrollbar" style="max-height: 410px; overflow-y: auto; overflow-x: hidden !important;">
+                                <div class="req-container custom-scrollbar" style="max-height: 480px; overflow-y: auto; overflow-x: hidden !important;">
                                     <div v-for="(item, idx) in selectedApplication.requirements" :key="idx"
                                         class="req-checklist-card"
                                         :class="{'is-invalid': !isDocVerified(item) && showRequirementsValidation}">
@@ -563,45 +750,6 @@
                                                            @input="setDocRemarks(item, $event.target.value)">
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Form 137 / SF10 High School Transmittal Tracking Box -->
-                                <div class="transmittal-card">
-                                    <div class="transmittal-header">
-                                        <div class="transmittal-title">
-                                            <i class="fa-solid fa-paper-plane text-success"></i>
-                                            <span>Form 137 / SF10 Transmittal</span>
-                                        </div>
-                                        <span class="badge py-1 px-2.5 rounded-pill fw-bold" style="font-size: 0.68rem;" :class="{
-                                            'bg-secondary-subtle text-secondary border border-secondary-subtle': getTransmittalData().form137Status === 'NOT_SENT',
-                                            'bg-warning-subtle text-warning-emphasis border border-warning-subtle': ['1ST_REQUEST_SENT', '2ND_REQUEST_SENT'].includes(getTransmittalData().form137Status),
-                                            'bg-success-subtle text-success border border-success-subtle': getTransmittalData().form137Status === 'RECEIVED_ARCHIVED'
-                                        }">
-                                            {{ (getTransmittalData().form137Status || 'NOT_SENT').replace(/_/g, ' ') }}
-                                        </span>
-                                    </div>
-                                    <div class="row g-2">
-                                        <div class="col-7">
-                                            <label class="form-label-subtle">Transmittal Status</label>
-                                            <select class="form-select form-select-sm py-1.5" style="font-size: 0.78rem;"
-                                                    :value="getTransmittalData().form137Status || 'NOT_SENT'"
-                                                    @change="setTransmittalStatus($event.target.value)"
-                                                    :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)">
-                                                <option value="NOT_SENT">Not Sent / Pending</option>
-                                                <option value="1ST_REQUEST_SENT">1st Request Dispatched</option>
-                                                <option value="2ND_REQUEST_SENT">2nd Follow-up Dispatched</option>
-                                                <option value="RECEIVED_ARCHIVED">Received &amp; Archived in Vault</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-5">
-                                            <label class="form-label-subtle">Date Dispatched / Logged</label>
-                                            <input type="date" class="form-control form-control-sm py-1.5" style="font-size: 0.78rem;"
-                                                   :value="getTransmittalData().dateDispatched"
-                                                   @change="setTransmittalDate($event.target.value)"
-                                                   :disabled="['ENROLLED', 'Rejected', 'REJECTED'].includes(selectedApplication.status)"
-                                                   title="Transmittal Dispatched or Received Date">
                                         </div>
                                     </div>
                                 </div>

@@ -809,38 +809,4 @@ a { text-decoration: none; }
     outline: none;
 }
 
-/* High School Transmittal Card */
-.transmittal-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 13px 15px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-.transmittal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-.transmittal-title {
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.transmittal-card .form-label-subtle {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-bottom: 3px;
-    display: block;
-}
-
 
